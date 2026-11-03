@@ -1,0 +1,21 @@
+plugins { id 'com.android.application' }
+android {
+ namespace 'app.streamnest'
+ compileSdk 36
+ defaultConfig { applicationId 'app.streamnest'; minSdk 28; targetSdk 35; versionCode 12; versionName '0.7.4'; ndk { abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64' } }
+ splits { abi { enable true; reset(); include "armeabi-v7a", "arm64-v8a", "x86_64"; universalApk true } }
+ compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+ packaging { jniLibs { useLegacyPackaging = true } }
+}
+dependencies {
+ implementation 'org.libtorrent4j:libtorrent4j:2.1.0-39'
+ implementation 'org.libtorrent4j:libtorrent4j-android-arm:2.1.0-39'
+ implementation 'org.libtorrent4j:libtorrent4j-android-arm64:2.1.0-39'
+ implementation 'org.libtorrent4j:libtorrent4j-android-x86_64:2.1.0-39'
+ implementation 'org.videolan.android:libvlc-all:3.7.7'
+ implementation 'org.nanohttpd:nanohttpd:2.3.1'
+ testImplementation 'junit:junit:4.13.2'
+ testImplementation 'org.json:json:20240303'
+}
+
+tasks.withType(JavaCompile).configureEach { options.encoding = "UTF-8" }
