@@ -13,3 +13,8 @@ gradlew.bat text eol=crlf
 desktop/LICENSE.txt -whitespace
 # Installer checksums cover these exact bytes on every checkout platform.
 desktop/overlay/** -text -whitespace
+
+# Catalog signatures cover exact UTF-8 bytes.
+catalogs/bundled-manifest.json -text
+app/src/main/assets/catalog-*.json -text
+catalogs/public-key.pem text eol=lf

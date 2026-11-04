@@ -1,6 +1,8 @@
-# Desktop status — patch 0.8.1
+# Desktop status — patch 0.8.2
 
 The desktop backlog has been implemented in the overlay patch and applied to the local Popcorn Time 0.5.1 installation. See [desktop/README.md](desktop/README.md) for detailed behavior and validation.
+
+Implemented in 0.8.2: persistent saved catalogs/search, movie endpoint cooldown, protected empty refreshes, pinned fallback paging, independent TVmaze series search and signed snapshot updates. See CATALOG-RESILIENCE.md.
 
 Implemented in 0.8.1: visible Hindi Trending films, confirmed-HD Hindi movie discovery/snapshot, regional series ranking and automatic anonymous subtitle session renewal.
 
@@ -16,4 +18,4 @@ Verified: six sort contracts/reverse ordering/filter tests, 12-page paging tests
 - Password-based OpenSubtitles.org account login can still be rejected upstream; anonymous access does not repair account authentication.
 - Movie/Hindi catalogs, reported seeds and playable sources remain dependent on external services. Trending uses recent provider windows rather than a global popularity chart.
 
-The actual Android projector test is still pending and belongs to mobile/device validation.
+The user confirmed basic Android projector operation; longer binge/performance and USB storage tests remain pending.

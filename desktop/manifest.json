@@ -1,10 +1,10 @@
 {
-  "version": "0.8.1",
+  "version": "0.8.2",
   "target": "Popcorn Time 0.5.1",
   "files": [
     {
       "path": "bootstrap.js",
-      "sha256": "10ff33cc1531319b85ddeae8e39dfba0edf22ac9a411dec8677c82731171dc54"
+      "sha256": "5ab8e52e33720e6166eac803b1e1076e10d77d15bbcf3a68fa50381353cc22e3"
     },
     {
       "path": "butter-provider/anime-series-v6.json",
@@ -12,7 +12,27 @@
     },
     {
       "path": "butter-provider/anime.js",
-      "sha256": "d4110b65f55e319f674c6d7e8232c1af783a336c564ab8ca703f5cc9ffe589e3"
+      "sha256": "4b0bda876d704ba9d9c7f93c295afbe5797afa2490b327b5d1713aaf24da9918"
+    },
+    {
+      "path": "butter-provider/catalog-animes-v1.json",
+      "sha256": "f4fc0fd4d8aaccb926f9b9e25181e8c69a64dd969b034f263e2d574869f25cf6"
+    },
+    {
+      "path": "butter-provider/catalog-latest-v1.json",
+      "sha256": "bbd0d3cbf3783a74d76b60852c2f2d614ed61db1991d56af399d7e6ca0474ab4"
+    },
+    {
+      "path": "butter-provider/catalog-movies-v1.json",
+      "sha256": "af9b06f78810bec1c77d606795d24b494119ec7729d2a11f6753f30b9a080132"
+    },
+    {
+      "path": "butter-provider/catalog-public-key.pem",
+      "sha256": "e59d046078a80beaf6d7668e80c8cb7fe7cf545c4c2a209511bfe48f08aecac4"
+    },
+    {
+      "path": "butter-provider/catalog-shows-v1.json",
+      "sha256": "d24ff9da5fc6b937a05fe5253d95973d64387923d411e264d32a42765ea4ad56"
     },
     {
       "path": "butter-provider/generic.js",
@@ -40,15 +60,15 @@
     },
     {
       "path": "butter-provider/streamnest-anime.js",
-      "sha256": "0a3a769f7f6ce4d58ea07af9822edfec9d9d08d9d0964c783ebad61efd2201d8"
+      "sha256": "1e4494aa564f6c466d00c680296c65480e1222c35d336b365f9af6d0aa66b28c"
     },
     {
       "path": "butter-provider/streamnest-api.js",
-      "sha256": "a129b73cd5b923bf51e903a26021e972981dac98dedf9c57c2dee1cd412e6263"
+      "sha256": "aa8c1f390c8d2260df18298e86034dfbbd0c0f8be764ad5d68181ce05191e58e"
     },
     {
       "path": "butter-provider/streamnest-browse.js",
-      "sha256": "14f61ac08f7aef8f7e943fa035275733dc4213f3c3327e7e7aa85e5b696428c6"
+      "sha256": "f01b1af4ba50254e186ced405da41e17dced43757c1fb35cd5ccc8d5613048c1"
     },
     {
       "path": "butter-provider/streamnest-cache.js",
@@ -56,11 +76,11 @@
     },
     {
       "path": "butter-provider/streamnest-episodes.js",
-      "sha256": "1380109c615dff2e220953a31b9cc72dcdd5c418b69acbb7b881cace9e2ca390"
+      "sha256": "7e9e99db0af12aeba135ad597be5043804bcf5083059bb1847141a4486c905e6"
     },
     {
       "path": "butter-provider/streamnest-fresh.js",
-      "sha256": "3e845d924599bcb44dc689456b86a7f49e3df6648744b9e65d048eafd08fe945"
+      "sha256": "40c97bd00feaaa8d63d9ce3095c4972379b43e62310afcc296237eec619d3cfc"
     },
     {
       "path": "butter-provider/streamnest-hindi.js",
@@ -68,7 +88,7 @@
     },
     {
       "path": "butter-provider/streamnest-net.js",
-      "sha256": "1d5d7dc83c018cb77c27aa85b6b5ffaf6f8bf2bd6b665856ced617a067347597"
+      "sha256": "50995b1318f5b18ee91efdc4e5cbdae11b363ac2c89f4d6bf643142d8c4ae328"
     },
     {
       "path": "butter-provider/streamnest-org.js",
@@ -76,15 +96,19 @@
     },
     {
       "path": "butter-provider/streamnest-paged.js",
-      "sha256": "e905db0ba9aa53da091f0ad01080076a925ad3e3e421382dadf9720999467a45"
+      "sha256": "d915469d62b6534b2dd0e6fea35e787f825387cd3d8f70d9a0f9d838c2706c57"
     },
     {
       "path": "butter-provider/streamnest-releases.js",
-      "sha256": "a3c0a7f1d86039b18a434d2f9fcd10afc134b65143a7ffdc167ee4507abb9a32"
+      "sha256": "6a3eccddba4b8173d82202cafbda48c6b81dedf7fe460c9cc1939ba9ac2963fe"
+    },
+    {
+      "path": "butter-provider/streamnest-resilience.js",
+      "sha256": "f7d7693e2432cfba799922e8e13f9d24d704773f46ba97eb23e6ce4fd9cc0b12"
     },
     {
       "path": "butter-provider/streamnest-series.js",
-      "sha256": "ea0de2bc78b625f8cb363c5af997a41fa07fea0e547d1e142de35a628756eae7"
+      "sha256": "ee01e11b3f7bdc5216051a66a749a3d35951404c38ae458e5571a4d4c1cb08c0"
     },
     {
       "path": "butter-provider/tv.js",
@@ -132,7 +156,7 @@
     },
     {
       "path": "templates/filter-bar.tpl",
-      "sha256": "2db3bf9d1256263cebae9e98194f89f550774241cd19386d4d63da079a7d1364"
+      "sha256": "3cd064e160e759970d223104ecd7d64901563072c5b046efe69487699edb38a3"
     },
     {
       "path": "templates/settings-container.tpl",

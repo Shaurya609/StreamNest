@@ -25,3 +25,9 @@ STREAMING-VALIDATION.md
 !*.example
 __pycache__/
 *.pyc
+
+**/node_modules/
+
+catalogs/v1/
+
+!RELEASE-0.8.0.md

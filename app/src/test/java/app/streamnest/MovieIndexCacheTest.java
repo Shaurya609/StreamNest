@@ -46,7 +46,7 @@ public class MovieIndexCacheTest {
   }
 
   @Test
-  public void oldCacheIsNotPresentedAsCurrent() throws Exception {
+  public void emptyStaleCacheIsIgnored() throws Exception {
     File folder = temp.newFolder();
     JSONObject doc =
         new JSONObject()
@@ -57,5 +57,21 @@ public class MovieIndexCacheTest {
         doc.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
     MovieIndex.configure(folder);
     assertNull(MovieIndex.snapshot);
+  }
+
+  @Test
+  public void validStaleCatalogSurvivesAnOutage() throws Exception {
+    File folder = temp.newFolder();
+    long saved = System.currentTimeMillis() - 48 * 60 * 60 * 1000L;
+    JSONObject doc =
+        new JSONObject()
+            .put("saved", saved)
+            .put("movies", new JSONArray().put(new JSONObject().put("title", "Last good title")));
+    Files.write(
+        new File(folder, "movies-index-v7.json").toPath(),
+        doc.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    MovieIndex.configure(folder);
+    assertEquals("Last good title", MovieIndex.snapshot.get(0).getString("title"));
+    assertEquals(saved, MovieIndex.refreshed);
   }
 }

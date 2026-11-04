@@ -11,6 +11,9 @@ public class MovieProviderTest {
 
   @Before
   public void setup() {
+    MovieProvider.health.reset();
+    MovieProvider.store = null;
+    MovieProvider.bases = MovieProvider.BASES;
     saved = MovieProvider.fetcher;
     preferred = MovieProvider.preferred;
     MovieProvider.preferred = MovieProvider.BASES.get(0);
@@ -18,6 +21,8 @@ public class MovieProviderTest {
 
   @After
   public void restore() {
+    MovieProvider.store = null;
+    MovieProvider.health.reset();
     MovieProvider.fetcher = saved;
     MovieProvider.preferred = preferred;
   }
@@ -56,5 +61,34 @@ public class MovieProviderTest {
           throw new java.io.IOException("offline");
         };
     MovieProvider.data("list_movies.json");
+  }
+
+  @Test
+  public void allOutagesUseLastGoodDataAndDoNotProbeCoolingHosts() throws Exception {
+    int[] calls = {0};
+    MovieProvider.fetcher =
+        url -> {
+          calls[0]++;
+          throw new java.io.IOException("offline");
+        };
+    MovieProvider.store =
+        new MovieProvider.Store() {
+          public void remember(String path, org.json.JSONObject data) {}
+
+          public org.json.JSONObject saved(String path) throws Exception {
+            return new org.json.JSONObject()
+                .put("movie_count", 1)
+                .put(
+                    "movies",
+                    new org.json.JSONArray().put(new org.json.JSONObject().put("title", "Saved")));
+          }
+        };
+    CatalogStatus.begin();
+    assertEquals(1, MovieProvider.data("list_movies.json").getInt("movie_count"));
+    assertTrue(CatalogStatus.note().contains("Saved"));
+    int first = calls[0];
+    MovieProvider.data("list_movies.json?page=2");
+    assertEquals(first, calls[0]);
+    MovieProvider.store = null;
   }
 }

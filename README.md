@@ -2,11 +2,12 @@
 
 Native Android app for browsing movies, series and anime, with torrent-based playback through libtorrent and LibVLC.
 
-**Current Android version: 0.7.7. Desktop patch: 0.8.1.** [Download an APK](https://github.com/Shaurya609/StreamNest/releases/latest) · [Release notes](RELEASE-0.7.7.md) · [Desktop backlog](DESKTOP-PENDING.md)
+**Current Android version: 0.8.0. Desktop patch: 0.8.2.** [Download an APK](https://github.com/Shaurya609/StreamNest/releases/latest) · [Release notes](RELEASE-0.8.0.md) · [Desktop backlog](DESKTOP-PENDING.md)
 
 ## Features
 
 - Movie, series and anime catalogs with search, continuous pagination, English/Hindi filters and sorting.
+- Persistent saved catalogs/search, bounded failover and signed background snapshot updates.
 - Posters, descriptions, seasons and canonical episode details; inline quality selection and direct Watch Now.
 - Movies in 1080p/2160p. Episodes default to Auto with 720p/SD fallback and explicit manual choices.
 - Additional episode source discovery, exact season-pack member selection and bounded startup source recovery.
@@ -30,7 +31,7 @@ Open [Releases](https://github.com/Shaurya609/StreamNest/releases/latest) and do
 
 Android 9 or later is required. The APKs are debug-signed development builds. Enter subtitle credentials inside the app; no account credentials or API keys are supplied in this repository.
 
-**Device status:** tablet playback has been tested on Android 14. Installation and operation on the Croma 55-inch Google TV were confirmed by the user. Testing on the 1 GB Android 14 projector is pending. See [projector setup](PROJECTOR-SETUP.md) and [validation](VALIDATION.md).
+**Device status:** tablet playback has been tested on Android 14. Installation and operation on the Croma 55-inch Google TV were confirmed by the user. Basic operation on the 1 GB Android 14 projector was also confirmed by the user; longer performance and external-storage tests remain pending. See [projector setup](PROJECTOR-SETUP.md) and [validation](VALIDATION.md).
 
 ## Build
 
@@ -68,8 +69,8 @@ The interface and workflow were informed by Popcorn Time, with an independently 
 
 See [third-party references](THIRD_PARTY.md). Catalog/provider endpoints are external and may change or become unavailable. This repository contains source code and catalog metadata, not video media.
 
-## Planned reliability and desktop packaging
+## Reliability and desktop packaging
 
-See [catalog resilience](CATALOG-RESILIENCE.md) for the proposed independent-provider adapters, offline catalogs, endpoint health handling and mirrored catalog service. These are a design proposal, not newly deployed servers.
+Saved catalogs/search, endpoint cooldown, independent TVmaze series discovery and signed GitHub/CDN snapshot distribution are implemented. See [catalog resilience](CATALOG-RESILIENCE.md) for behavior, verification and remaining limits.
 
 See [standalone desktop packaging](DESKTOP-PACKAGING.md) for the proposed full-source desktop fork, branding, clean build and installer work. The current desktop download remains a patch.

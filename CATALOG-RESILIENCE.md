@@ -1,27 +1,31 @@
-# Catalog resilience proposal
+# Catalog resilience — implemented in Android 0.8.0 / desktop patch 0.8.2
 
-Status: design and current-code audit, not a claim that new servers have been deployed.
+## What survives an outage
 
-## Current coverage
+Movies, series and anime retain valid packaged and downloaded catalogs. Saved browsing, title search, filtering and ordering continue when catalog servers time out, return errors or deliver malformed data. A populated root catalog is protected against suspicious empty refreshes; a genuine empty search remains valid.
 
-Movies have three compatible endpoints and validation/failover. They are mirrors of one API family, so they do not provide independent catalog coverage. The default live movie feed still needs a responding endpoint; the Hindi HD snapshot is locally available.
+Android movies use a persistent indexed SQLite database with paged queries and streaming snapshot imports, rather than loading the whole movie catalog into memory. Saved metadata is separate from video cache and survives episode cleanup and Exit StreamNest. The HTTP metadata cache is capped at 48 MiB. Desktop keeps a persistent movie index and validated metadata responses.
 
-Series have a saved/bundled full index and background refresh, but the main source catalog still depends on one backend. Hindi discovery uses a separate regional metadata feed. Searches and live source resolution can still fail even when the saved browsing index is intact.
+The initial packaged snapshot contains 777 source-confirmed HD movie records, 8,652 series, 30 mapped anime series and 69 individual anime releases. This is a fallback seed, not the entire upstream catalog. Live pages and later signed snapshots expand it. Movie inclusion still requires a provider-reported 1080p/2160p source; camera releases and metadata-only films do not pass that gate. Provider confirmation does not guarantee connected peers or independently verified video quality.
 
-Anime have saved/bundled catalog data, Kitsu-based discovery, TVmaze identity checks, canonical episode metadata/mappings and separate episode-source lookups. These are separate jobs, not interchangeable URL mirrors; replacing one endpoint with an unrelated API URL will not work.
+## Recovery and independent discovery
 
-## Recommended implementation
+Compatible movie hosts have a preferred working endpoint, bounded request deadlines and exponential cooldown after failures. Cooling hosts are skipped instead of repeatedly delaying every page. Mobile displays saved movie results immediately and refreshes in the background. Desktop tries live pages first, then saved data. A small Saved catalog notice identifies fallback results.
 
-1. Store the last good movie, series and anime catalog locally, including title search and stable ordering. Refresh in the background and show a small cached/offline status when refresh fails. Never replace a populated catalog with an HTTP error, malformed response or suspicious empty full-catalog refresh. Genuine empty search results remain valid. Prefer a paged local database for the 1 GB devices.
-2. Add adapters for independent metadata providers, exact IMDb/TMDB/TVmaze/Kitsu identity mapping, deduplication and one normalized schema. TMDB discovery supports language/filter/sort parameters; TVmaze supplies show and episode data. Metadata providers do not supply torrent availability, and the movie HD gate must remain a separate source check.
-3. Add bounded endpoint health checks, failure cooldown, last-working-host preference and a total request deadline. Avoid repeatedly waiting for already failing hosts. Keep concurrency low on Low Memory devices. Do not send account credentials to catalog providers.
-4. Publish our own versioned catalog snapshots and provider configuration, with a CDN/static mirror. Clients pin a catalog version while paging so a refresh cannot reorder earlier pages. A signed configuration can change approved endpoints without requiring an APK update; retain a packaged fallback and rollback. A catalog service needs an account/key and deployment decision before it can be hosted.
-5. Resolve playable sources separately on Play, recheck availability and offer verified alternatives. Multiple catalogs cannot create peers for a dead torrent. Retain provider provenance, source quality/age and canonical episode numbering; do not label unverified metadata as playable HD.
+Paging sessions pin their record order so incoming records do not move earlier pages while scrolling. Refreshing starts a new session. Existing series/anime snapshots remain available during partial upstream refreshes. Known series searches return saved matches immediately; primary lookup and an independent TVmaze adapter can add exact IMDb matches in the background. Unknown TVmaze matches retain explicit language and metadata-only provenance, with no invented playback availability.
 
-Suggested source roles: TMDB for movie/Hindi discovery, TVmaze for series/episode identity, existing anime mappings/discovery as separate adapters, plus cached normalized snapshots. Verify provider terms, attribution and rate limits before deploying a public aggregator.
+The three movie API hosts belong to one API family. They provide endpoint redundancy, not independent movie coverage. The signed snapshot distribution adds independent delivery of previously collected data. A future independent movie discovery adapter still needs exact identity mapping and a separate HD-source check.
 
-## Acceptance checks
+## Signed snapshot distribution
 
-Simulate a primary timeout, multiple host outages, invalid HTTP-200 payloads, offline startup, legitimate empty searches, a stale snapshot, provider identity conflicts, duplicate releases and catalog changes between pages. Browsing, sorting and cached search must remain usable when upstream refresh is down. Playback can still report that no live source is currently available.
+A GitHub Actions job collects and validates metadata every six hours, retaining known records when individual providers fail. RSA-signed manifests and content-hashed snapshots are published to the separate [catalog-data branch](https://github.com/Shaurya609/StreamNest/tree/catalog-data), with GitHub raw and jsDelivr delivery paths. Catalog history is kept out of application source commits.
 
-References: [TMDB movie discovery](https://developer.themoviedb.org/reference/discover-movie), [TVmaze API](https://www.tvmaze.com/api), [Kitsu API](https://kitsu.docs.apiary.io/).
+Clients pin the public key, verify the manifest signature, file path, byte length, SHA-256 checksum and record count, and retain the last working data on a rejected/incomplete refresh. Older manifest replay is rejected. Signed provider configuration can update compatible HTTPS movie endpoints without an APK change. Packaged fallbacks remain usable if both distribution hosts fail. Seven earlier snapshot sets are retained for operator recovery; there is no automatic client rollback UI.
+
+The publisher contains no subtitle credentials or user watch history. Its private signing key is outside Git and supplied to automation through a repository secret. See [publisher operations](catalogs/README.md).
+
+## Verified behavior and limits
+
+Android unit tests and desktop fixtures cover endpoint outages, cooldown, schema rejection, stable paging, exact identities and signature tampering. On the Android 14 tablet, injected outages returned five saved movie pages with 120 unique titles; saved search survived closing/reopening the database, legitimate empty searches remained empty, series/anime fallbacks worked and the real signed GitHub snapshot verified successfully. These tests did not disable device networking or alter subtitle credentials.
+
+Catalog resilience cannot create torrent peers or guarantee live subtitle/provider availability. Episode/source requests are separate from discovery. Newly released titles cannot be discovered during a complete upstream outage until a provider or refreshed mirror becomes available. User-confirmed basic operation on the 1 GB Android 14 projector is recorded separately from performance/stress testing.

@@ -58,6 +58,7 @@ final class AnimeCatalog {
       task.setPriority(Thread.MIN_PRIORITY);
       task.start();
     }
+    CatalogStatus.cached();
     return snapshot;
   }
 
@@ -112,8 +113,8 @@ final class AnimeCatalog {
     int rank = 0;
     for (String catalog : new String[] {"kitsu-anime-trending", "kitsu-anime-airing"}) {
       JSONObject response =
-          new JSONObject(
-              Net.text("https://anime-kitsu.strem.fun/catalog/series/" + catalog + ".json"));
+          CatalogHttp.object(
+              "https://anime-kitsu.strem.fun/catalog/series/" + catalog + ".json", "metas");
       JSONArray a = response.optJSONArray("metas");
       if (a == null) continue;
       for (int i = 0; i < a.length(); i++) {

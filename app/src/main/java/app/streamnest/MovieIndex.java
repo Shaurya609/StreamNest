@@ -40,10 +40,11 @@ final class MovieIndex {
               new String(
                   Files.readAllBytes(disk.toPath()), java.nio.charset.StandardCharsets.UTF_8));
       long age = System.currentTimeMillis() - saved.getLong("saved");
-      if (age < 0 || age > 24 * 60 * 60 * 1000L) return;
+      // Old valid catalogs remain usable while refresh is unavailable.
       JSONArray a = saved.getJSONArray("movies");
       List<JSONObject> loaded = new ArrayList<>();
       for (int i = 0; i < a.length(); i++) loaded.add(a.getJSONObject(i));
+      if (loaded.isEmpty()) return;
       snapshot = loaded;
       refreshed = saved.getLong("saved");
     } catch (Exception ignored) {
@@ -89,6 +90,7 @@ final class MovieIndex {
         refresh.setDaemon(true);
         refresh.start();
       }
+      CatalogStatus.cached();
       return snapshot;
     }
     snapshot = build();
@@ -183,8 +185,12 @@ final class MovieIndex {
             records(
                 q + "|" + sort + "|" + genre + "|" + quality + "|" + language + "|" + order, page));
     if (!q.isBlank()) {
-      JSONArray a = fetch("date_added", q);
-      for (int i = 0; i < a.length(); i++) records.add(FreshMovies.normalize(a.getJSONObject(i)));
+      try {
+        JSONArray a = fetch("date_added", q);
+        for (int i = 0; i < a.length(); i++) records.add(FreshMovies.normalize(a.getJSONObject(i)));
+      } catch (Exception unavailable) {
+        CatalogStatus.cached();
+      }
     }
     return BrowseOrder.select(records, page, q, sort, genre, quality, language, order);
   }

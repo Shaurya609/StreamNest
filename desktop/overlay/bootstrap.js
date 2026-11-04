@@ -118,6 +118,7 @@
         App.TabTypes[provider.type] = p.name;
       });
 
+      require('./butter-provider/streamnest-resilience').sync().catch(function(error){win.warn('Catalog mirror retained saved data: '+error.message);});
       // Warm the anonymous session after settings are loaded; requests also renew on expiry.
       if (AdvSettings.get('opensubtitlesAnonymous') || !AdvSettings.get('opensubtitlesAuthenticated') || !AdvSettings.get('opensubtitlesUsername'))
         require('./butter-provider/streamnest-org').login(true).catch(function(error) {

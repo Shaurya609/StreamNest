@@ -31,6 +31,7 @@ public class MainActivity extends Activity {
   final BrowseState browse = new BrowseState();
   List<Catalog.Title> titles = browse.rows;
   Future<?> browseJob;
+  boolean forceCatalogRefresh;
   BaseAdapter browseAdapter;
   AbsListView browseList;
   Button moreControl;
@@ -104,9 +105,16 @@ public class MainActivity extends Activity {
     FreshMovies.discoveryThreads = DeviceProfile.lite(this) ? 2 : 4;
     activeLite = DeviceProfile.lite(this);
     posters = new PosterLoader(this);
-    MovieIndex.configure(getAssets(), getCacheDir());
-    SeriesIndex.configure(getAssets(), getCacheDir());
-    AnimeCatalog.configure(getAssets(), getCacheDir());
+    java.io.File catalogFolder = CatalogStorage.folder(this);
+    CatalogHttp.configure(catalogFolder);
+    MovieRepository repository = MovieRepository.shared(getApplicationContext());
+    MovieProvider.store = repository;
+    MovieIndex.configure(getAssets(), catalogFolder);
+    SeriesIndex.configure(getAssets(), catalogFolder);
+    AnimeCatalog.configure(getAssets(), catalogFolder);
+    AnimeReleases.configure(catalogFolder, getAssets());
+    CatalogSync.configure(this, catalogFolder, repository);
+    CatalogSync.refresh(false);
     getWindow().setStatusBarColor(0xff17181b);
     getWindow().setNavigationBarColor(0xff17181b);
     root = new LinearLayout(this);
@@ -179,6 +187,19 @@ public class MainActivity extends Activity {
     sortControl = button("Sort by", filtersRow, this::sortMenu);
     status = text("", 12, 0xff92959c);
     status.setPadding(dp(6), dp(4), 0, dp(6));
+    status.setContentDescription("Refresh catalog");
+    status.setFocusable(true);
+    status.setOnClickListener(
+        v -> {
+          forceCatalogRefresh = true;
+          CatalogSync.refresh(true);
+          MovieProvider.health.reset();
+          PagedMovies.feeds.clear();
+          SeriesIndex.refreshed = 0;
+          AnimeCatalog.refreshed = 0;
+          AnimeReleases.ages.clear();
+          load();
+        });
     root.addView(status);
     content = new LinearLayout(this);
     content.setOrientation(LinearLayout.VERTICAL);
@@ -325,12 +346,16 @@ public class MainActivity extends Activity {
     int direction = order;
     int p = requestedPage;
     boolean saved = favoriteTab;
+    boolean forceRefresh = forceCatalogRefresh;
+    forceCatalogRefresh = false;
     boolean hindi = hindiMode;
     String format = animeFormat;
     browseJob =
         work.submit(
             () -> {
               try {
+                CatalogStatus.begin();
+                MovieProvider.forceLive.set(forceRefresh);
                 List<Catalog.Title> found;
                 if (saved) {
                   found = new ArrayList<>();
@@ -376,6 +401,7 @@ public class MainActivity extends Activity {
                 else if (!saved && (k.equals("movies") && Catalog.legacy(b) || k.equals("animes")))
                   more = Boolean.TRUE.equals(PagedMovies.remaining.get());
                 final boolean canNext = more;
+                final String catalogNote = saved ? "" : CatalogStatus.note();
                 ui.post(
                     () -> {
                       if (request != generation || isDestroyed()) return;
@@ -400,10 +426,11 @@ public class MainActivity extends Activity {
                               + (k.equals("animes") && format.equals("latest")
                                   ? (titles.size() == 1 ? " release" : " releases")
                                   : (titles.size() == 1 ? " title" : " titles"))
-                              + (saved ? "" : " loaded"));
+                              + (saved ? "" : " loaded")
+                              + catalogNote);
                       if (hindi && !saved)
                         content.setContentDescription(
-                            "Live Hindi catalog. Playback sources and audio vary by title.");
+                            "Hindi catalog. Playback sources and audio vary by title.");
                       if (browseAdapter == null) render();
                       else browseAdapter.notifyDataSetChanged();
                       updatePaging();
@@ -434,6 +461,8 @@ public class MainActivity extends Activity {
                       button("Retry", retry, this::load);
                       button("Settings", retry, this::settings);
                     });
+              } finally {
+                MovieProvider.forceLive.remove();
               }
             });
   }
@@ -1090,11 +1119,81 @@ public class MainActivity extends Activity {
     Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
   }
 
+  final java.util.function.Consumer<String> catalogUpdated =
+      path -> ui.post(() -> updatedCatalog(path));
+
+  void updatedCatalog(String path) {
+    if (!isFinishing()
+        && !isDestroyed()
+        && !favoriteTab
+        && kind.equals("shows")
+        && path.equals("series-search:" + query)) {
+      if (!browse.loading
+          && browse.page == 1
+          && (browseList == null || browseList.getFirstVisiblePosition() == 0)) load();
+      else status.setText("Updated catalog ready · tap to refresh");
+      return;
+    }
+    if (!isFinishing()
+        && !isDestroyed()
+        && !favoriteTab
+        && kind.equals("animes")
+        && animeFormat.equals("latest")
+        && path.equals("anime-latest:" + query + "|" + quality)) {
+      if (!browse.loading
+          && browse.page == 1
+          && (browseList == null || browseList.getFirstVisiblePosition() == 0)) load();
+      else status.setText("Updated catalog ready · tap to refresh");
+      return;
+    }
+    if (isFinishing()
+        || isDestroyed()
+        || favoriteTab
+        || hindiMode
+        || !(kind.equals("movies") || kind.equals("animes") && animeFormat.equals("films"))) return;
+    try {
+      Map<String, String> p = MovieRepository.params(path);
+      if (!p.getOrDefault("page", "1").equals("1")
+          || !p.getOrDefault("query_term", "").equals(query)
+          || !p.getOrDefault("sort_by", "").equals(PagedMovies.providerSort(sort))
+          || !p.getOrDefault("genre", "All").equals(kind.equals("animes") ? "Animation" : genre)
+          || !p.getOrDefault("quality", "1080p").equals(quality.equals("2160p") ? "2160p" : "1080p")
+          || !p.getOrDefault("order_by", "desc").equals(order == 1 ? "asc" : "desc")) return;
+      if (browse.loading) {
+        int version = generation;
+        ui.postDelayed(
+            () -> {
+              if (version == generation && !browse.loading) updatedCatalog(path);
+            },
+            500);
+        return;
+      }
+      boolean top =
+          browseList == null
+              || browseList.getFirstVisiblePosition() == 0
+                  && (browseList.getChildCount() == 0
+                      || browseList.getChildAt(0).getTop() >= browseList.getPaddingTop());
+      if (browse.page == 1 && top) {
+        forceCatalogRefresh = true;
+        PagedMovies.feeds.clear();
+        load();
+      } else status.setText("Updated catalog ready · tap to refresh");
+    } catch (Exception ignored) {
+    }
+  }
+
   protected void onResume() {
     super.onResume();
+    CatalogUpdates.add(catalogUpdated);
     if (posters != null && activeLite != DeviceProfile.lite(this)) {
       recreate();
     }
+  }
+
+  @Override
+  protected void onPause() {
+    CatalogUpdates.remove(catalogUpdated);
+    super.onPause();
   }
 
   public void onTrimMemory(int level) {

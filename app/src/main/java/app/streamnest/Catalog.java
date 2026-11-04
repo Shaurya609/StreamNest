@@ -197,7 +197,7 @@ final class Catalog {
             : (t.kind.equals("movies") ? "movie/" : t.kind.equals("animes") ? "anime/" : "show/")
                 + Net.q(t.id)
                 + "?locale=en&contentLocale=en";
-    return new JSONObject(Net.text(base.replaceAll("/+$", "") + "/" + path));
+    return CatalogHttp.object(base.replaceAll("/+$", "") + "/" + path, null);
   }
 
   static JSONArray episodes(JSONObject obj) throws Exception {

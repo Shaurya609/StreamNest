@@ -1,5 +1,5 @@
 'use strict';
-const get = require('./streamnest-net');
+const get = url=>require('./streamnest-resilience').metadata(url,value=>value&&typeof value==='object');
 const path = require('path');
 const cache = new Map();
 const camera = name => /\b(cam|hdcam|camrip|telesync|hdts|tsrip)\b/i.test(name || '');

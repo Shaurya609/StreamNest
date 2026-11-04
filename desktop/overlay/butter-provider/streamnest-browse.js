@@ -2,7 +2,7 @@
 const Fresh=require('./streamnest-fresh'),Hindi=require('./streamnest-hindi');let snapshot,refreshed=0,inflight;
 const seeds=m=>Math.max(0,...(m.items||[]).map(t=>Number(t.torrent_seeds)||0));
 function compare(sort){return (a,b)=>{let n=0;switch(sort){case 'title':n=a.title.toLowerCase()<b.title.toLowerCase()?-1:a.title.toLowerCase()>b.title.toLowerCase()?1:0;break;case 'year':n=Number(b.year)-Number(a.year);break;case 'rating':n=Number(b.rating)-Number(a.rating);break;case 'last added':n=(b.date_uploaded_unix||0)-(a.date_uploaded_unix||0);break;case 'popularity':n=(a.popularityRank||2147483647)-(b.popularityRank||2147483647)||seeds(b)-seeds(a);break;default:n=seeds(b)-seeds(a);}return n||(a.imdb<b.imdb?-1:a.imdb>b.imdb?1:0);};}
-try {const doc=require('./movies-hindi-v1.json');snapshot=doc.movies.map(Fresh.normalize).filter(m=>m.language==='hi'&&m.items.length);refreshed=doc.saved;} catch(e){}
+try {const doc=require('./streamnest-resilience').catalog('movies')||require('./movies-hindi-v1.json');snapshot=doc.movies.map(Fresh.normalize).filter(m=>m.language==='hi'&&m.items.length);refreshed=doc.saved;} catch(e){}
 async function build() {
  const all=new Map();let failure,responding=0;
  for(const sort of ['date_added','seeds','download_count'])try{

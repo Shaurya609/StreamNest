@@ -34,16 +34,16 @@ final class SeriesIndex {
 
   static JSONArray fetch(String base, String sort, int page, String query) throws Exception {
     JSONObject o =
-        new JSONObject(
-            Net.text(
-                base.replaceAll("/+$", "")
-                    + "/shows?"
-                    + Catalog.compat()
-                    + "&short=1&page="
-                    + page
-                    + "&sort="
-                    + sort
-                    + (query.isBlank() ? "" : "&keywords=" + Net.q(query))));
+        CatalogHttp.object(
+            base.replaceAll("/+$", "")
+                + "/shows?"
+                + Catalog.compat()
+                + "&short=1&page="
+                + page
+                + "&sort="
+                + sort
+                + (query.isBlank() ? "" : "&keywords=" + Net.q(query)),
+            "MovieList");
     JSONArray a = o.optJSONArray("MovieList");
     return a == null ? new JSONArray() : a;
   }
@@ -73,7 +73,9 @@ final class SeriesIndex {
           "trendRank",
           "latestRank",
           "language",
-          "regionalCatalog"
+          "regionalCatalog",
+          "metadataOnly",
+          "metadataSource"
         }) if (raw.has(k)) m.put(k, raw.get(k));
     String description = raw.optString("description");
     m.put("description", description.substring(0, Math.min(1200, description.length())));
@@ -138,11 +140,17 @@ final class SeriesIndex {
       task.setDaemon(true);
       task.start();
     }
+    CatalogStatus.cached();
     return snapshot;
   }
 
   static List<JSONObject> buildFull(String base) throws Exception {
     Map<String, JSONObject> all = new LinkedHashMap<>();
+    synchronized (SeriesIndex.class) {
+      if (snapshot != null)
+        for (JSONObject row : snapshot)
+          all.put(row.optString("imdb"), new JSONObject(row.toString()));
+    }
     for (String sort : new String[] {"seeds", "dateadded"}) {
       Set<String> seen = new HashSet<>();
       for (int p = 1; ; p++) {
@@ -192,7 +200,9 @@ final class SeriesIndex {
     List<JSONObject> out = new ArrayList<>();
     int regional = 0;
     for (JSONObject row : records) {
-      if (row.optString("language").equals("hi") && row.optInt("trendRank", 10000) >= 10000) {
+      if (row.optString("language").equals("hi")
+          && row.optInt("trendRank", Integer.MAX_VALUE) >= 10000
+          && row.optInt("trendRank", Integer.MAX_VALUE) < 1000000) {
         JSONObject copy = new JSONObject(row.toString());
         int rank = ++regional * 4;
         copy.put("trendRank", rank).put("latestRank", rank);
@@ -246,6 +256,94 @@ final class SeriesIndex {
     return out;
   }
 
+  static final java.util.concurrent.ThreadPoolExecutor searchWorker =
+      new java.util.concurrent.ThreadPoolExecutor(
+          1,
+          1,
+          30,
+          java.util.concurrent.TimeUnit.SECONDS,
+          new java.util.concurrent.ArrayBlockingQueue<>(2),
+          r -> {
+            Thread t = new Thread(r, "series-search-refresh");
+            t.setDaemon(true);
+            return t;
+          },
+          new java.util.concurrent.ThreadPoolExecutor.AbortPolicy());
+  static final Map<String, Long> searchAttempts = new java.util.concurrent.ConcurrentHashMap<>();
+
+  static List<JSONObject> discover(String base, String query) {
+    Map<String, JSONObject> result = new LinkedHashMap<>();
+    try {
+      JSONArray found = fetch(base, "seeds", 1, query);
+      for (int i = 0; i < found.length(); i++) {
+        JSONObject row = compact(found.getJSONObject(i)).put("language", "en");
+        if (row.optString("imdb").matches("tt[0-9]+")) result.put(row.getString("imdb"), row);
+      }
+    } catch (Exception e) {
+      CatalogStatus.cached();
+    }
+    try {
+      for (JSONObject meta : SeriesDiscovery.search(query)) {
+        String id = meta.getString("imdb");
+        JSONObject row = result.get(id);
+        if (row == null) result.put(id, meta);
+        else row.put("language", meta.getString("language"));
+      }
+    } catch (Exception ignored) {
+    }
+    return new ArrayList<>(result.values());
+  }
+
+  static void refreshSearch(String base, String query) {
+    String key = base + "|" + query;
+    long now = System.currentTimeMillis();
+    Long previous = searchAttempts.get(key);
+    if (previous != null && now - previous < 300000) return;
+    if (searchAttempts.size() > 32) searchAttempts.clear();
+    searchAttempts.put(key, now);
+    try {
+      searchWorker.execute(
+          () -> {
+            try {
+              List<JSONObject> found = discover(base, query);
+              boolean changed = false;
+              synchronized (SeriesIndex.class) {
+                if (snapshot == null) return;
+                Set<String> ids = new HashSet<>();
+                for (JSONObject row : snapshot) ids.add(row.optString("imdb"));
+                List<JSONObject> merged = new ArrayList<>(snapshot);
+                for (JSONObject row : found)
+                  if (ids.add(row.optString("imdb"))) {
+                    merged.add(row);
+                    changed = true;
+                  }
+                if (changed) {
+                  snapshot = merged;
+                  if (disk != null) {
+                    java.io.File tmp = new java.io.File(disk.getParentFile(), "series-search.tmp");
+                    java.nio.file.Files.write(
+                        tmp.toPath(),
+                        new JSONObject()
+                            .put("saved", refreshed)
+                            .put("series", new JSONArray(merged))
+                            .toString()
+                            .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    java.nio.file.Files.move(
+                        tmp.toPath(),
+                        disk.toPath(),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                  }
+                }
+              }
+              if (changed) CatalogUpdates.notify("series-search:" + query);
+            } catch (Exception ignored) {
+            }
+          });
+    } catch (java.util.concurrent.RejectedExecutionException e) {
+      searchAttempts.remove(key);
+    }
+  }
+
   static List<Catalog.Title> list(
       String base, int page, String q, String sort, String genre, String language, int order)
       throws Exception {
@@ -257,9 +355,10 @@ final class SeriesIndex {
     if (a == null || page == 1) {
       a = new ArrayList<>(pool(base));
       if (!q.isBlank()) {
-        JSONArray found = fetch(base, "seeds", 1, q);
-        for (int i = 0; i < found.length(); i++)
-          a.add(found.getJSONObject(i).put("language", "en"));
+        if (!select(a, 1, q, sort, genre, language, order).isEmpty()) {
+          CatalogStatus.cached();
+          refreshSearch(base, q);
+        } else a.addAll(discover(base, q));
       }
       synchronized (SeriesIndex.class) {
         sessions.put(sessionKey, a);

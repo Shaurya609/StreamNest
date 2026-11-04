@@ -75,8 +75,8 @@ final class EpisodeLibrary {
       try {
         metadata =
             CanonicalEpisodes.fromMappings(
-                new JSONObject(
-                    Net.text("https://api.ani.zip/mappings?mal_id=" + title.raw.optInt("malId"))),
+                CatalogHttp.object(
+                    "https://api.ani.zip/mappings?mal_id=" + title.raw.optInt("malId"), null),
                 id);
       } catch (Exception ignored) {
       }
@@ -84,7 +84,7 @@ final class EpisodeLibrary {
     if (metadata.length() == 0 && id.matches("tt[0-9]+"))
       try {
         JSONObject meta =
-            new JSONObject(Net.text("https://v3-cinemeta.strem.io/meta/series/" + id + ".json"))
+            CatalogHttp.object("https://v3-cinemeta.strem.io/meta/series/" + id + ".json", null)
                 .getJSONObject("meta");
         metadata = CanonicalEpisodes.fromCinemeta(meta, id);
       } catch (Exception ignored) {
@@ -92,12 +92,10 @@ final class EpisodeLibrary {
     if (metadata.length() == 0 && id.matches("tt[0-9]+"))
       try {
         JSONObject identity =
-            new JSONObject(Net.text("https://api.tvmaze.com/lookup/shows?imdb=" + id));
+            CatalogHttp.object("https://api.tvmaze.com/lookup/shows?imdb=" + id, null);
         int show = identity.getInt("id");
         Object response =
-            new JSONTokener(
-                    Net.text("https://api.tvmaze.com/shows/" + show + "/episodes?specials=1"))
-                .nextValue();
+            CatalogHttp.array("https://api.tvmaze.com/shows/" + show + "/episodes?specials=1");
         if (response instanceof JSONArray) metadata = (JSONArray) response;
       } catch (Exception ignored) {
       }

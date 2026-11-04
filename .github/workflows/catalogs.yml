@@ -1,0 +1,43 @@
+name: Refresh signed catalogs
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: signed-catalog-publish
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.repository == 'Shaurya609/StreamNest'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install parser dependencies
+        run: npm ci --prefix tools/catalog --ignore-scripts
+      - name: Restore previous signed snapshots
+        run: |
+          if git fetch --depth=1 origin catalog-data; then
+            git archive FETCH_HEAD catalogs/v1 | tar -x
+          fi
+      - name: Validate tooling
+        run: node --test tools/catalog/*.test.mjs
+      - name: Collect, validate and sign snapshots
+        env:
+          CATALOG_SIGNING_KEY: ${{ secrets.CATALOG_SIGNING_KEY }}
+        run: node tools/catalog/publish.mjs
+      - name: Publish generated data branch
+        run: |
+          git checkout --orphan catalog-publish
+          git rm -r --cached .
+          printf 'catalogs/v1/data/** -text\ncatalogs/v1/manifest.json -text\ncatalogs/public-key.pem text eol=lf\n' > .gitattributes
+          git add -f .gitattributes catalogs/v1 catalogs/public-key.pem
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Refresh signed catalog snapshots'
+          git push origin HEAD:catalog-data --force

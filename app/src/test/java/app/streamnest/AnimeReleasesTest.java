@@ -80,4 +80,30 @@ public class AnimeReleasesTest {
         "<!DOCTYPE rss [<!ENTITY x SYSTEM 'file:///etc/passwd'>]><rss>&x;</rss>"
             .getBytes(StandardCharsets.UTF_8));
   }
+
+  @org.junit.Test
+  public void savedMirrorReleasesKeepExactIdentityAndNormalizeTimestamp() throws Exception {
+    org.json.JSONObject row =
+        new org.json.JSONObject()
+            .put("imdb", "nyaa:123")
+            .put("title", "[Group] One Piece - 1179 [720p]")
+            .put("uploaded", 1790000000000L)
+            .put(
+                "items",
+                new org.json.JSONArray()
+                    .put(
+                        new org.json.JSONObject()
+                            .put("quality", "720p")
+                            .put("torrent_url", "https://nyaa.si/download/123.torrent")
+                            .put("torrent_seeds", 20)));
+    org.json.JSONObject doc =
+        new org.json.JSONObject().put("releases", new org.json.JSONArray().put(row));
+    java.util.List<org.json.JSONObject> rows = AnimeReleases.savedRows(doc, "One Piece", "720p");
+    org.junit.Assert.assertEquals(1, rows.size());
+    org.junit.Assert.assertEquals(1790000000L, rows.get(0).getLong("uploaded"));
+    org.junit.Assert.assertTrue(AnimeReleases.savedRows(doc, "Another series", "All").isEmpty());
+    org.junit.Assert.assertTrue(AnimeReleases.savedRows(doc, "One Piece", "1080p").isEmpty());
+    row.put("imdb", "nyaa:999");
+    org.junit.Assert.assertTrue(AnimeReleases.savedRows(doc, "", "All").isEmpty());
+  }
 }

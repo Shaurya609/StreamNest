@@ -96,3 +96,5 @@
         <i id="filterbar-settings" class="fa fa-cog settings tooltipped" data-toggle="tooltip" data-placement="left" title="<%= i18n.__("Settings") %>"></i>
     </li>
 </ul>
+
+<span id="streamnest-catalog-status" style="display:none;position:absolute;right:60px;top:44px;font-size:11px;color:#a5b6c8">Saved catalog</span>

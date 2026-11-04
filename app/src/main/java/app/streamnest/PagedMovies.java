@@ -9,12 +9,14 @@ final class PagedMovies {
     JSONObject get(String path) throws Exception;
   }
 
-  static Fetcher fetcher = MovieProvider::data;
+  static Fetcher fetcher = MovieProvider::browse;
   static final ThreadLocal<Boolean> remaining = new ThreadLocal<>();
   static final LinkedHashMap<String, Feed> feeds = new LinkedHashMap<>();
 
   static class Feed {
     long created = System.currentTimeMillis();
+    String token = UUID.randomUUID().toString();
+    Boolean savedOrigin;
     int next = 1;
     boolean done;
     List<JSONObject> rows = new ArrayList<>();
@@ -97,7 +99,18 @@ final class PagedMovies {
     while (feed.rows.size() < end && !feed.done) {
       if (Thread.currentThread().isInterrupted())
         throw new InterruptedException("Catalog request replaced");
-      JSONObject data = fetcher.get(prefix + "&page=" + feed.next);
+      JSONObject data;
+      boolean force = Boolean.TRUE.equals(MovieProvider.forceLive.get());
+      MovieProvider.feedToken.set(feed.token);
+      MovieProvider.forceLive.set(force || Boolean.FALSE.equals(feed.savedOrigin));
+      try {
+        data = fetcher.get(prefix + "&page=" + feed.next);
+      } finally {
+        MovieProvider.feedToken.remove();
+        MovieProvider.forceLive.set(force);
+      }
+      if (feed.savedOrigin == null || data.optBoolean("catalog_saved"))
+        feed.savedOrigin = data.optBoolean("catalog_saved");
       JSONArray raw = data.optJSONArray("movies");
       if (raw == null) raw = new JSONArray();
       StringBuilder signature = new StringBuilder();
@@ -169,6 +182,7 @@ final class PagedMovies {
     int start = Math.min(feed.rows.size(), end - pageSize);
     for (int i = start; i < Math.min(feed.rows.size(), end); i++)
       out.add(Catalog.parse(feed.rows.get(i), "movies"));
+    if (Boolean.TRUE.equals(feed.savedOrigin)) CatalogStatus.cached();
     remaining.set(feed.rows.size() > end || !feed.done);
     return out;
   }

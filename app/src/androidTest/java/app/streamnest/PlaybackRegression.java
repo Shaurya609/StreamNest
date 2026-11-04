@@ -14,7 +14,7 @@ import org.videolan.libvlc.Media;
 /** Device-only regression; fixture is supplied locally, never bundled in the app. */
 public class PlaybackRegression extends Instrumentation {
   PlayerActivity activity;
-  boolean catalog, subtitles, storage;
+  boolean catalog, subtitles, storage, resilience;
 
   @Override
   public void onCreate(Bundle args) {
@@ -22,11 +22,23 @@ public class PlaybackRegression extends Instrumentation {
     catalog = args != null && "true".equals(args.getString("catalog"));
     subtitles = args != null && "true".equals(args.getString("subtitles"));
     storage = args != null && "true".equals(args.getString("storage"));
+    resilience = args != null && "true".equals(args.getString("resilience"));
     start();
   }
 
   @Override
   public void onStart() {
+    if (resilience) {
+      Bundle result = new Bundle();
+      try {
+        result = CatalogRegression.run(this);
+        finish(Activity.RESULT_OK, result);
+      } catch (Throwable e) {
+        result.putString("result", "FAIL: " + e);
+        finish(Activity.RESULT_CANCELED, result);
+      }
+      return;
+    }
     if (subtitles) {
       subtitleProbe();
       return;

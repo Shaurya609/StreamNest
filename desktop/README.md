@@ -1,8 +1,12 @@
-# StreamNest desktop patch 0.8.1
+# StreamNest desktop patch 0.8.2
 
 This is an overlay patch for the installed Windows Popcorn Time **0.5.1** application. It is not a standalone installer or a replacement for its native dependencies.
 
 ## Included
+
+- Persistent saved movie search/filter/sort/paging, validated metadata fallback, endpoint cooldown and signed GitHub/CDN catalog updates.
+- Independent TVmaze series search with exact IMDb identity and metadata-only provenance.
+- Packaged fallback catalogs: 777 HD movie records, 8,652 series, 30 anime series and 69 latest anime releases.
 
 - Hindi movie snapshot with 91 exact IMDb matches and confirmed-by-provider HD sources, background refresh, a working Hindi filter and language-balanced mixed Trending pages.
 - Regional Hindi series rank correction so Trending/Last added no longer bury them behind thousands of English entries.

@@ -4,6 +4,22 @@ import java.io.*;
 import java.net.*;
 
 final class Net {
+  private static final java.util.concurrent.ScheduledExecutorService deadlines =
+      java.util.concurrent.Executors.newSingleThreadScheduledExecutor(
+          r -> {
+            Thread t = new Thread(r, "catalog-deadline");
+            t.setDaemon(true);
+            return t;
+          });
+
+  static byte[] catalogBytes(String url, int limit, long deadlineNanos) throws Exception {
+    long remaining =
+        java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(deadlineNanos - System.nanoTime());
+    if (remaining <= 0) throw new java.net.SocketTimeoutException("Catalog request timed out");
+    return bytes(
+        url, limit, (int) Math.min(3000, remaining), (int) Math.min(5000, remaining), remaining);
+  }
+
   static byte[] read(InputStream in, int limit) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     byte[] b = new byte[16384];
@@ -24,6 +40,11 @@ final class Net {
   }
 
   static byte[] bytes(String url, int limit, int connectTimeout, int readTimeout) throws Exception {
+    return bytes(url, limit, connectTimeout, readTimeout, 0);
+  }
+
+  static byte[] bytes(String url, int limit, int connectTimeout, int readTimeout, long totalTimeout)
+      throws Exception {
     URI uri = URI.create(url);
     if (!"http".equals(uri.getScheme()) && !"https".equals(uri.getScheme()))
       throw new IOException("Use an HTTP or HTTPS address");
@@ -37,6 +58,11 @@ final class Net {
                 || uri.getHost().equals("yts.gg"))
             ? "okhttp/3.14.7"
             : "StreamNest/0.6.0");
+    java.util.concurrent.ScheduledFuture<?> stop =
+        totalTimeout > 0
+            ? deadlines.schedule(
+                c::disconnect, totalTimeout, java.util.concurrent.TimeUnit.MILLISECONDS)
+            : null;
     try {
       if (c.getResponseCode() != 200)
         throw new IOException("Server returned HTTP " + c.getResponseCode());
@@ -51,6 +77,7 @@ final class Net {
         return out.toByteArray();
       }
     } finally {
+      if (stop != null) stop.cancel(false);
       c.disconnect();
     }
   }

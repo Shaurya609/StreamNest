@@ -9,6 +9,7 @@ class AnimeApi extends TVApi {
   extractIds(items) { return items.results.map(item=>item.imdb_id); }
 
   fetch(filters) {
+    require('./streamnest-resilience').begin();
     if(filters.language==='latest')return require('./streamnest-releases').list(filters).then(result=>({results:result.rows.map(o=>Object.assign(require('./streamnest-api').movie(o,false,false),{animeRelease:true,animeMovie:true})),hasMore:result.hasMore}));
     if(filters.language==='films'&&!['All','1080p','2160p'].includes(filters.type))filters=Object.assign({},filters,{type:'All'});
     if(filters.language==='films')return require('./streamnest-paged').list(filters,'all',true).then(result=>({results:result.rows.map(o=>Object.assign(require('./streamnest-api').movie(o,false,false),{freshMovie:true,animeMovie:true,contextLocale:'ja',exist_translations:['ja']})),hasMore:result.hasMore}));

@@ -10,16 +10,7 @@ const Episodes=require('./streamnest-episodes');
 const base = 'https://api.apiabcd.com/';
 const common = 'app_id=T4P_AND&os=android14&ver=3.6.10&device_type=phone';
 const cache = new Map();
-function get(path) {
- const cached = cache.get(path); if (cached && Date.now()-cached.time<300000) return Promise.resolve(cached.value);
- return new Promise((resolve,reject)=>{
-  const request=https.get(base+path,{headers:{'User-Agent':'okhttp/3.14.7','Accept':'application/json'}},res=>{
-   if(res.statusCode!==200){res.resume();reject(new Error('Catalog HTTP '+res.statusCode));return;}
-   let data='';res.setEncoding('utf8');res.on('data',chunk=>{data+=chunk;if(data.length>16000000)request.destroy(new Error('Catalog response too large'));});
-   res.on('end',()=>{try{const value=JSON.parse(data);cache.set(path,{time:Date.now(),value});resolve(value);}catch(e){reject(e);}});
-  });request.setTimeout(20000,()=>request.destroy(new Error('Catalog request timed out')));request.on('error',reject);
- });
-}
+function get(path){return require('./streamnest-resilience').metadata(base+path,value=>value&&typeof value==='object'&&!value.error);}
 function active(provider){return (provider.apiURL||[]).some(url=>url.includes('apiabcd.com'));}
 function items(movie) {
  let list=[...(movie.items||[])];for(const group of Object.values(movie.items_lang||{})){if(Array.isArray(group))list=list.concat(group);}
@@ -40,6 +31,7 @@ async function detail(id,old,show) {
  return Object.assign({},old||{},{imdb_id:id,tvdb_id:id,episodes,num_seasons:new Set(episodes.map(e=>e.season)).size,seasons:new Set(episodes.map(e=>e.season)).size,contextLocale:old&&old.contextLocale|| (isHindi(id)?'hi':'en'),exist_translations:[isHindi(id)?'hi':'en'],status:'Unknown',rating:old&&typeof old.rating==='object'?old.rating:{percentage:0}});
 }
 async function list(provider,filters,show) {
+ require('./streamnest-resilience').begin();
  const f=Object.assign({},filters),hi=f.genre==='Hindi'||f.language==='hi'||(!f.language&&provider.contentLanguage==='hi'&&provider.contentLangOnly);if(f.genre==='Hindi')f.genre='All';const language=hi?'hi':f.language==='en'?'en':'all';const result=await (show?Series:Browse).list(f,language);return {results:result.rows.map(o=>Object.assign(movie(o,show,o.language==='hi'),{freshMovie:!show,regionalCatalog:!!o.regionalCatalog,selectedQuality:f.type||'All'})),hasMore:result.hasMore};
 }
 

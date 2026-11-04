@@ -11,8 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Desktop adapter and cache tests
-        run: node --test desktop/tests/*.test.js
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Desktop adapter, cache and catalog integrity tests
+        run: node --test desktop/tests/*.test.js tools/catalog/*.test.mjs
   build:
     runs-on: ubuntu-latest
     steps:
