@@ -76,13 +76,32 @@ final class CatalogHttp {
     throw new IOException("Catalog provider is temporarily unavailable", failure);
   }
 
+  static boolean validObject(String url, String arrayKey, Object value) {
+    if (!(value instanceof JSONObject)) return false;
+    JSONObject o = (JSONObject) value;
+    if (o.length() == 0 || o.has("error")) return false;
+    if (arrayKey != null) return o.optJSONArray(arrayKey) != null;
+    java.net.URI uri = java.net.URI.create(url);
+    if ("v3-cinemeta.strem.io".equals(uri.getHost()) && uri.getPath().startsWith("/meta/series/")) {
+      JSONObject meta = o.optJSONObject("meta");
+      String id = uri.getPath().replace("/meta/series/", "").replace(".json", "");
+      return meta != null
+          && id.equals(meta.optString("imdb_id", meta.optString("id")))
+          && meta.optJSONArray("videos") != null;
+    }
+    if ("api.ani.zip".equals(uri.getHost()))
+      return o.optJSONObject("mappings") != null && o.optJSONObject("episodes") != null;
+    if ("api.tvmaze.com".equals(uri.getHost()) && "/lookup/shows".equals(uri.getPath())) {
+      String query = uri.getQuery(),
+          id = query == null ? "" : query.replaceFirst("^.*imdb=", "").split("&")[0];
+      JSONObject ids = o.optJSONObject("externals");
+      return o.optInt("id") > 0 && ids != null && id.equals(ids.optString("imdb"));
+    }
+    return true;
+  }
+
   static JSONObject object(String url, String arrayKey) throws Exception {
-    return (JSONObject)
-        get(
-            url,
-            value ->
-                value instanceof JSONObject
-                    && (arrayKey == null || ((JSONObject) value).optJSONArray(arrayKey) != null));
+    return (JSONObject) get(url, value -> validObject(url, arrayKey, value));
   }
 
   static JSONArray array(String url) throws Exception {

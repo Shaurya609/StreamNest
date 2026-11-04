@@ -1,5 +1,12 @@
 'use strict';
-const get = url=>require('./streamnest-resilience').metadata(url,value=>value&&typeof value==='object');
+const get = url=>require('./streamnest-resilience').metadata(url,value=>{
+  if(!value||typeof value!=='object'||value.error)return false;
+  if(url.includes('/meta/series/')){const id=url.split('/').pop().replace('.json','');return value.meta&&(value.meta.imdb_id||value.meta.id)===id&&Array.isArray(value.meta.videos);}
+  if(url.includes('/lookup/shows?imdb='))return value.id>0&&value.externals&&value.externals.imdb===new URL(url).searchParams.get('imdb');
+  if(url.includes('api.ani.zip'))return !!value.mappings&&!!value.episodes;
+  if(url.includes('/stream/series/'))return Array.isArray(value.streams);
+  return Array.isArray(value);
+});
 const path = require('path');
 const cache = new Map();
 const camera = name => /\b(cam|hdcam|camrip|telesync|hdts|tsrip)\b/i.test(name || '');

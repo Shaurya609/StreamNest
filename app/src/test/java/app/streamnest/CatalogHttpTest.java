@@ -67,4 +67,16 @@ public class CatalogHttpTest {
     assertEquals(0, CatalogHttp.array("https://fixture.example/search?q=missing").length());
     assertEquals("", CatalogStatus.note());
   }
+
+  @Test
+  public void wrongEpisodeIdentityCannotReplaceSavedMetadata() throws Exception {
+    String url = "https://v3-cinemeta.strem.io/meta/series/tt123.json";
+    CatalogHttp.fetcher =
+        u -> "{\"meta\":{\"id\":\"tt123\",\"videos\":[]}}".getBytes(StandardCharsets.UTF_8);
+    assertEquals("tt123", CatalogHttp.object(url, null).getJSONObject("meta").getString("id"));
+    CatalogHttp.fetcher =
+        u -> "{\"meta\":{\"id\":\"tt999\",\"videos\":[]}}".getBytes(StandardCharsets.UTF_8);
+    assertEquals("tt123", CatalogHttp.object(url, null).getJSONObject("meta").getString("id"));
+    assertTrue(CatalogStatus.note().contains("Saved"));
+  }
 }

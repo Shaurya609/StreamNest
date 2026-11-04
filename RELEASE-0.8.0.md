@@ -9,3 +9,5 @@ A signed snapshot publisher refreshes every six hours on GitHub Actions. Clients
 The user confirmed basic projector operation. This release does not guarantee new releases during a complete provider outage, live peers for every title, or performance on every device. Movie API mirrors still share one provider family. See CATALOG-RESILIENCE.md and VALIDATION.md for scope and checks.
 
 Install the universal APK when device architecture is unknown. These remain debug-signed development APKs. Desktop download is an overlay for installed Popcorn Time 0.5.1, not a standalone installer; close the desktop app and run Install.ps1 to apply it with a backup.
+
+Validation: 134 Android unit tests, zero lint errors, 26 desktop/publisher test groups, and the on-tablet catalog fault regression passed.

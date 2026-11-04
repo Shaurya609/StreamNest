@@ -33,3 +33,5 @@ The native cache-folder test selected and saved an app-storage subfolder using t
 ## Android 0.8.0 / desktop patch 0.8.2
 
 Catalog fault tests on the Android 14 tablet passed: 120 unique saved movie titles across five pages, offline search after database reopening, suspicious empty root protection, independent Hindi TVmaze metadata, saved anime series/releases and live RSA-verified GitHub mirror download. Failures were injected inside the test process, without disabling networking or accessing saved subtitle credentials. Desktop/tool tests cover cold-start fallback, saved search, pinned paging, schema rejection, compatible-host cooldown and signed snapshot integrity.
+
+Local release checks: 134 Android unit tests passed, lint reported zero errors, and 26 desktop/publisher test groups passed. The installed desktop movie grid loaded English and Hindi titles after the patch; full UI outage scenarios remain covered by fixtures rather than a live network-disconnection test.
