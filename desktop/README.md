@@ -1,3 +1,5 @@
+Standalone Windows x64 preview: see [STANDALONE.md](STANDALONE.md). The instructions below apply to the separate legacy overlay patch.
+
 # StreamNest desktop patch 0.9.0
 
 This is an overlay patch for the installed Windows Popcorn Time **0.5.1** application. It is not a standalone installer or a replacement for its native dependencies.

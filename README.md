@@ -63,7 +63,7 @@ Use Back from the catalog or Settings → Exit StreamNest to clear video cache. 
 
 ## Project scope
 
-This repository contains the Android app and an overlay patch for Windows Popcorn Time 0.5.1. See [desktop installation and verification](desktop/README.md). Desktop runtime account settings, backups and media caches are excluded. Production signing, casting, a background download library and broader device testing remain future work.
+This repository contains the Android app, a standalone Windows desktop preview and an overlay patch for Windows Popcorn Time 0.5.1. See [desktop installation and verification](desktop/README.md). Desktop runtime account settings, backups and media caches are excluded. Production signing, casting, a background download library and broader device testing remain future work.
 
 The interface and workflow were informed by Popcorn Time, with an independently implemented Android UI and original StreamNest artwork. This is not an official Popcorn Time release.
 
@@ -75,7 +75,7 @@ See [third-party references](THIRD_PARTY.md). Catalog/provider endpoints are ext
 
 Saved catalogs/search, endpoint cooldown, independent TVmaze series discovery and signed GitHub/CDN snapshot distribution are implemented. See [catalog resilience](CATALOG-RESILIENCE.md) for behavior, verification and remaining limits.
 
-See [standalone desktop packaging](DESKTOP-PACKAGING.md) for the proposed full-source desktop fork, branding, clean build and installer work. The current desktop download remains a patch.
+The standalone Windows x64 preview has its own executable, profile/cache, approved branding and per-user installer. It does not require Popcorn Time. See [standalone setup and build instructions](desktop/STANDALONE.md); the older overlay remains available separately.
 
 ## Episode playback
 

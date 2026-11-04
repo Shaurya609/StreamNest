@@ -1,0 +1,36 @@
+# build files
+node_modules/
+src/app/themes
+build/
+cache/
+dist/windows/*-Setup.exe
+dist/linux/linux-installer
+dist/linux/*.deb
+src/app/css/app.css
+*git.json
+
+# temp files
+pids
+logs
+results
+npm-debug.log
+.sass-cache
+*-ck.js
+*.srt
+*.DS_Store
+lib-cov
+.idea/
+*.swp
+*.sublime-*
+.vscode/
+*.code-workspace
+*.bat
+*.db
+*.seed
+*.log
+*.csv
+*.dat
+*.out
+*.pid
+*.gz
+*.iml

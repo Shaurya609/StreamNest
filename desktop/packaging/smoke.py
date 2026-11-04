@@ -1,0 +1,38 @@
+"""Run an opt-in hidden renderer probe with no real user profile or UI input."""
+from pathlib import Path
+import argparse, json, os, subprocess, time, uuid
+
+ROOT = Path(__file__).resolve().parents[2]
+parser=argparse.ArgumentParser()
+parser.add_argument('--app',type=Path,required=True)
+parser.add_argument('--video',type=Path)
+args=parser.parse_args()
+app=args.app.resolve()
+probe=ROOT/'reference/standalone-smoke'/str(uuid.uuid4())
+probe.mkdir(parents=True)
+for name in ('Local','Roaming','Temp','Chromium'):(probe/name).mkdir()
+env=dict(os.environ,LOCALAPPDATA=str(probe/'Local'),APPDATA=str(probe/'Roaming'),
+         TEMP=str(probe/'Temp'),TMP=str(probe/'Temp'),STREAMNEST_SMOKE_ROOT=str(probe))
+if args.video:env['STREAMNEST_SMOKE_VIDEO']=str(args.video.resolve())
+with (probe/'process.log').open('w',encoding='utf8') as output:
+    process=subprocess.Popen([str(app/'StreamNest.exe'),'--streamnest-smoke',
+                              '--user-data-dir='+str(probe/'Chromium'),
+                              '--disable-background-timer-throttling','--autoplay-policy=no-user-gesture-required'],
+                             cwd=app,env=env,stdout=output,stderr=output,
+                             creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+    deadline=time.monotonic()+110
+    while time.monotonic()<deadline and not (probe/'result.json').exists():
+        if process.poll() is not None:break
+        time.sleep(0.25)
+    if (probe/'result.json').exists():
+        result=json.loads((probe/'result.json').read_text(encoding='utf8'))
+    else:
+        result={'ok':False,'error':'Renderer exited or timed out before producing a report','exitCode':process.poll()}
+    if process.poll() is None:
+        try:process.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            # Only this isolated, agent-launched smoke process is terminated.
+            process.terminate()
+    result['probeFolder']=str(probe)
+    print(json.dumps(result,indent=2))
+    if not result['ok']:raise SystemExit(1)

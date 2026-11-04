@@ -21,3 +21,7 @@ Verified: six sort contracts/reverse ordering/filter tests, 12-page paging tests
 - Movie/Hindi catalogs, reported seeds and playable sources remain dependent on external services. Trending uses recent provider windows rather than a global popularity chart.
 
 The user confirmed basic Android projector operation; longer binge/performance and USB storage tests remain pending.
+
+## Standalone preview
+
+Windows x64 portable/installer packaging now lives in desktop/packaging, with pinned full sources, independent branding/profile/cache and no dependency on the installed Popcorn Time app. See desktop/STANDALONE.md. Runtime modernization, code signing, optional metadata-account registration and broader hands-on verification remain pending.

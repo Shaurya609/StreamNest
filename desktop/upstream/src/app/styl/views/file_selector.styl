@@ -1,0 +1,166 @@
+.file-selector-container
+    z-index 100
+    height 100%
+    width 100%
+    position fixed
+    background-color $BgColor1
+    -webkit-user-select none
+    opacity 1
+    background-position 50% 50%
+
+    .file-selector-backdrop
+        position absolute
+        width 100%
+        height 100%
+        background-repeat no-repeat
+        background-position-x 50%
+        background-position-y 50%
+        background-size cover
+        filter blur(60px) brightness(0.7)
+        margin-top 32px
+
+    .file-selector-backdrop-overlay
+        width 100%
+        height 100%
+        position absolute
+        opacity 0.7
+        background-color $ShowBgColor1
+
+    .button
+        position absolute
+        right 16.2%
+        cursor pointer
+        height 35px
+        margin-top 15px
+        border-radius $ButtonRadius
+        background-clip padding-box
+        background-color $ButtonBg
+        padding 0 15px
+        transition background-color 0.5s
+        color $ButtonText
+        font-family $MainFont
+        font-smoothing antialiased
+        text-align center
+        font-size 12px
+        line-height 34px
+
+        &:hover
+            background $ButtonBgHover
+            text-decoration none
+
+        &:active
+            box-shadow inset 0 1px 4px rgba(0,0,0,0.6)
+            background $ButtonBgActive
+
+        .playerchoice
+            padding-left 0px
+            margin 0
+            border 0
+
+        &.store-torrent
+            right initial
+            margin-left 17%
+            margin-top 15px
+            position absolute
+
+        &.disabled
+            background-color $ButtonBgDisabled
+            &:hover
+                background-color $ButtonBgDisabled
+            &:active
+                background-color $ButtonBgDisabled
+
+    .title
+        font-size 36px
+        opacity 0.07
+        padding 0 0 50px
+        margin-top 7%
+        color $Text1
+        font-family $MainFontBold
+        margin-left 14.2%
+
+    .fakeskan
+        display none
+        position absolute
+        width 66%
+        left 17%
+        text-align center
+        padding 5px 0px
+        background rgba(0,0,0,.2)
+        margin-top -28px
+        color $Text1
+        font-family $MainFont
+        font-size 13px
+        line-height 16px
+
+        &:before
+            content '\f071'
+            color $WarningColor
+            font-family "Font Awesome 6 Free"
+            font-weight 900
+            font-size 16px
+            padding-right 8px
+
+    .content
+        position relative
+        margin 0 auto 32px auto
+        width calc(66% - 5px)
+        height 56.5%
+        color $TextError
+        font-family $MainFont
+        font-size 15px
+        text-align center
+        scrollable()
+
+        ul
+            cursor pointer
+
+            li.file-item
+                text-align left
+                cursor pointer
+                color $SettingsText1
+                height 40px
+                margin-top 2px
+
+                &:nth-child(odd)
+                    background rgba($ShowOddHighlight, $ShowOddHighlightOp)
+
+                a
+                    color $EpisodeListText
+                    text-decoration blink
+                    width 100%
+                    display block
+                    padding 12px 160px 13px 20px
+                    transition opacity .1s ease-in
+                    overflow hidden
+                    text-overflow ellipsis
+                    white-space nowrap
+                    position absolute
+                    z-index 1
+
+                    &:hover
+                        background rgba($EpisodeSelectorHoverTran,20%)
+
+                i
+                    float right
+                    margin 2px 13px 2px 1px
+                    border-radius 50%
+                    opacity 0.4
+                    transition all .5s
+                    font-size 14px
+                    padding 10px
+                    position relative
+                    z-index 2
+
+                    &:hover
+                        opacity 1
+
+                        ~ a
+                            background rgba($EpisodeSelectorHoverTran,20%)
+
+                span
+                    float right
+                    margin 13px 24px 0 0
+                    opacity 0.4
+                    pointer-events none
+                    font-size 14px

@@ -1,0 +1,9 @@
+{
+  "name": "streamnest-desktop-build",
+  "private": true,
+  "version": "0.10.0",
+  "dependencies": {
+    "yarn": "1.22.22",
+    "@resvg/resvg-js": "2.6.2"
+  }
+}

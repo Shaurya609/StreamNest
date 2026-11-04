@@ -1,0 +1,24 @@
+{
+  "upstream": {
+    "repository": "https://github.com/popcorn-time-ru/popcorn-desktop",
+    "commit": "e484724a821a681bdd2a4c0a3de01f50dfbad60a",
+    "archiveSha256": "2c6df23bd4691f738a0cf1c250af69869ac7beb8832e3e0ad8041f2b2e7799c7"
+  },
+  "assets": {
+    "runtime": {
+      "file": "nwjs-sdk-v0.44.5-win-x64.zip",
+      "url": "https://popcorn-time.serv00.net/nw/v0.44.5/nwjs-sdk-v0.44.5-win-x64.zip",
+      "sha256": "e6a26eb3e6752d5f1fb0c339dbcf4d267fc4edcf3929ff1c2f007bb1fbace0db"
+    },
+    "nsis": {
+      "file": "nsis-3.11.zip",
+      "url": "https://downloads.sourceforge.net/project/nsis/NSIS%203/3.11/nsis-3.11.zip",
+      "sha256": "c7d27f780ddb6cffb4730138cd1591e841f4b7edb155856901cdf5f214394fa1"
+    },
+    "rcedit": {
+      "file": "rcedit-x64.exe",
+      "url": "https://github.com/electron/rcedit/releases/download/v2.0.0/rcedit-x64.exe",
+      "sha256": "3e7801db1a5edbec91b49a24a094aad776cb4515488ea5a4ca2289c400eade2a"
+    }
+  }
+}
