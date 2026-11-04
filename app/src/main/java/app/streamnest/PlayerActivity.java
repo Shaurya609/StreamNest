@@ -411,7 +411,8 @@ public class PlayerActivity extends Activity {
             TorrentEngine engine = StreamService.engine;
             String hash = engine == null ? "" : engine.movieHash();
             java.util.List<SubtitleQuery.Result> results =
-                api.search(imdb, season, episode, title, language, hash);
+                api.search(
+                    imdb, season, episode, title, language, hash, engine == null ? 0 : engine.size);
             ui.post(
                 () -> {
                   subtitleBusy = false;

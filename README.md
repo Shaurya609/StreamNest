@@ -2,7 +2,7 @@
 
 Native Android app for browsing movies, series and anime, with torrent-based playback through libtorrent and LibVLC.
 
-**Current Android version: 0.7.6. Desktop patch: 0.8.1.** [Download an APK](https://github.com/Shaurya609/StreamNest/releases/latest) · [Release notes](RELEASE-0.7.6.md) · [Desktop backlog](DESKTOP-PENDING.md)
+**Current Android version: 0.7.7. Desktop patch: 0.8.1.** [Download an APK](https://github.com/Shaurya609/StreamNest/releases/latest) · [Release notes](RELEASE-0.7.7.md) · [Desktop backlog](DESKTOP-PENDING.md)
 
 ## Features
 
@@ -13,8 +13,8 @@ Native Android app for browsing movies, series and anime, with torrent-based pla
 - Full-screen landscape playback, automatically hiding icon controls, seeking and remote navigation.
 - Transparent SVG branding and Android vector launcher/TV artwork.
 - Embedded/local subtitles, automatically renewed anonymous OpenSubtitles.org access and OpenSubtitles.com integration; API key and account details are entered inside the app.
-- Configurable video-cache location, episode-by-episode cleanup and cleanup on app exit.
-- TV launcher support and a projector/low-memory mode.
+- Storage and folder picker for the video cache, episode-by-episode cleanup and cleanup on app exit.
+- TV launcher support and Low Memory mode.
 
 External catalogs and peers determine actual availability. Seed counts are provider reports rather than connected-peer guarantees. Source recovery tries up to six candidates and cannot guarantee every episode will stream.
 
@@ -67,3 +67,9 @@ The interface and workflow were informed by Popcorn Time, with an independently 
 ## Dependencies and providers
 
 See [third-party references](THIRD_PARTY.md). Catalog/provider endpoints are external and may change or become unavailable. This repository contains source code and catalog metadata, not video media.
+
+## Planned reliability and desktop packaging
+
+See [catalog resilience](CATALOG-RESILIENCE.md) for the proposed independent-provider adapters, offline catalogs, endpoint health handling and mirrored catalog service. These are a design proposal, not newly deployed servers.
+
+See [standalone desktop packaging](DESKTOP-PACKAGING.md) for the proposed full-source desktop fork, branding, clean build and installer work. The current desktop download remains a patch.

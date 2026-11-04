@@ -149,21 +149,24 @@ class OrgSubtitles {
   List<SubtitleQuery.Result> search(
       String imdb, int season, int episode, String title, String language, String hash)
       throws Exception {
+    return search(imdb, season, episode, title, language, hash, 0);
+  }
+
+  List<SubtitleQuery.Result> search(
+      String imdb, int season, int episode, String title, String language, String hash, long size)
+      throws Exception {
     ensureAnonymous(false);
     String token = secrets.get("orgToken");
     if (token.isEmpty()) throw new IOException("Connect to OpenSubtitles.org in Settings");
-    Map<String, Object> q = new LinkedHashMap<>();
-    q.put("sublanguageid", language.equals("hi") ? "hin" : "eng");
-    if (imdb != null && imdb.matches("tt[0-9]+")) q.put("imdbid", imdb.substring(2));
-    else q.put("query", title == null ? "" : title);
-    if (season > 0) {
-      q.put("season", String.valueOf(season));
-      q.put("episode", String.valueOf(episode));
-    }
-    if (hash != null && !hash.isEmpty()) q.put("moviehash", hash);
-    Map<String, Object> response = sessionRpc("SearchSubtitles", Collections.singletonList(q));
+    List<Map<String, Object>> criteria =
+        OrgSearch.criteria(imdb, season, episode, title, language, hash, size);
+    if (criteria.isEmpty()) return Collections.emptyList();
+    Map<String, Object> response = sessionRpc("SearchSubtitles", criteria);
     List<SubtitleQuery.Result> results = new ArrayList<>();
     Object data = response.get("data");
+    if (!(data instanceof List) && !Boolean.FALSE.equals(data) && !"false".equals(data))
+      throw new IOException("OpenSubtitles.org returned an invalid subtitle list. Please retry.");
+    Set<Integer> seen = new HashSet<>();
     if (data instanceof List)
       for (Object row : (List<?>) data) {
         if (!(row instanceof Map)) continue;
@@ -172,6 +175,9 @@ class OrgSubtitles {
         if (fileId == null) continue;
         try {
           int id = Integer.parseInt(String.valueOf(fileId));
+          if (id <= 0 || !seen.add(id)) continue;
+          String lang = String.valueOf(a.get("SubLanguageID"));
+          if (!lang.equals("null") && !lang.equals(language.equals("hi") ? "hin" : "eng")) continue;
           String release = String.valueOf(a.get("MovieReleaseName"));
           if (release.equals("null")) release = String.valueOf(a.get("SubFileName"));
           SubtitleQuery.Result result =

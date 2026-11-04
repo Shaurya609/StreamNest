@@ -23,3 +23,9 @@ Movie outage recovery: a server returned HTTP 521; the replacement/fallback clie
 - Installed desktop grid visibly included Hindi movies in mixed Trending. Five mixed-page fixtures covered 120 unique cards without dropping English or Hindi items.
 - Session tests cover launch renewal, expiry, missing tokens, sign-out, server rejection, shared desktop logins and bounded retries. Real server lifetime expiry was simulated; a long-running wall-clock expiry soak was not performed.
 - The SVG has no embedded image or background rectangle. Android logo, launcher and TV banner reference native vector paths.
+
+## Android 0.7.7
+
+122 unit tests passed and lint had zero errors. Live on-tablet .org searches returned 5 English subtitle choices for Percy Jackson S1E1 and 2 for Scorpion (2026), with the hash criterion deliberately unable to match. Downloaded a valid timed 42,211-byte subtitle file. The subtitle probe used an isolated in-memory anonymous session and did not inspect or overwrite saved user credentials.
+
+The native cache-folder test selected and saved an app-storage subfolder using the screen's Use this folder action, checked the friendly label and restored the previous folder. Canonical containment/name tests reject traversal and invalid names. Broad shared-folder access remains a user-enabled Android permission; it was not granted automatically during testing. USB/SD hardware and vendor Settings implementations still require device-specific validation.

@@ -33,13 +33,13 @@ public class PlaybackSettingsActivity extends Activity {
             + " playback.",
         14);
     mode = label(box, "", 15);
-    button(box, "Projector / memory mode")
+    button(box, "Low Memory mode")
         .setOnClickListener(
             v ->
                 new AlertDialog.Builder(this)
-                    .setTitle("Memory mode")
+                    .setTitle("Low Memory mode")
                     .setItems(
-                        new String[] {"Automatic", "Projector / low memory", "Standard"},
+                        new String[] {"Automatic", "Low Memory mode", "Standard"},
                         (d, n) -> {
                           getSharedPreferences("performance", 0)
                               .edit()
@@ -50,8 +50,8 @@ public class PlaybackSettingsActivity extends Activity {
                     .show());
     label(
         box,
-        "Projector mode uses smaller posters, fewer workers, fewer peers and shorter read-ahead."
-            + " Choose 1080p H.264 for a 1 GB projector; 4K or HEVC may exceed its decoder"
+        "Low Memory mode uses smaller posters, fewer workers, fewer peers and shorter read-ahead."
+            + " Choose 1080p H.264 for a 1 GB device; 4K or HEVC may exceed its decoder"
             + " capability. Restart playback after changing mode.",
         14);
     button(box, "Done").setOnClickListener(v -> finish());
@@ -79,61 +79,28 @@ public class PlaybackSettingsActivity extends Activity {
     File f = CacheLocation.current(this);
     path.setText(
         "Cache folder\n"
-            + f.getPath()
+            + CacheLocation.description(this)
             + "\nFree space: "
-            + android.text.format.Formatter.formatFileSize(this, f.getUsableSpace()));
+            + android.text.format.Formatter.formatFileSize(this, CacheLocation.freeSpace(f)));
     mode.setText(
-        "Memory mode: "
-            + getSharedPreferences("performance", 0).getString("mode", "auto")
+        "Low Memory mode: "
+            + modeLabel()
             + " · "
             + (DeviceProfile.lite(this) ? "low memory active" : "standard active"));
   }
 
-  void folders() {
-    List<File> choices = CacheLocation.choices(this);
-    List<String> labels = new ArrayList<>();
-    for (int i = 0; i < choices.size(); i++)
-      labels.add(
-          (i == 0 ? "Internal app storage" : "App storage " + i) + "\n" + choices.get(i).getPath());
-    labels.add("Custom writable folder…");
-    new AlertDialog.Builder(this)
-        .setTitle("Cache folder")
-        .setItems(
-            labels.toArray(new String[0]),
-            (d, n) -> {
-              if (n < choices.size()) save(choices.get(n));
-              else {
-                EditText path = new EditText(this);
-                path.setSingleLine(true);
-                path.setHint("Absolute folder path");
-                new AlertDialog.Builder(this)
-                    .setTitle("Custom cache folder")
-                    .setMessage(
-                        "Choose a folder this app can write to. Android may restrict shared or USB"
-                            + " folders; the app-storage choices above do not need broad file"
-                            + " access.")
-                    .setView(path)
-                    .setPositiveButton(
-                        "Use folder",
-                        (dialog, which) -> save(new File(path.getText().toString().trim())))
-                    .setNegativeButton("Cancel", null)
-                    .show();
-              }
-            })
-        .show();
+  String modeLabel() {
+    String setting = getSharedPreferences("performance", 0).getString("mode", "auto");
+    return setting.equals("auto") ? "Automatic" : setting.equals("lite") ? "On" : "Off";
   }
 
-  void save(File f) {
-    try {
-      CacheLocation.select(this, f);
-      refresh();
-      Toast.makeText(this, "Cache folder changed", Toast.LENGTH_SHORT).show();
-    } catch (IOException e) {
-      new AlertDialog.Builder(this)
-          .setTitle("Folder unavailable")
-          .setMessage(e.getMessage())
-          .setPositiveButton("OK", null)
-          .show();
-    }
+  @Override
+  protected void onResume() {
+    super.onResume();
+    if (path != null) refresh();
+  }
+
+  void folders() {
+    startActivity(new Intent(this, CacheFolderActivity.class));
   }
 }

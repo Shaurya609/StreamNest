@@ -140,8 +140,14 @@ final class OpenSubtitles {
   List<SubtitleQuery.Result> search(
       String imdb, int season, int episode, String title, String language, String hash)
       throws Exception {
+    return search(imdb, season, episode, title, language, hash, 0);
+  }
+
+  List<SubtitleQuery.Result> search(
+      String imdb, int season, int episode, String title, String language, String hash, long size)
+      throws Exception {
     if (orgMode())
-      return new OrgSubtitles(context).search(imdb, season, episode, title, language, hash);
+      return new OrgSubtitles(context).search(imdb, season, episode, title, language, hash, size);
     return SubtitleQuery.results(
         request(
             "GET", SubtitleQuery.search(imdb, season, episode, title, language, hash), null, true));

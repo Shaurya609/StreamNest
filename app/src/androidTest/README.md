@@ -11,3 +11,5 @@ The test needs an unlocked device and an MP4 at the target application's private
 An explicit catalog check can instead run with `-e catalog true`. It reports confirmed Hindi HD records, mixed-page Hindi count and a Hindi series page. The movie snapshot and normal live movie provider are used; no credentials are read or printed by this diagnostic.
 
 The test app is separate from the distributed APK and can be uninstalled after verification. Remove only the supplied test fixture from the app cache afterward.
+
+Other explicit probes: `-e subtitles true` checks live anonymous English search for Percy S1E1 and Scorpion (2026), with an unmatched hash, then verifies a timed subtitle download. It uses an in-memory session store. `-e storage true` exercises the native app-storage folder screen and restores the previous setting; it does not grant all-files access or change shared-folder permissions.

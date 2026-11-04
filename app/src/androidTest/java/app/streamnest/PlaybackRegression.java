@@ -14,17 +14,27 @@ import org.videolan.libvlc.Media;
 /** Device-only regression; fixture is supplied locally, never bundled in the app. */
 public class PlaybackRegression extends Instrumentation {
   PlayerActivity activity;
-  boolean catalog;
+  boolean catalog, subtitles, storage;
 
   @Override
   public void onCreate(Bundle args) {
     super.onCreate(args);
     catalog = args != null && "true".equals(args.getString("catalog"));
+    subtitles = args != null && "true".equals(args.getString("subtitles"));
+    storage = args != null && "true".equals(args.getString("storage"));
     start();
   }
 
   @Override
   public void onStart() {
+    if (subtitles) {
+      subtitleProbe();
+      return;
+    }
+    if (storage) {
+      storageProbe();
+      return;
+    }
     if (catalog) {
       catalogProbe();
       return;
@@ -179,6 +189,122 @@ public class PlaybackRegression extends Instrumentation {
     } catch (Exception e) {
       result.putString("status", "Provider unavailable: " + e.getMessage());
       finish(Activity.RESULT_CANCELED, result);
+    }
+  }
+
+  void subtitleProbe() {
+    Bundle result = new Bundle();
+    OrgSubtitles api = null;
+    try {
+      Map<String, String> values = new HashMap<>();
+      api =
+          new OrgSubtitles(
+              new OrgSubtitles.Store() {
+                public String get(String key) {
+                  return values.getOrDefault(key, "");
+                }
+
+                public void put(String key, String value) {
+                  values.put(key, value);
+                }
+              });
+      api.anonymous();
+      List<SubtitleQuery.Result> percy =
+          api.search(
+              "tt12324366", 1, 1, "Percy Jackson · S1 E1", "en", "0123456789abcdef", 500000000);
+      List<SubtitleQuery.Result> scorpion =
+          api.search("tt33473834", 0, 0, "Scorpion", "en", "0123456789abcdef", 500000000);
+      if (percy.isEmpty() || scorpion.isEmpty())
+        throw new AssertionError("Expected English subtitle matches");
+      File directory = new File(getTargetContext().getCacheDir(), "org-subtitle-regression");
+      if (!directory.isDirectory() && !directory.mkdirs())
+        throw new AssertionError("Cannot create subtitle test cache");
+      File file = api.download(percy.get(0), directory);
+      String text =
+          new String(
+              java.nio.file.Files.readAllBytes(file.toPath()),
+              java.nio.charset.StandardCharsets.UTF_8);
+      if (!text.contains("-->")) throw new AssertionError("Downloaded file is not timed subtitles");
+      result.putInt("percyEnglish", percy.size());
+      result.putInt("scorpionEnglish", scorpion.size());
+      result.putLong("downloadBytes", file.length());
+      file.delete();
+      directory.delete();
+      result.putString(
+          "result",
+          "PASS: independent IMDb fallback works despite an unmatched file hash; timed subtitle"
+              + " download verified");
+      finish(Activity.RESULT_OK, result);
+    } catch (Throwable e) {
+      result.putString("result", "FAIL: " + e);
+      finish(Activity.RESULT_CANCELED, result);
+    } finally {
+      if (api != null)
+        try {
+          api.logout();
+        } catch (Exception ignored) {
+        }
+    }
+  }
+
+  View textView(View root, String label) {
+    if (root instanceof android.widget.TextView
+        && label.contentEquals(((android.widget.TextView) root).getText())) return root;
+    if (root instanceof ViewGroup) {
+      ViewGroup group = (ViewGroup) root;
+      for (int i = 0; i < group.getChildCount(); i++) {
+        View found = textView(group.getChildAt(i), label);
+        if (found != null) return found;
+      }
+    }
+    return null;
+  }
+
+  void storageProbe() {
+    Bundle result = new Bundle();
+    CacheFolderActivity picker = null;
+    File child = null;
+    android.content.SharedPreferences prefs = getTargetContext().getSharedPreferences("storage", 0);
+    String previous = prefs.getString("torrentRoot", "");
+    try {
+      picker =
+          (CacheFolderActivity)
+              startActivitySync(
+                  new Intent(getTargetContext(), CacheFolderActivity.class)
+                      .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+      CacheFolderActivity selected = picker;
+      CacheLocation.Volume root = CacheLocation.volumes(getTargetContext()).get(0);
+      child = FolderPolicy.child(root.appFolder, "picker-regression");
+      CacheLocation.writable(child);
+      File target = child;
+      main(
+          () -> {
+            selected.open(root, target, false);
+            View use = textView(selected.getWindow().getDecorView(), "Use this folder");
+            if (use == null) throw new AssertionError("Missing folder action");
+            use.performClick();
+          });
+      if (!CacheLocation.current(getTargetContext())
+          .getCanonicalFile()
+          .equals(child.getCanonicalFile()))
+        throw new AssertionError("Folder selection was not saved");
+      if (CacheLocation.description(getTargetContext()).contains("/data/"))
+        throw new AssertionError("Raw path exposed");
+      result.putString(
+          "result",
+          "PASS: native folder selection saved writable app-storage subfolder with a friendly"
+              + " label; prior selection restored");
+      finish(Activity.RESULT_OK, result);
+    } catch (Throwable e) {
+      result.putString("result", "FAIL: " + e);
+      finish(Activity.RESULT_CANCELED, result);
+    } finally {
+      prefs.edit().putString("torrentRoot", previous).commit();
+      if (child != null) child.delete();
+      if (picker != null) {
+        CacheFolderActivity selected = picker;
+        main(selected::finish);
+      }
     }
   }
 }
