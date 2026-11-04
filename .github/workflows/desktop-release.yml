@@ -1,0 +1,73 @@
+name: Publish checked desktop preview
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful standalone Windows build run
+        required: true
+      tag:
+        description: Desktop preview tag (desktop-vX.Y.Z)
+        required: true
+permissions:
+  actions: read
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate source run and tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ inputs.run_id }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          python - <<'PY'
+          import os,re,json,subprocess
+          assert re.fullmatch(r'\d+',os.environ['RUN_ID'])
+          assert re.fullmatch(r'desktop-v\d+\.\d+\.\d+',os.environ['RELEASE_TAG'])
+          r=json.loads(subprocess.check_output(['gh','api','repos/'+os.environ['GH_REPO']+'/actions/runs/'+os.environ['RUN_ID']]))
+          assert r['conclusion']=='success' and r['name']=='Standalone Windows desktop'
+          assert r['head_branch']=='main' and r['event']=='push'
+          assert r['head_repository']['full_name']==os.environ['GH_REPO']
+          with open(os.environ['GITHUB_ENV'],'a') as f:f.write('SOURCE_SHA='+r['head_sha']+'\n')
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          name: streamnest-desktop-win-x64
+          path: release-payload
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+      - name: Verify checksums, upload and publish preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          python - <<'PY'
+          import os,json,subprocess,hashlib
+          from pathlib import Path
+          tag=os.environ['RELEASE_TAG'];version=tag.removeprefix('desktop-v');root=Path('release-payload')
+          checksum=root/('SHA256SUMS-Desktop-'+version+'.txt')
+          expected={}
+          for line in checksum.read_text().splitlines():
+            sha,name=line.split('  ',1);assert Path(name).name==name
+            file=root/name;assert hashlib.sha256(file.read_bytes()).hexdigest()==sha
+            expected[name]=sha
+          names={f'StreamNest-Desktop-{version}-win-x64-Setup.exe',f'StreamNest-Desktop-{version}-win-x64-portable.zip',f'StreamNest-Desktop-{version}-application-source.zip'}
+          assert set(expected)==names
+          expected[checksum.name]=hashlib.sha256(checksum.read_bytes()).hexdigest()
+          assert {f.name for f in root.iterdir()}==set(expected)
+          notes=Path('desktop-release-notes.md')
+          notes.write_text('Standalone Windows x64 preview. Popcorn Time is not required. Download Setup.exe or portable.zip below.\n\nAndroid / Google TV: https://github.com/'+os.environ['GH_REPO']+'/releases/tag/v'+version+'\n\n'+Path('RELEASE-'+version+'.md').read_text()+'\nBuild source commit: '+os.environ['SOURCE_SHA']+'\n\nUnsigned preview retaining NW.js 0.44.5. Matching complete application source and checksums are included.\n')
+          subprocess.run(['gh','release','create',tag,*[str(root/n) for n in sorted(expected)],'--target',os.environ['SOURCE_SHA'],'--title','StreamNest Desktop '+version+' — standalone Windows preview','--notes-file',str(notes),'--draft','--prerelease'],check=True)
+          releases=json.loads(subprocess.check_output(['gh','api','repos/'+os.environ['GH_REPO']+'/releases?per_page=30']))
+          release=next(r for r in releases if r['tag_name']==tag)
+          assert release['draft'] and release['prerelease']
+          assets={a['name']:a for a in release['assets']};assert set(assets)==set(expected)
+          for name,sha in expected.items():
+            assert assets[name]['digest']=='sha256:'+sha and assets[name]['size']==(root/name).stat().st_size
+          subprocess.run(['gh','api','--method','PATCH','repos/'+os.environ['GH_REPO']+'/releases/'+str(release['id']),'-F','draft=false'],check=True,stdout=subprocess.DEVNULL)
+          print(json.dumps({'published':True,'prerelease':True,'releaseId':release['id'],'source':os.environ['SOURCE_SHA'],'assetsVerified':len(expected)}))
+          PY
