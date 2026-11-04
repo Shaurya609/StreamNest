@@ -27,7 +27,7 @@ For rollback, close the app and restore the corresponding files from the backup 
 
 ## Verification
 
-- 10 Node test groups passed, including six sort contracts/reverse direction, filter intersection, 12-page pagination, exact file selection, quality fallback, canonical numbering, live-release matching and cache-boundary tests.
+- 11 Node test groups passed, including six sort contracts/reverse direction, filter intersection, 12-page pagination, exact file selection, quality fallback, canonical numbering, live-release matching and cache-boundary tests.
 - Live movie catalog returned 24 titles with additional pages. The installed movie grid was inspected.
 - Live series page 15 returned 24 titles. The installed series grid appended more results while scrolling.
 - One Piece metadata mapped absolute episode 1179 to Season 23 Episode 24; 1,209 canonical/special entries were returned at the test time.

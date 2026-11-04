@@ -4,6 +4,11 @@ const E=require('../overlay/butter-provider/streamnest-episodes');
 const C=require('../overlay/butter-provider/streamnest-cache');
 const R=require('../overlay/butter-provider/streamnest-releases');
 const fs=require('fs'),path=require('path'),os=require('os');
+test('overlay files exactly match the installer checksum manifest',()=>{
+ const root=path.resolve(__dirname,'..'),overlay=path.join(root,'overlay');
+ const manifest=JSON.parse(fs.readFileSync(path.join(root,'manifest.json'),'utf8'));
+ for(const entry of manifest.files){const file=path.resolve(overlay,entry.path);assert.ok(file.startsWith(overlay+path.sep));assert.equal(require('crypto').createHash('sha256').update(fs.readFileSync(file)).digest('hex'),entry.sha256,entry.path);}
+});
 test('regular seasons precede Specials and long anime seasons do not collide',()=>{
  const rows=[{season:0,episode:1},{season:1,episode:101},{season:2,episode:1}];
  assert.equal(E.nextUnwatched(rows,[],'firstUnwatched').season,1);
