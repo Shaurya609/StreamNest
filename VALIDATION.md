@@ -68,3 +68,8 @@ An anonymous live IntroDB lookup for Breaking Bad S1E1 returned a matching outro
 - Reported Percy Jackson stall happened on the TV. Exact TV codec/source and long-form playback require user retesting; tablet checks do not verify that TV.
 
 - Public Windows preview desktop-v0.11.0 was published by workflow 41870009937 directly from successful build 41867838077; the complete three-file checksum list and all four uploaded asset sizes/digests were verified before publication. Android v0.11.0 uploaded asset sizes/SHA256 digests were independently matched against the local APKs before publication.
+
+
+## Desktop 0.11.1 local installer verification
+
+Built locally from commit 30742955e184231918c8d2dd48342d3eed142680 while GitHub Actions was queued. All 45 desktop/publisher checks passed; payload identity and isolated hidden startup passed. Silent installation created the desktop shortcut by default; uninstall removed it and preserved a user-added sentinel file. The visible checkbox page compiles; clearing its state bypasses shortcut creation. An interactive unchecked-option walkthrough remains unverified. All four release asset sizes and SHA256 digests matched the local files before publication.
