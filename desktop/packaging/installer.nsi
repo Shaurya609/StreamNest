@@ -1,6 +1,9 @@
 Unicode true
 !include "MUI2.nsh"
 !include "x64.nsh"
+!include "nsDialogs.nsh"
+Var ShortcutChoice
+Var ShortcutCheckbox
 Name "StreamNest"
 OutFile "${OUTPUT}"
 InstallDir "$LOCALAPPDATA\Programs\StreamNest"
@@ -12,17 +15,31 @@ SetCompressor /SOLID lzma
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE "${APPDIR}\LICENSE.txt"
 !insertmacro MUI_PAGE_DIRECTORY
+Page custom ShortcutOptions ShortcutOptionsLeave
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_LANGUAGE "English"
-VIProductVersion "0.11.0.0"
+VIProductVersion "0.11.1.0"
 VIAddVersionKey /LANG=1033 "ProductName" "StreamNest"
 VIAddVersionKey /LANG=1033 "FileDescription" "StreamNest per-user installer"
-VIAddVersionKey /LANG=1033 "FileVersion" "0.11.0"
+VIAddVersionKey /LANG=1033 "FileVersion" "0.11.1"
 VIAddVersionKey /LANG=1033 "LegalCopyright" "StreamNest contributors; Popcorn Time and Butter Project contributors"
+Function ShortcutOptions
+  !insertmacro MUI_HEADER_TEXT "Installation options" "Choose your shortcuts."
+  nsDialogs::Create 1018
+  Pop $0
+  ${NSD_CreateCheckbox} 0 10u 100% 12u "Create desktop shortcut"
+  Pop $ShortcutCheckbox
+  ${NSD_SetState} $ShortcutCheckbox $ShortcutChoice
+  nsDialogs::Show
+FunctionEnd
+Function ShortcutOptionsLeave
+  ${NSD_GetState} $ShortcutCheckbox $ShortcutChoice
+FunctionEnd
 Function .onInit
+  StrCpy $ShortcutChoice ${BST_CHECKED}
   ${IfNot} ${RunningX64}
     MessageBox MB_OK "StreamNest requires 64-bit Windows."
     Abort
@@ -49,9 +66,14 @@ Section "StreamNest"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   CreateDirectory "$SMPROGRAMS\StreamNest"
   CreateShortcut "$SMPROGRAMS\StreamNest\StreamNest.lnk" "$INSTDIR\StreamNest.exe" "" "$INSTDIR\src\app\images\streamnest.ico"
-  CreateShortcut "$DESKTOP\StreamNest.lnk" "$INSTDIR\StreamNest.exe" "" "$INSTDIR\src\app\images\streamnest.ico"
+  ${If} $ShortcutChoice == ${BST_CHECKED}
+    CreateShortcut "$DESKTOP\StreamNest.lnk" "$INSTDIR\StreamNest.exe" "" "$INSTDIR\src\app\images\streamnest.ico"
+    IfErrors 0 +3
+      MessageBox MB_OK "Windows could not create the desktop shortcut. StreamNest is available from the Start menu."
+      ClearErrors
+  ${EndIf}
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "DisplayName" "StreamNest"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "DisplayVersion" "0.11.0"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "DisplayVersion" "0.11.1"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "UninstallString" '$\"$INSTDIR\Uninstall.exe$\"'
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "InstallLocation" "$INSTDIR"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "DisplayIcon" "$INSTDIR\StreamNest.exe"
