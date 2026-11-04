@@ -53,3 +53,16 @@ An anonymous live IntroDB lookup for Breaking Bad S1E1 returned a matching outro
 - Silent install/uninstall also passed locally. An unrelated sentinel file survived uninstall; the existing Popcorn Time installation/profile was not used as build input.
 - The 40 desktop/publisher test groups passed. The Android source is unchanged from the 0.9.0 release; the accompanying Android CI job passed as well.
 - Hands-on standalone subtitle/player/binge behavior on additional Windows machines, code signing, runtime modernization, optional metadata integration registration and other desktop operating systems remain pending.
+
+
+## 0.11.0 — 4 November 2026
+
+- Android: 146 unit tests; all ABI/universal debug APKs; lint passed. CI run 41868549572 passed.
+- Connected tablet: fresh anonymous .org session and explicit expiry renewal in isolated memory; Percy Jackson S1E1 (5 English matches) and Scorpion (2 matches); 42,211-byte timed episode subtitle download. No saved account credentials used or changed.
+- Tablet foreground playback fixture: nonblack decoded frames after subtitle menu and account-screen return; advancing position and preserved user pause. The first instrumentation attempt after replacing/restarting the app twice hit an Android foreground-service startup timeout; the awake foreground rerun passed. This is a test-startup limitation still worth monitoring, not a reproduced TV failure.
+- Startup regression tests reject an 80%-complete file without required headers/footer, cover unaligned pack-file offsets and cap retries. Decoder retry preserves the requested initial resume position.
+- Desktop/publisher: 45 automated checks passed. Windows CI 41867838077 passed clean build, payload identity, isolated hidden renderer and per-user installation/uninstall preserving user files.
+- Actual hidden Windows video.js display: anonymous Percy Jackson S1E1 search returned 10 English choices; full 42,208-byte SRT yielded 540 parsed cues; a downloaded cue was rendered and attached to the display. Controlled cue time was used for the renderer check; this does not establish synchronization for every torrent release.
+- Desktop Scorpion movie: 4 English choices and a 54,174-byte timed SRT downloaded anonymously. No movie scene synchronization claim.
+- Signed catalog publication 41867874027 passed; remote manifest signature and anime payload digest independently verified. Expanded snapshot has 302 anime series, including 280 metadata-only entries; desktop adapter returned 13 unique pages / 302 titles. Torrent availability remains a separate resolution step.
+- Reported Percy Jackson stall happened on the TV. Exact TV codec/source and long-form playback require user retesting; tablet checks do not verify that TV.
