@@ -50,6 +50,7 @@ public class StreamService extends Service {
       stopSelf();
       return START_NOT_STICKY;
     }
+    promote();
     TorrentEngine next = new TorrentEngine();
     next.sourceUrl = source;
     next.fileIndex = i.getIntExtra("fileIndex", -1);

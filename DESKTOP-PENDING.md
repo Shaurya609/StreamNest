@@ -1,6 +1,8 @@
-# Desktop status — patch 0.8.2
+# Desktop status — patch 0.9.0
 
 The desktop backlog has been implemented in the overlay patch and applied to the local Popcorn Time 0.5.1 installation. See [desktop/README.md](desktop/README.md) for detailed behavior and validation.
+
+Implemented in 0.9.0: previous/next episode controls, season-boundary navigation, natural-end autoplay, validated intro/credits timestamps and playback toggles. Full desktop player UI verification remains pending while the owner is working; background fixtures cover the new paths.
 
 Implemented in 0.8.2: persistent saved catalogs/search, movie endpoint cooldown, protected empty refreshes, pinned fallback paging, independent TVmaze series search and signed snapshot updates. See CATALOG-RESILIENCE.md.
 

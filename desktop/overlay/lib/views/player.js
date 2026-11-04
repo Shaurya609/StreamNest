@@ -242,11 +242,13 @@
         },
 
         onPlayerEnded: function () {
-            if (this.model.get('torrentModel') && this.model.get('torrentModel').get('auto_play')) {
-                this.playNextNow();
-            } else {
-                this.closePlayer();
+            const tm=this.model.get('torrentModel'),P=require('./butter-provider/streamnest-playback');
+            if(tm&&tm.get('type')==='episode'){
+                if(this._streamnestEnded||!P.completed(Math.max(this._streamnestPosition||0,this.video.currentTime()),Math.max(this._streamnestLength||0,this.video.duration()),this._streamnestPlayed,false))return;
+                this._streamnestEnded=true;
+                if(tm.get('auto_play')&&P.neighbour(tm.attributes,1)){this.navigateEpisode(1);return;}
             }
+            this.closePlayer();
         },
 
         checkAutoPlay: function () {
@@ -336,12 +338,13 @@
                 });
             }
 
+            this.setupEpisodeControls();
             // resume position
-            if (Settings.lastWatchedTitle === this.model.get('title') && Settings.lastWatchedTime > 0) {
+            if (!(tm&&tm.get('streamnestFromBeginning')) && Settings.lastWatchedTitle === this.model.get('title') && Settings.lastWatchedTime > 0) {
                 var position = Settings.lastWatchedTime;
                 win.info('Resuming position to', position.toFixed(), 'secs');
                 this.player.currentTime(position);
-            } else if (Settings.traktPlayback) {
+            } else if (!(tm&&tm.get('streamnestFromBeginning')) && Settings.traktPlayback) {
                 var type = this.isMovie();
                 var id = type === 'movie' ? this.model.get('imdb_id') : this.model.get('episode_id');
                 App.Trakt.getPlayback(type, id).then(function (position_percent) {
@@ -456,7 +459,7 @@
                 event.preventDefault();
             });
 
-            if (this.model.get('torrentModel') && this.model.get('torrentModel').get('auto_play')) {
+            if (this.model.get('torrentModel') && Array.isArray(this.model.get('torrentModel').get('auto_play_data'))) {
                 this.precachestarted = false;
                 this.autoplayisshown = false;
                 this.next_episode_model = false;
@@ -643,14 +646,36 @@
             App.Trakt.scrobble(method, type, id, progress);
         },
 
-        playNextNow: function () {
-            this.dontTouchFS = true; //XXX(xaiki): hack, don't touch fs state
-
-            this.closePlayer();
-
-            if (this.next_episode_model) {
-                App.vent.trigger('stream:start', this.next_episode_model);
+        playNextNow: function () { this.navigateEpisode(1); },
+        navigateEpisode: function(direction){
+            const tm=this.model.get('torrentModel');if(!tm||this._streamnestNavigating||this.isDestroyed())return;
+            this._streamnestNavigating=true;this._streamnestNavButtons&&this._streamnestNavButtons.prop('disabled',true);
+            require('./butter-provider/streamnest-playback').resolve(tm.attributes,direction).then(attrs=>{
+                if(this.isDestroyed())return;
+                this.dontTouchFS=true;this.closePlayer();App.vent.trigger('stream:start',new Backbone.Model(attrs));
+            }).catch(error=>{if(this.isDestroyed())return;this._streamnestNavigating=false;this._streamnestNavButtons&&this._streamnestNavButtons.each(function(){const button=$(this);button.prop('disabled',!require('./butter-provider/streamnest-playback').neighbour(tm.attributes,Number(button.attr('data-direction'))));});$('.notification_alert').text(error.message).fadeIn('fast').delay(4000).fadeOut('fast');});
+        },
+        setupEpisodeControls: function(){
+            const tm=this.model.get('torrentModel');if(this._StreamNestTimer||!tm||tm.get('type')!=='episode'||!Array.isArray(tm.get('auto_play_data')))return;
+            const P=require('./butter-provider/streamnest-playback'),bar=$(this.player.el()).find('.vjs-control-bar');
+            this._streamnestNavButtons=$();
+            for(const item of [{direction:-1,label:'Previous episode',icon:'fa-step-backward'},{direction:1,label:'Next episode',icon:'fa-step-forward'}]){
+                const button=$('<button type="button" class="vjs-control vjs-button"><i class="fa"></i></button>').attr({'title':item.label,'aria-label':item.label});
+                button.attr('data-direction',item.direction);button.find('i').addClass(item.icon);button.prop('disabled',!P.neighbour(tm.attributes,item.direction));button.on('click',()=>this.navigateEpisode(item.direction));bar.append(button);this._streamnestNavButtons=this._streamnestNavButtons.add(button);
             }
+            this._streamnestSkip=$('<button type="button" class="vjs-control vjs-button" style="display:none;position:absolute;right:24px;bottom:90px;width:52px;height:48px;background:#2389cf;z-index:25"><i class="fa fa-fast-forward"></i></button>');
+            $(this.player.el()).append(this._streamnestSkip);this._streamnestSkip.on('click',()=>{if(this._streamnestSegment)this.player.currentTime(this._streamnestSegment.end);});
+            this._streamnestSegments=[];
+            this._StreamNestTimer=setInterval(()=>{
+                if(this.isDestroyed())return;
+                const position=this.video.currentTime(),length=this.video.duration();
+                if(Number.isFinite(position))this._streamnestPosition=position;if(Number.isFinite(length))this._streamnestLength=length;
+                if(position>1&&!this.video.paused())this._streamnestPlayed=true;
+                if(!this._streamnestSkipRequested&&length>0&&Settings.streamnestSkipButtons!==false){this._streamnestSkipRequested=true;P.segments(tm.attributes,length).then(rows=>{if(!this.isDestroyed())this._streamnestSegments=rows;}).catch(()=>{});}
+                this._streamnestSegment=P.active(this._streamnestSegments,position);
+                const segment=this._streamnestSegment;this._streamnestSkip.toggle(!!segment&&!this._streamnestNavigating);
+                if(segment)this._streamnestSkip.attr({'title':segment.type==='intro'?'Skip intro':'Skip credits','aria-label':segment.type==='intro'?'Skip intro':'Skip credits'});
+            },500);
         },
         playNextNot: function () {
             $('.playing_next').hide();
@@ -660,40 +685,8 @@
             this.model.get('torrentModel').set('auto_play', false);
         },
         processNext: function () {
-            var torrentModel = this.model.get('torrentModel');
-            var episodes = torrentModel.get('episodes');
-
-            if (torrentModel.get('auto_id') !== episodes[episodes.length - 1]) {
-
-                var auto_play_data = torrentModel.get('auto_play_data');
-                var current_quality = torrentModel.get('quality');
-                var tvdb = torrentModel.get('tvdb_id');
-                var auto_id = torrentModel.get('auto_id');
-                var idx;
-
-                _.find(auto_play_data, function (data, dataIdx) {
-                    if (data.id === auto_id) {
-                        idx = dataIdx;
-                        return true;
-                    }
-                });
-                var next_episode = auto_play_data[idx + 1];
-
-                next_episode.auto_play = true;
-                next_episode.auto_id = String(next_episode.season)+':'+String(next_episode.episode);
-                next_episode.tvdb_id = tvdb;
-                next_episode.auto_play_data = auto_play_data;
-                next_episode.episodes = episodes;
-                next_episode.quality = current_quality;
-
-                const nextSource=require('./butter-provider/streamnest-episodes').rank(next_episode.streamnestSources || Object.values(next_episode.torrents||{}),current_quality)[0]
-                    || require('./butter-provider/streamnest-episodes').rank(Object.values(next_episode.torrents||{}),'Auto')[0];
-                next_episode.torrent=nextSource?nextSource.url:'';
-                next_episode.file_name=nextSource?nextSource.file||'':'';
-                next_episode.fileIndex=nextSource?nextSource.fileIndex:-1;
-                next_episode.streamnestQuality='Auto';
-                this.next_episode_model = new Backbone.Model(next_episode);
-            }
+            const tm=this.model.get('torrentModel');this.next_episode_model=false;
+            if(tm){const row=require('./butter-provider/streamnest-playback').neighbour(tm.attributes,1);if(row)this.next_episode_model=new Backbone.Model(row);}
         },
 
         remainingTime: function () {
@@ -1270,6 +1263,7 @@
         },
 
         onBeforeDestroy: function () {
+            if(this._StreamNestTimer)clearInterval(this._StreamNestTimer);
             if (this.model.get('type') === 'video/youtube') { // XXX Sammuel86 Trailer UI Show FIX/HACK -START
                 $('.trailer_mouse_catch').remove();
             }

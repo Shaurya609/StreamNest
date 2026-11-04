@@ -456,9 +456,6 @@
             <span>
                 <input class="settings-checkbox" name="playNextEpisodeAuto" id="playNextEpisodeAuto" type="checkbox" <%=(Settings.playNextEpisodeAuto? "checked='checked'":"")%>>
                 <label class="settings-label" for="playNextEpisodeAuto"><%= i18n.__("Play next episode automatically") %></label>
-                <% if (Settings.playNextEpisodeAuto) { %>
-                &nbsp;&nbsp;&nbsp;<input id="preloadNextEpisodeTime" type="number" min="0" max="99999" name="preloadNextEpisodeTime" value="<%=Settings.preloadNextEpisodeTime%>" autocomplete="off"/>&nbsp;&nbsp;&nbsp;<em><%= i18n.__("minute(s) remaining before preloading next episode") %>,&nbsp;&nbsp;&nbsp;<%= i18n.__("0 = Disable preloading") %></em>
-                <% } %>
             </span>
             <span>
                 <input class="settings-checkbox" name="audioPassthrough" id="audioPassthrough" type="checkbox" <%=(Settings.audioPassthrough? "checked='checked'":"")%>>
@@ -466,6 +463,12 @@
             </span>
         </div>
     </section>
+
+    <section id="streamnest-skipping"><div class="title">Episode skipping</div><div class="content"><span>
+      <input class="settings-checkbox" name="streamnestSkipButtons" id="streamnestSkipButtons" type="checkbox" <%=Settings.streamnestSkipButtons!==false?"checked='checked'":""%>>
+      <label class="settings-label" for="streamnestSkipButtons">Show intro and credits skip buttons</label>
+      <p>Community timestamps from IntroDB and AniSkip, when available. Credits skip to the segment end; later scenes remain playable. Previous/next episode controls work independently of autoplay. Preloading is disabled to preserve episode cache cleanup.</p>
+    </span></div></section>
 
     <section id="features">
         <div class="title"><%= i18n.__("Features") %></div>

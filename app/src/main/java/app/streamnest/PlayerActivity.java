@@ -15,7 +15,17 @@ public class PlayerActivity extends Activity {
   LibVLC vlc;
   MediaPlayer player;
   VLCVideoLayout video;
-  TextView status, time;
+  TextView status, time, playingTitle;
+  org.json.JSONObject episodeQueue;
+  List<org.json.JSONObject> episodeRows = new ArrayList<>();
+  ImageButton previousEpisode, nextEpisode, skipSegment;
+  List<SkipSegments.Segment> segments = new ArrayList<>();
+  SkipSegments.Segment activeSegment;
+  boolean changingEpisode, endedHandled, pendingAuto, skipRequested;
+  int playbackVersion;
+  long lastPosition, lastLength;
+  final java.util.concurrent.ExecutorService episodeWorker =
+      java.util.concurrent.Executors.newSingleThreadExecutor();
   SeekBar seek;
   Handler ui = new Handler(Looper.getMainLooper());
   boolean opened, dragging;
@@ -28,7 +38,7 @@ public class PlayerActivity extends Activity {
         if (player != null && player.isPlaying() && !dragging && hasWindowFocus())
           setControlsVisible(false);
       };
-  String source, key;
+  String source, key, episodeMessage;
   ImageButton pause;
   TextView subtitleStatus;
   final java.util.concurrent.ExecutorService subtitleWorker =
@@ -55,7 +65,7 @@ public class PlayerActivity extends Activity {
       finish();
       return;
     }
-    key = "position_" + source;
+    key = positionKey();
     alternatives = AlternateEpisodes.decode(getIntent().getStringExtra("alternatives"));
     attemptStarted = SystemClock.elapsedRealtime();
     lastProgressAt = attemptStarted;
@@ -80,6 +90,7 @@ public class PlayerActivity extends Activity {
     bottomControls = bottom;
     root.addView(bottom, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
     TextView title = new TextView(this);
+    playingTitle = title;
     title.setText(getIntent().getStringExtra("title"));
     title.setTextColor(-1);
     title.setTextSize(16);
@@ -101,6 +112,13 @@ public class PlayerActivity extends Activity {
     bottom.addView(seek);
     LinearLayout buttons = new LinearLayout(this);
     bottom.addView(buttons);
+    previousEpisode =
+        button(
+            R.drawable.ic_previous_episode,
+            "Previous episode",
+            buttons,
+            () -> changeEpisode(-1, false));
+    previousEpisode.setVisibility(View.GONE);
     button(
         R.drawable.ic_rewind,
         "Back 10 seconds",
@@ -134,6 +152,26 @@ public class PlayerActivity extends Activity {
           if (player != null)
             player.setTime(Math.min(player.getLength(), player.getTime() + 10000));
         });
+    nextEpisode =
+        button(R.drawable.ic_next_episode, "Next episode", buttons, () -> changeEpisode(1, false));
+    nextEpisode.setVisibility(View.GONE);
+    skipSegment = new ImageButton(this);
+    skipSegment.setImageResource(R.drawable.ic_skip_segment);
+    skipSegment.setBackgroundColor(0xe02389cf);
+    int skipSize = (int) (56 * getResources().getDisplayMetrics().density);
+    FrameLayout.LayoutParams skipParams =
+        new FrameLayout.LayoutParams(skipSize, skipSize, Gravity.RIGHT | Gravity.CENTER_VERTICAL);
+    skipParams.rightMargin = 24;
+    root.addView(skipSegment, skipParams);
+    skipSegment.setVisibility(View.GONE);
+    skipSegment.setOnClickListener(
+        v -> {
+          if (activeSegment != null) {
+            player.setTime(activeSegment.end);
+            updateSegment(activeSegment.end);
+          }
+          setControlsVisible(true);
+        });
     button(R.drawable.ic_subtitles, "Subtitles", buttons, this::subtitleMenu);
     nextSource =
         button(R.drawable.ic_retry, "Try another source", buttons, () -> switchSource(false));
@@ -160,6 +198,7 @@ public class PlayerActivity extends Activity {
             setControlsVisible(true);
             status.setText("Playback failed. Stop and retry, or choose another source.");
           }
+          if (e.type == MediaPlayer.Event.EndReached) episodeEnded();
           if (e.type == MediaPlayer.Event.Playing) scheduleHide();
           if (e.type == MediaPlayer.Event.Paused || e.type == MediaPlayer.Event.EndReached)
             setControlsVisible(true);
@@ -167,8 +206,14 @@ public class PlayerActivity extends Activity {
             opened = true;
             if (getIntent().hasExtra("subtitlesEnabled")
                 && !getIntent().getBooleanExtra("subtitlesEnabled", true)) player.setSpuTrack(-1);
-            long p = resumeAfterSwitch > 0 ? resumeAfterSwitch : getPreferences(0).getLong(key, 0);
+            long p =
+                resumeAfterSwitch > 0
+                    ? resumeAfterSwitch
+                    : getIntent().getBooleanExtra("startFromBeginning", false)
+                        ? 0
+                        : getPreferences(0).getLong(key, 0);
             if (p > 0) player.setTime(p);
+            getIntent().putExtra("startFromBeginning", false);
             if (!getIntent().getBooleanExtra("embeddedFirst", false)
                 && !(getIntent().getStringExtra("imdb") != null
                     && getIntent().getStringExtra("imdb").startsWith("nyaa:"))
@@ -195,8 +240,206 @@ public class PlayerActivity extends Activity {
 
           public void onProgressChanged(SeekBar b, int p, boolean user) {}
         });
+    loadEpisodeQueue();
     startStream();
     ui.post(tick);
+  }
+
+  String positionKey() {
+    String identity = getIntent().getStringExtra("episodeIdentity");
+    return "position_" + source + (identity == null || identity.isEmpty() ? "" : "|" + identity);
+  }
+
+  void loadEpisodeQueue() {
+    String token = getIntent().getStringExtra("episodeQueue");
+    if (token == null) return;
+    episodeWorker.execute(
+        () -> {
+          try {
+            org.json.JSONObject doc = EpisodeQueue.read(this, token);
+            List<org.json.JSONObject> rows = EpisodeQueue.rows(doc);
+            ui.post(
+                () -> {
+                  if (isDestroyed()) return;
+                  episodeQueue = doc;
+                  episodeRows = rows;
+                  updateEpisodeButtons();
+                });
+          } catch (Exception ignored) {
+          }
+        });
+  }
+
+  org.json.JSONObject neighbour(int direction) {
+    return EpisodePlayback.neighbour(
+        episodeRows,
+        getIntent().getIntExtra("season", 0),
+        getIntent().getIntExtra("episode", 0),
+        direction);
+  }
+
+  void updateEpisodeButtons() {
+    boolean episodic = episodeQueue != null;
+    for (ImageButton b : new ImageButton[] {previousEpisode, nextEpisode})
+      b.setVisibility(episodic ? View.VISIBLE : View.GONE);
+    previousEpisode.setEnabled(!changingEpisode && neighbour(-1) != null);
+    nextEpisode.setEnabled(!changingEpisode && neighbour(1) != null);
+    previousEpisode.setAlpha(previousEpisode.isEnabled() ? 1f : 0.35f);
+    nextEpisode.setAlpha(nextEpisode.isEnabled() ? 1f : 0.35f);
+  }
+
+  void episodeEnded() {
+    long len = Math.max(lastLength, player.getLength()),
+        position = Math.max(lastPosition, player.getTime());
+    if (endedHandled || !EpisodePlayback.completed(position, len, playedVideo, userPaused)) return;
+    endedHandled = true;
+    getPreferences(0).edit().remove(key).apply();
+    if (getSharedPreferences("playback", 0).getBoolean("autoNext", true)
+        && episodeQueue != null
+        && neighbour(1) != null) pendingAuto = true;
+  }
+
+  void changeEpisode(int direction, boolean automatic) {
+    if (changingEpisode || isFinishing()) return;
+    org.json.JSONObject row = neighbour(direction);
+    if (row == null) return;
+    changingEpisode = true;
+    pendingAuto = false;
+    updateEpisodeButtons();
+    setControlsVisible(true);
+    episodeMessage = "Finding " + (direction > 0 ? "next" : "previous") + " episode…";
+    status.setText(episodeMessage);
+    final int version = playbackVersion;
+    episodeWorker.execute(
+        () -> {
+          try {
+            List<Catalog.Source> choices =
+                EpisodeQueue.resolve(episodeQueue, row, DeviceProfile.lite(this));
+            ui.post(
+                () -> {
+                  if (isDestroyed() || version != playbackVersion) return;
+                  getPreferences(0)
+                      .edit()
+                      .putLong(key, endedHandled ? 0 : Math.max(0, player.getTime()))
+                      .apply();
+                  ++playbackVersion;
+                  player.stop();
+                  Catalog.Source best = choices.get(0);
+                  source = best.url;
+                  key =
+                      "position_"
+                          + source
+                          + "|"
+                          + episodeQueue.optString("imdb")
+                          + ":"
+                          + EpisodeLibrary.key(row);
+                  getIntent()
+                      .putExtra("source", source)
+                      .putExtra("alternatives", AlternateEpisodes.encode(choices))
+                      .putExtra("fileIndex", best.fileIndex)
+                      .putExtra("filename", best.filename)
+                      .putExtra("season", row.optInt("season"))
+                      .putExtra("episode", row.optInt("episode"))
+                      .putExtra("absolute", row.optInt("absolute"))
+                      .putExtra(
+                          "episodeIdentity",
+                          episodeQueue.optString("imdb") + ":" + EpisodeLibrary.key(row))
+                      .putExtra("embeddedFirst", row.optBoolean("liveRelease"))
+                      .putExtra("startFromBeginning", true);
+                  String title =
+                      episodeQueue.optString("title")
+                          + " · S"
+                          + row.optInt("season")
+                          + " E"
+                          + row.optInt("episode");
+                  getIntent().putExtra("title", title);
+                  playingTitle.setText(title);
+                  getSharedPreferences("library", 0)
+                      .edit()
+                      .putString(
+                          "episode_" + episodeQueue.optString("imdb"), EpisodeLibrary.key(row))
+                      .apply();
+                  alternatives = choices;
+                  attempt = 0;
+                  resumeAfterSwitch = 0;
+                  lastPosition = 0;
+                  lastLength = 0;
+                  opened = false;
+                  mediaSet = false;
+                  playedVideo = false;
+                  sourceFailed = false;
+                  userPaused = false;
+                  resumeOnReturn = false;
+                  endedHandled = false;
+                  pendingAuto = false;
+                  skipRequested = false;
+                  subtitleBusy = false;
+                  segments = new ArrayList<>();
+                  activeSegment = null;
+                  skipSegment.setVisibility(View.GONE);
+                  attemptStarted = lastProgressAt = SystemClock.elapsedRealtime();
+                  lastReceived = 0;
+                  changingEpisode = false;
+                  episodeMessage = null;
+                  pause.setImageResource(R.drawable.ic_pause);
+                  pause.setContentDescription("Pause");
+                  nextSource.setVisibility(choices.size() > 1 ? View.VISIBLE : View.GONE);
+                  subtitleStatus.setText("");
+                  time.setText("");
+                  seek.setProgress(0);
+                  updateEpisodeButtons();
+                  startStream();
+                });
+          } catch (Exception error) {
+            ui.post(
+                () -> {
+                  if (isDestroyed() || version != playbackVersion) return;
+                  changingEpisode = false;
+                  updateEpisodeButtons();
+                  episodeMessage = error.getMessage();
+                  status.setText(episodeMessage);
+                  if (!automatic)
+                    Toast.makeText(this, error.getMessage(), Toast.LENGTH_LONG).show();
+                });
+          }
+        });
+  }
+
+  void requestSegments(long length) {
+    if (skipRequested
+        || length <= 0
+        || episodeQueue == null
+        || !getSharedPreferences("playback", 0).getBoolean("skipButtons", true)) return;
+    skipRequested = true;
+    int version = playbackVersion;
+    String imdb = getIntent().getStringExtra("imdb");
+    int season = getIntent().getIntExtra("season", 0),
+        episode = getIntent().getIntExtra("episode", 0),
+        mal =
+            episodeRows.stream()
+                .filter(e -> e.optInt("season") == season && e.optInt("episode") == episode)
+                .mapToInt(e -> e.optInt("skipMalId"))
+                .findFirst()
+                .orElse(0);
+    episodeWorker.execute(
+        () -> {
+          List<SkipSegments.Segment> found =
+              SkipSegments.load(imdb == null ? "" : imdb, season, episode, mal, length);
+          ui.post(
+              () -> {
+                if (!isDestroyed() && version == playbackVersion) segments = found;
+              });
+        });
+  }
+
+  void updateSegment(long position) {
+    activeSegment = SkipSegments.active(segments, position);
+    skipSegment.setVisibility(activeSegment != null && !changingEpisode ? View.VISIBLE : View.GONE);
+    if (activeSegment != null) {
+      String label = activeSegment.type.equals("intro") ? "Skip intro" : "Skip credits";
+      skipSegment.setContentDescription(label);
+      skipSegment.setTooltipText(label);
+    }
   }
 
   void startStream() {
@@ -216,6 +459,7 @@ public class PlayerActivity extends Activity {
   }
 
   void switchSource(boolean automatic) {
+    if (changingEpisode) return;
     if (attempt + 1 >= alternatives.size()) {
       if (!automatic)
         Toast.makeText(
@@ -231,11 +475,16 @@ public class PlayerActivity extends Activity {
     player.stop();
     Catalog.Source next = alternatives.get(++attempt);
     source = next.url;
-    key = "position_" + source;
+    key = positionKey();
     getIntent()
         .putExtra("source", source)
         .putExtra("fileIndex", next.fileIndex)
         .putExtra("filename", next.filename);
+    ++playbackVersion;
+    skipRequested = false;
+    segments = new ArrayList<>();
+    activeSegment = null;
+    skipSegment.setVisibility(View.GONE);
     subtitleBusy = false;
     opened = false;
     mediaSet = false;
@@ -390,6 +639,7 @@ public class PlayerActivity extends Activity {
   void findSubtitles(boolean automatic) {
     if (subtitleBusy) return;
     final int requestAttempt = attempt;
+    final int requestVersion = playbackVersion;
     OpenSubtitles api = new OpenSubtitles(this);
     if (!api.configured()) {
       if (!automatic) startActivity(new Intent(this, SubtitleSettingsActivity.class));
@@ -416,7 +666,8 @@ public class PlayerActivity extends Activity {
             ui.post(
                 () -> {
                   subtitleBusy = false;
-                  if (isDestroyed() || attempt != requestAttempt) return;
+                  if (isDestroyed()
+                      || (attempt != requestAttempt || playbackVersion != requestVersion)) return;
                   if (results.isEmpty()) {
                     subtitleStatus.setText(
                         "No " + (language.equals("hi") ? "Hindi" : "English") + " subtitles found");
@@ -437,8 +688,9 @@ public class PlayerActivity extends Activity {
             ui.post(
                 () -> {
                   subtitleBusy = false;
-                  if (!isDestroyed() && attempt == requestAttempt)
-                    subtitleStatus.setText(e.getMessage());
+                  if (!isDestroyed()
+                      && attempt == requestAttempt
+                      && playbackVersion == requestVersion) subtitleStatus.setText(e.getMessage());
                 });
           }
         });
@@ -446,6 +698,7 @@ public class PlayerActivity extends Activity {
 
   void downloadSubtitle(SubtitleQuery.Result result) {
     final int requestAttempt = attempt;
+    final int requestVersion = playbackVersion;
     subtitleStatus.setText("Downloading subtitles…");
     subtitleWorker.execute(
         () -> {
@@ -463,7 +716,9 @@ public class PlayerActivity extends Activity {
                     : new OpenSubtitles(this).download(result, getCacheDir());
             ui.post(
                 () -> {
-                  if (!isDestroyed() && attempt == requestAttempt) {
+                  if (!isDestroyed()
+                      && attempt == requestAttempt
+                      && playbackVersion == requestVersion) {
                     player.addSlave(Media.Slave.Type.Subtitle, Uri.fromFile(file), true);
                     subtitleStatus.setText("Subtitles added: " + result.label);
                   }
@@ -471,8 +726,9 @@ public class PlayerActivity extends Activity {
           } catch (Exception e) {
             ui.post(
                 () -> {
-                  if (!isDestroyed() && attempt == requestAttempt)
-                    subtitleStatus.setText(e.getMessage());
+                  if (!isDestroyed()
+                      && attempt == requestAttempt
+                      && playbackVersion == requestVersion) subtitleStatus.setText(e.getMessage());
                 });
           }
         });
@@ -503,10 +759,12 @@ public class PlayerActivity extends Activity {
               && source.equals(e.sourceUrl)
               && e.fileIndex == getIntent().getIntExtra("fileIndex", -1)) {
             status.setText(
-                (alternatives.size() > 1
-                        ? "Source " + (attempt + 1) + "/" + alternatives.size() + " · "
-                        : "")
-                    + e.status());
+                episodeMessage != null
+                    ? episodeMessage
+                    : (alternatives.size() > 1
+                            ? "Source " + (attempt + 1) + "/" + alternatives.size() + " · "
+                            : "")
+                        + e.status());
             if (e.url != null && !mediaSet && viewsAttached && hasWindowFocus()) {
               Media media = new Media(vlc, Uri.parse(e.url));
               media.addOption(":http-proxy=");
@@ -519,6 +777,16 @@ public class PlayerActivity extends Activity {
             }
           }
           long len = player.getLength(), p = player.getTime();
+          if (len > 0) lastLength = len;
+          if (p >= 0) lastPosition = p;
+          if (mediaSet && playedVideo) requestSegments(len);
+          updateSegment(p);
+          if (pendingAuto
+              && !userPaused
+              && getSharedPreferences("playback", 0).getBoolean("autoNext", true)
+              && hasWindowFocus()
+              && viewsAttached
+              && !changingEpisode) changeEpisode(1, true);
           if (len > 0) {
             if (!dragging) seek.setProgress((int) (p * 10000 / len));
             time.setText(clock(p) + " / " + clock(len));
@@ -531,6 +799,11 @@ public class PlayerActivity extends Activity {
     if (event.getRepeatCount() == 0
         && (code == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE || code == KeyEvent.KEYCODE_SPACE)) {
       pause.performClick();
+      return true;
+    }
+    if (code == KeyEvent.KEYCODE_MEDIA_NEXT || code == KeyEvent.KEYCODE_MEDIA_PREVIOUS) {
+      if (event.getRepeatCount() == 0)
+        changeEpisode(code == KeyEvent.KEYCODE_MEDIA_NEXT ? 1 : -1, false);
       return true;
     }
     if (code == KeyEvent.KEYCODE_MEDIA_STOP) {
@@ -611,6 +884,8 @@ public class PlayerActivity extends Activity {
     TorrentEngine activeEngine = StreamService.engine;
     if (activeEngine != null) activeEngine.closed = true;
     stopService(new Intent(this, StreamService.class));
+    ++playbackVersion;
+    episodeWorker.shutdownNow();
     subtitleWorker.shutdownNow();
     ui.removeCallbacksAndMessages(null);
     if (player != null) {

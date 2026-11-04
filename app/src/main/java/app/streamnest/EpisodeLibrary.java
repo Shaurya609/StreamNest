@@ -32,6 +32,7 @@ final class EpisodeLibrary {
                   .put("title", m.optString("name", "Episode " + m.optInt("number")))
                   .put("synopsis", m.optString("summary", "").replaceAll("<[^>]+>", " "))
                   .put("airdate", m.optString("airdate", ""));
+      if (m.has("skipMalId")) e.put("skipMalId", m.getInt("skipMalId"));
       if (m.has("absolute")) e.put("absolute", m.getInt("absolute"));
       String key = key(e);
       if (!seen.add(key)) continue;

@@ -27,3 +27,5 @@ Bundled seed indexes contain provider metadata and remote poster URLs, not video
 - [Big Buck Bunny](https://peach.blender.org/), Blender Foundation, CC BY 3.0, is the public playback test film. Its test torrent is hosted by [WebTorrent](https://webtorrent.io/).
 
 The StreamNest icon is original generated artwork selected for this project, stored in branding/streamnest-approved.png.
+
+Episode timestamp metadata: [IntroDB API](https://introdb.app/docs/api) and [AniSkip API](https://api.aniskip.com/api-docs). StreamNest makes anonymous read-only lookups and does not submit or vote on timestamps. Community coverage, release alignment, provider availability and rate limits apply.

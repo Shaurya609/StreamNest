@@ -67,7 +67,8 @@ function canonical(meta) {
 }
 function mapped(doc,id) {
   if (!doc.mappings || doc.mappings.imdb_id !== id) return [];
-  return Object.values(doc.episodes || {}).filter(e=>Number.isInteger(e.seasonNumber)&&Number.isInteger(e.episodeNumber)).map(e=>({
+  return Object.entries(doc.episodes || {}).filter(([key,e])=>Number.isInteger(e.seasonNumber)&&Number.isInteger(e.episodeNumber)).map(([key,e])=>({
+    skipMalId:doc.mappings.mal_id>0&&e.seasonNumber===1&&key===String(e.episodeNumber)?Number(doc.mappings.mal_id):0,
     season:e.seasonNumber,episode:e.episodeNumber,absolute:Number(e.absoluteEpisodeNumber)||0,
     title: typeof e.title==='object' ? e.title.en || e.title['x-jat'] || 'Episode '+e.episodeNumber : e.title || 'Episode '+e.episodeNumber,
     overview:e.overview || '',first_aired:Date.parse(e.airDate || '')/1000 || 0,tvdb_id:e.tvdbId || id+':'+e.seasonNumber+':'+e.episodeNumber

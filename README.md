@@ -2,7 +2,7 @@
 
 Native Android app for browsing movies, series and anime, with torrent-based playback through libtorrent and LibVLC.
 
-**Current Android version: 0.8.0. Desktop patch: 0.8.2.** [Download an APK](https://github.com/Shaurya609/StreamNest/releases/latest) · [Release notes](RELEASE-0.8.0.md) · [Desktop backlog](DESKTOP-PENDING.md)
+**Current Android version: 0.9.0. Desktop patch: 0.9.0.** [Download an APK](https://github.com/Shaurya609/StreamNest/releases/latest) · [Release notes](RELEASE-0.9.0.md) · [Desktop backlog](DESKTOP-PENDING.md)
 
 ## Features
 
@@ -11,6 +11,8 @@ Native Android app for browsing movies, series and anime, with torrent-based pla
 - Posters, descriptions, seasons and canonical episode details; inline quality selection and direct Watch Now.
 - Movies in 1080p/2160p. Episodes default to Auto with 720p/SD fallback and explicit manual choices.
 - Additional episode source discovery, exact season-pack member selection and bounded startup source recovery.
+- Previous/next episode icons and automatic next episode on natural playback completion, including season boundaries.
+- Intro/credits skip controls when community timestamps match the episode; credits skipping preserves later scenes.
 - Full-screen landscape playback, automatically hiding icon controls, seeking and remote navigation.
 - Transparent SVG branding and Android vector launcher/TV artwork.
 - Embedded/local subtitles, automatically renewed anonymous OpenSubtitles.org access and OpenSubtitles.com integration; API key and account details are entered inside the app.
@@ -74,3 +76,11 @@ See [third-party references](THIRD_PARTY.md). Catalog/provider endpoints are ext
 Saved catalogs/search, endpoint cooldown, independent TVmaze series discovery and signed GitHub/CDN snapshot distribution are implemented. See [catalog resilience](CATALOG-RESILIENCE.md) for behavior, verification and remaining limits.
 
 See [standalone desktop packaging](DESKTOP-PACKAGING.md) for the proposed full-source desktop fork, branding, clean build and installer work. The current desktop download remains a patch.
+
+## Episode playback
+
+The built-in player exposes previous/next icons for canonical anime and series episode lists, even with autoplay disabled. Regular seasons continue in numeric order; Specials stay in their own sequence. Future or source-less adjacent episodes are reported instead of silently jumping to a later episode. Source selection is resolved before stopping the current player, and exact season-pack member indexes are retained. A different episode uses the existing cache-cleanup policy.
+
+Autoplay starts the next episode after a natural end near the media runtime, rather than at an estimated credits time. Turn it off in Playback & storage (Android) or Playback settings (desktop). Desktop enables autoplay once when migrating to the new episode controls; later choices are preserved. External players manage their own navigation/autoplay.
+
+Skip icons appear only inside validated intro/outro ranges from [IntroDB](https://introdb.app/docs/api) or [AniSkip](https://api.aniskip.com/api-docs). Lookup is read-only and needs no account key. IntroDB uses exact IMDb/season/episode identity; AniSkip requires an explicit MAL ID, first-season mapping and a matching reported runtime. Later-season MAL offsets are not guessed. Unsupported episodes or provider outages keep normal controls. Release edits can still shift community timings, so skipping is manual. Credits skip to the end of the marked segment, not directly to the next episode. Disable these icons in playback settings if preferred.

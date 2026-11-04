@@ -1,8 +1,12 @@
-# StreamNest desktop patch 0.8.2
+# StreamNest desktop patch 0.9.0
 
 This is an overlay patch for the installed Windows Popcorn Time **0.5.1** application. It is not a standalone installer or a replacement for its native dependencies.
 
 ## Included
+
+- Previous/next episode icons independent of autoplay, canonical season-boundary navigation, source resolution before stopping playback and automatic advancement on natural end.
+- Optional intro/credits skip icons from validated IntroDB/AniSkip community timestamps. Credits jump to the marked segment end, preserving later content. Timestamp coverage is not universal; later-season anime IDs are not guessed.
+- Autoplay is enabled once during migration; Playback settings can disable it. Preloading remains disabled to preserve previous-episode cache cleanup.
 
 - Persistent saved movie search/filter/sort/paging, validated metadata fallback, endpoint cooldown and signed GitHub/CDN catalog updates.
 - Independent TVmaze series search with exact IMDb identity and metadata-only provenance.
@@ -35,7 +39,8 @@ For rollback, close the app and restore the corresponding files from the backup 
 
 ## Verification
 
-- 14 Node test groups passed, including six sort contracts/reverse direction, filter intersection, 12-page pagination, exact file selection, quality fallback, canonical numbering, live-release matching and cache-boundary tests.
+- The current full desktop/publisher suite has 37 passing groups. Earlier playback checks below predate 0.9.0; the new desktop controls have background fixture tests, including the real ended handler, and still need a hands-on player check.
+- Earlier checks included including six sort contracts/reverse direction, filter intersection, 12-page pagination, exact file selection, quality fallback, canonical numbering, live-release matching and cache-boundary tests.
 - Live movie catalog returned 24 titles with additional pages. The installed movie grid was inspected.
 - Live series page 15 returned 24 titles. The installed series grid appended more results while scrolling.
 - One Piece metadata mapped absolute episode 1179 to Season 23 Episode 24; 1,209 canonical/special entries were returned at the test time.

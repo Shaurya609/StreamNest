@@ -36,7 +36,8 @@ final class CanonicalEpisodes {
     List<JSONObject> rows = new ArrayList<>();
     Iterator<String> keys = episodes.keys();
     while (keys.hasNext()) {
-      JSONObject e = episodes.optJSONObject(keys.next());
+      String mappingKey = keys.next();
+      JSONObject e = episodes.optJSONObject(mappingKey);
       if (e == null || !e.has("seasonNumber") || !e.has("episodeNumber")) continue;
       JSONObject titles = e.optJSONObject("title");
       String name = titles == null ? "" : titles.optString("en", titles.optString("x-jat", ""));
@@ -50,6 +51,10 @@ final class CanonicalEpisodes {
               .put("airdate", e.optString("airDate", e.optString("airdate", "")));
       if (e.optInt("absoluteEpisodeNumber") > 0)
         row.put("absolute", e.optInt("absoluteEpisodeNumber"));
+      if (mappings.optInt("mal_id") > 0
+          && e.optInt("seasonNumber") == 1
+          && mappingKey.equals(String.valueOf(e.optInt("episodeNumber"))))
+        row.put("skipMalId", mappings.optInt("mal_id"));
       rows.add(row);
     }
     rows.sort(

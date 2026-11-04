@@ -23,6 +23,27 @@ public class PlaybackSettingsActivity extends Activity {
     scroll.addView(box);
     setContentView(scroll);
     label(box, "Playback & storage", 25);
+    Switch autoNext = new Switch(this);
+    autoNext.setText("Play next episode automatically");
+    autoNext.setTextColor(Color.WHITE);
+    autoNext.setChecked(getSharedPreferences("playback", 0).getBoolean("autoNext", true));
+    autoNext.setOnCheckedChangeListener(
+        (v, on) -> getSharedPreferences("playback", 0).edit().putBoolean("autoNext", on).apply());
+    box.addView(autoNext);
+    Switch skip = new Switch(this);
+    skip.setText("Show intro and credits skip buttons");
+    skip.setTextColor(Color.WHITE);
+    skip.setChecked(getSharedPreferences("playback", 0).getBoolean("skipButtons", true));
+    skip.setOnCheckedChangeListener(
+        (v, on) ->
+            getSharedPreferences("playback", 0).edit().putBoolean("skipButtons", on).apply());
+    box.addView(skip);
+    label(
+        box,
+        "Skip buttons use community timestamps from IntroDB and AniSkip when available. Coverage"
+            + " and release timings vary. Credits are skipped only when you choose; scenes after"
+            + " credits are preserved when the timestamps identify them.",
+        14);
     path = label(box, "", 15);
     Button folder = button(box, "Change cache folder");
     folder.setOnClickListener(v -> folders());

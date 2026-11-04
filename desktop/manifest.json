@@ -1,10 +1,10 @@
 {
-  "version": "0.8.2",
+  "version": "0.9.0",
   "target": "Popcorn Time 0.5.1",
   "files": [
     {
       "path": "bootstrap.js",
-      "sha256": "5ab8e52e33720e6166eac803b1e1076e10d77d15bbcf3a68fa50381353cc22e3"
+      "sha256": "94d4b334c22fe18ac3e6ce63287a63339c1fdab0142805b68fdafa9594dbbcfe"
     },
     {
       "path": "butter-provider/anime-series-v6.json",
@@ -76,7 +76,7 @@
     },
     {
       "path": "butter-provider/streamnest-episodes.js",
-      "sha256": "253199882f7877d79c693bdfb80132bd215e57e1fa9da62aa650982aaa31c661"
+      "sha256": "d2dbd78d5b6e2d515d1c9a18022e7fb3ef1d356684b4270158aa2f35148e28e9"
     },
     {
       "path": "butter-provider/streamnest-fresh.js",
@@ -97,6 +97,10 @@
     {
       "path": "butter-provider/streamnest-paged.js",
       "sha256": "d915469d62b6534b2dd0e6fea35e787f825387cd3d8f70d9a0f9d838c2706c57"
+    },
+    {
+      "path": "butter-provider/streamnest-playback.js",
+      "sha256": "d6f0d089136697ed803cb985a01208f81fdf4d95708f99ebc7beb54046beed88"
     },
     {
       "path": "butter-provider/streamnest-releases.js",
@@ -136,7 +140,7 @@
     },
     {
       "path": "lib/views/player.js",
-      "sha256": "64fea6d985304a68073050feeafe7253e536129c755a614c7e54711450b593ba"
+      "sha256": "05869663b7d38b840c72908e24d062687502617cdbae3c7ab958fdd5c7cbf230"
     },
     {
       "path": "lib/views/quality_selector.js",
@@ -144,11 +148,11 @@
     },
     {
       "path": "lib/views/settings_container.js",
-      "sha256": "92d41be24b75c7270c4b334963fc3084bf7eda8791913b341f32b246d06c141d"
+      "sha256": "d4e9bc380654c67aa150358c9d65eac46578776b971f577b876225ff574a05e6"
     },
     {
       "path": "lib/views/show_detail.js",
-      "sha256": "965a399e0c5b525add857f0a30a707ade510c30c4fd6c2df6c7bcfc56db29d97"
+      "sha256": "c3a03c38f8183f0a73a4d90e0805c5143fbf164833992b7ea21823294a0c2245"
     },
     {
       "path": "streamer.js",
@@ -160,7 +164,7 @@
     },
     {
       "path": "templates/settings-container.tpl",
-      "sha256": "e0f0ae1be55c5a8d4ca5caf4738529cce4ec3b34a6ceefc98f76b2b0c28b8e7f"
+      "sha256": "743bdac1c516e70da4e047f7a611b64e54abf6b2ac590970ef60ab503c5523cd"
     },
     {
       "path": "templates/show-detail.tpl",

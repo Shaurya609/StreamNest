@@ -545,7 +545,7 @@
             //var selected_quality = $(e.currentTarget).attr('data-quality');
             var auto_play = false;
             var images = this.model.get('images');
-            if (state !== 'downloadOnly' && AdvSettings.get('playNextEpisodeAuto') && this.model.get('imdb_id').indexOf('mal') === -1) {
+            if (state !== 'downloadOnly') {
                 _.each(this.model.get('episodes'), function (value) {
                     var epaInfo = {
                         id: String(value.season)+':'+String(value.episode),
@@ -556,6 +556,9 @@
                         torrents: value.torrents,
                         streamnestSources: value.streamnestSources || [],
                         absolute: value.absolute || 0,
+                        malId: value.skipMalId || 0,
+                        first_aired: value.first_aired || 0,
+                        airdate: value.airdate || '',
                         extract_subtitle: {
                             type: 'show',
                             imdbid: that.model.get('imdb_id'),
@@ -580,9 +583,7 @@
                 });
                 episodes_data.sort((a,b)=>require('./butter-provider/streamnest-episodes').compareId(a.id,b.id));
 
-                if (String(season)+':'+String(episode) !== episodes[episodes.length - 1]) {
-                    auto_play = true;
-                }
+                auto_play = !!AdvSettings.get('playNextEpisodeAuto');
 
             } else {
                 episodes_data = null;
@@ -607,6 +608,7 @@
                 file_name: file_name,
                 fileIndex: Number($(e.currentTarget).attr('data-fileindex')),
                 absolute: (that.model.get('selectedEpisode')||{}).absolute || 0,
+                malId: (that.model.get('selectedEpisode')||{}).skipMalId || 0,
                 streamnestQuality: that.model.get('streamnestQuality') || 'Auto',
                 streamnestSources: (that.model.get('selectedEpisode')||{}).streamnestSources || [],
                 auto_play: auto_play,

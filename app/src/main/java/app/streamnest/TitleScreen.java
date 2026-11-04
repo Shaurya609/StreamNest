@@ -573,8 +573,18 @@ final class TitleScreen extends Dialog {
         series
             ? title.title + " · S" + selected.optInt("season") + " E" + selected.optInt("episode")
             : title.title;
+    String queueToken = null;
+    if (series)
+      try {
+        queueToken = EpisodeQueue.create(a, title, episodes, selectedQuality);
+      } catch (Exception error) {
+        Toast.makeText(
+                a, "Episode navigation unavailable: " + error.getMessage(), Toast.LENGTH_LONG)
+            .show();
+      }
     a.startActivity(
         new Intent(a, PlayerActivity.class)
+            .putExtra("episodeQueue", queueToken)
             .putExtra("title", playTitle)
             .putExtra("source", best.url)
             .putExtra("fileIndex", best.fileIndex)
