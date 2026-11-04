@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');
-const root=process.argv[2]||'C:/Users/shaur/AppData/Local/Popcorn-Time/src/app/butter-provider';
+const root=process.argv[2]||require('node:path').join(__dirname,'../overlay/butter-provider');
 const P=require(root+'/streamnest-paged');
 const m=(i,lang='en')=>({imdb_code:'tt'+i,title:'T'+i,language:lang,genres:['Animation'],torrents:[{quality:'1080p',type:'web',hash:'abc',seeds:i}]});
 (async()=>{
