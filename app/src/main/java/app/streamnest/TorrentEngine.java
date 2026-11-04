@@ -168,7 +168,13 @@ final class TorrentEngine implements AutoCloseable {
     handle.setFlags(TorrentFlags.SEQUENTIAL_DOWNLOAD);
     handle.resume();
     prioritize(0);
-    prioritize(Math.max(0, size - 2 * 1024 * 1024));
+    long startupWindow = Math.min(size, 1024 * 1024);
+    for (long edge : new long[] {0, size - startupWindow}) {
+      int first = (int) ((offset + edge) / pieceLength);
+      int last = (int) ((offset + edge + startupWindow - 1) / pieceLength);
+      for (int piece = first; piece <= last; piece++)
+        handle.setPieceDeadline(piece, (piece - first) * 150);
+    }
     String token = "/" + UUID.randomUUID();
     server =
         new NanoHTTPD("127.0.0.1", 0) {

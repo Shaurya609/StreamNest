@@ -49,7 +49,7 @@ public class PlayerActivity extends Activity {
   long attemptStarted, resumeAfterSwitch, lastProgressAt, lastReceived;
   boolean mediaSet, playedVideo, sourceFailed, userPaused;
   int startupRetries;
-  long mediaOpenedAt;
+  long mediaOpenedAt, startupPosition;
   boolean softwareDecoder;
   int videoOutputs;
   ImageButton nextSource;
@@ -217,6 +217,7 @@ public class PlayerActivity extends Activity {
                     : getIntent().getBooleanExtra("startFromBeginning", false)
                         ? 0
                         : getPreferences(0).getLong(key, 0);
+            startupPosition = p;
             if (p > 0) player.setTime(p);
             getIntent().putExtra("startFromBeginning", false);
             if (!getIntent().getBooleanExtra("embeddedFirst", false)
@@ -760,7 +761,8 @@ public class PlayerActivity extends Activity {
               && !userPaused
               && hasWindowFocus()
               && StartupRecovery.reopen(now, mediaOpenedAt, startupRetries, sourceFailed)) {
-            resumeAfterSwitch = Math.max(0, player.getTime());
+            resumeAfterSwitch = startupPosition;
+            if (startupPosition == 0) getIntent().putExtra("startFromBeginning", true);
             player.stop();
             videoOutputs = 0;
             ++playbackVersion;
@@ -785,6 +787,18 @@ public class PlayerActivity extends Activity {
             switchSource(true);
             ui.postDelayed(this, 1000);
             return;
+          }
+          if (!playedVideo
+              && mediaSet
+              && startupRetries >= 2
+              && alternatives.size() <= attempt + 1
+              && (sourceFailed || now - mediaOpenedAt >= 45000)) {
+            episodeMessage = "Video could not start. Go back and choose another quality or source.";
+            setControlsVisible(true);
+          } else if (playedVideo
+              && episodeMessage != null
+              && episodeMessage.startsWith("Video could not start")) {
+            episodeMessage = null;
           }
           if (e != null
               && source.equals(e.sourceUrl)
