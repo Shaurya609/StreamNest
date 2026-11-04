@@ -1,11 +1,12 @@
 """Run an opt-in hidden renderer probe with no real user profile or UI input."""
 from pathlib import Path
-import argparse, json, os, subprocess, time, uuid
+import argparse, contextlib, json, os, subprocess, time, uuid
 
 ROOT = Path(__file__).resolve().parents[2]
 parser=argparse.ArgumentParser()
 parser.add_argument('--app',type=Path,required=True)
 parser.add_argument('--video',type=Path)
+parser.add_argument('--loopback',action='store_true',help='Use the external local-torrent/video probe in a generated build folder')
 args=parser.parse_args()
 app=args.app.resolve()
 probe=ROOT/'reference/standalone-smoke'/str(uuid.uuid4())
@@ -14,7 +15,23 @@ for name in ('Local','Roaming','Temp','Chromium'):(probe/name).mkdir()
 env=dict(os.environ,LOCALAPPDATA=str(probe/'Local'),APPDATA=str(probe/'Roaming'),
          TEMP=str(probe/'Temp'),TMP=str(probe/'Temp'),STREAMNEST_SMOKE_ROOT=str(probe))
 if args.video:env['STREAMNEST_SMOKE_VIDEO']=str(args.video.resolve())
-with (probe/'process.log').open('w',encoding='utf8') as output:
+@contextlib.contextmanager
+def diagnostic_script():
+    if not args.loopback:
+        yield
+        return
+    assert args.video,'A local video fixture is required for the loopback check'
+    assert app.is_relative_to((ROOT/'reference/standalone-build').resolve()),'Diagnostic overrides are restricted to generated build folders'
+    target=app/'src/app/smoke.js'
+    original=target.read_bytes()
+    temporary=target.with_suffix('.diagnostic')
+    temporary.write_bytes((ROOT/'desktop/packaging/loopback-smoke.js').read_bytes())
+    temporary.replace(target)
+    try:yield
+    finally:
+        temporary.write_bytes(original)
+        temporary.replace(target)
+with diagnostic_script(), (probe/'process.log').open('w',encoding='utf8') as output:
     process=subprocess.Popen([str(app/'StreamNest.exe'),'--streamnest-smoke',
                               '--user-data-dir='+str(probe/'Chromium'),
                               '--disable-background-timer-throttling','--autoplay-policy=no-user-gesture-required'],

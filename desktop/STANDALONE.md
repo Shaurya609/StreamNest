@@ -48,3 +48,17 @@ This preview retains NW.js 0.44.5 for compatibility with the existing codec libr
 Trakt synchronization is not configured: no upstream application's shared Trakt/TMDB/Fanart/TVDB keys are reused in the runnable package. The local library and catalog metadata continue to work. Additional external-account metadata features need a StreamNest application registration before enabling them.
 
 Local tests have started the native standalone renderer with an isolated throwaway profile, rendered the movie catalog/language filters and decoded an 854x480 video fixture. No desktop mouse/keyboard input or personal account/profile data was used for this check. This is stronger than a module-only test but does not replace a hands-on TV/series/subtitle and long-playback check. See VALIDATION.md for completed results.
+
+## Release build and extended check
+
+The preview binaries and matching application-source ZIP were produced by the clean Windows [CI build](https://github.com/Shaurya609/StreamNest/actions/runs/41827321956) at commit `b984fae`. That job passed package inspection, native fresh-profile startup and silent per-user installation/uninstallation. The downloaded artifacts were checked against their SHA-256 file and rechecked locally.
+
+A private local-torrent diagnostic verified all 11,053,871 fixture bytes, served the downloaded file through the packaged torrent HTTP server, and decoded video/audio in the native renderer. The video was 854x480, a non-black decoded frame was observed and decoded audio bytes advanced. DHT/tracker discovery was disabled for these diagnostic clients and only a local peer was supplied. This validates the packaged engine without relying on a live public torrent.
+
+To repeat that extended check on a generated build with a local media fixture:
+
+```powershell
+python desktop/packaging/smoke.py --app reference/standalone-build/0.10.0/StreamNest --video path/to/local-test.mp4 --loopback
+```
+
+The loopback diagnostic temporarily substitutes only the generated app's opt-in smoke helper, restores it afterward and refuses to modify a real installed application. Normal product files and user profiles are not used for test state.

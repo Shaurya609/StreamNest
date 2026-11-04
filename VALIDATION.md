@@ -43,3 +43,13 @@ Local Android unit tests: 142 passed, with zero lint errors. Desktop/publisher f
 Android 14 tablet: a local video fixture produced decoded frames after intro seeking; credits seeking stopped before later content. Native previous/next controls retained the exact selected pack member. Natural LibVLC EOF advanced once; a missing next source left the current episode selected; turning autoplay off prevented advancement. Subtitle-menu/account-settings return still preserved decoded video, playback position and deliberate pause. These are local media/injected-source regressions, not claims that every live torrent or community timestamp has been verified. The service is promoted on each start request to support repeated episode transitions.
 
 An anonymous live IntroDB lookup for Breaking Bad S1E1 returned a matching outro range (3431–3500 seconds). AniSkip returned HTTP 403 from this network, so its parser/mapping behavior is fixture-tested and failures are handled as unavailable timestamps. No full native desktop player check was run in 0.9.0, to avoid interrupting the owner's laptop work. Earlier desktop playback checks remain documented above.
+
+## Standalone Windows desktop 0.10.0 preview
+
+- Clean Windows CI build at b984fae passed package identity/credential-default inspection, native fresh-profile startup, per-user installer and safe-uninstaller checks. Run: https://github.com/Shaurya609/StreamNest/actions/runs/41827321956
+- All four downloaded CI artifacts matched the generated SHA-256 checksums.
+- The CI-built app started locally using a throwaway profile/cache and rendered the catalog plus movie/series/anime and language controls without renderer errors.
+- The packaged WebTorrent engine transferred and verified an 11,053,871-byte local fixture between diagnostic clients, then served it through its local HTTP server. The native renderer decoded 854x480 video, a visible frame and 57,236 audio bytes. No public torrent was used for this check.
+- Silent install/uninstall also passed locally. An unrelated sentinel file survived uninstall; the existing Popcorn Time installation/profile was not used as build input.
+- The 40 desktop/publisher test groups passed. The Android source is unchanged from the 0.9.0 release; the accompanying Android CI job passed as well.
+- Hands-on standalone subtitle/player/binge behavior on additional Windows machines, code signing, runtime modernization, optional metadata integration registration and other desktop operating systems remain pending.

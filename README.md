@@ -4,6 +4,8 @@ Native Android app for browsing movies, series and anime, with torrent-based pla
 
 **Current Android version: 0.9.0. Desktop patch: 0.9.0.** [Download an APK](https://github.com/Shaurya609/StreamNest/releases/latest) · [Release notes](RELEASE-0.9.0.md) · [Desktop backlog](DESKTOP-PENDING.md)
 
+**Standalone Windows desktop preview 0.10.0:** [Installer and portable downloads](https://github.com/Shaurya609/StreamNest/releases/tag/desktop-v0.10.0). Popcorn Time is not required. [Setup and build details](desktop/STANDALONE.md).
+
 ## Features
 
 - Movie, series and anime catalogs with search, continuous pagination, English/Hindi filters and sorting.
