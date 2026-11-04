@@ -1,0 +1,142 @@
+{
+  "version": "0.8.0",
+  "target": "Popcorn Time 0.5.1",
+  "files": [
+    {
+      "path": "bootstrap.js",
+      "sha256": "32a4c5b383b54861b4e1a75914b1788695da6d668e7d7988860d99bad058941c"
+    },
+    {
+      "path": "butter-provider/anime-series-v6.json",
+      "sha256": "25cea71e52578d1af55b7cd07090845095cbe554c7d5e5a67b406903143a7049"
+    },
+    {
+      "path": "butter-provider/anime.js",
+      "sha256": "d4110b65f55e319f674c6d7e8232c1af783a336c564ab8ca703f5cc9ffe589e3"
+    },
+    {
+      "path": "butter-provider/generic.js",
+      "sha256": "2cbf0a803f45d9bce3c8f57b0f40f6173fd400e90977b3460c4036e505345c4a"
+    },
+    {
+      "path": "butter-provider/hindi-index.json",
+      "sha256": "047917cc4a60c9fb3aa74b9a5672d918812fe6647c3434ef87270c2a74a16f91"
+    },
+    {
+      "path": "butter-provider/hindi-seeds.json",
+      "sha256": "dcdb63f4eeb75e8bf63e994d579d3f17975614404f3c091c52fda42c7e3905bb"
+    },
+    {
+      "path": "butter-provider/movie.js",
+      "sha256": "2a6161725175d1f0f94ea0df9f41988f145f53fe3e93ef803231016a45a237bb"
+    },
+    {
+      "path": "butter-provider/series-index-v6.json",
+      "sha256": "74d74377797a53682d452aa36c04b3899d6ade00e0d3e65554e025fd1d69888d"
+    },
+    {
+      "path": "butter-provider/streamnest-anime.js",
+      "sha256": "0a3a769f7f6ce4d58ea07af9822edfec9d9d08d9d0964c783ebad61efd2201d8"
+    },
+    {
+      "path": "butter-provider/streamnest-api.js",
+      "sha256": "a129b73cd5b923bf51e903a26021e972981dac98dedf9c57c2dee1cd412e6263"
+    },
+    {
+      "path": "butter-provider/streamnest-browse.js",
+      "sha256": "068cb2616e55a54fb35a4e792b1cc425c0e66208b3750f1571d0a1990e0b9e24"
+    },
+    {
+      "path": "butter-provider/streamnest-cache.js",
+      "sha256": "87bee47e923d99fa842ace55c0b78d340f6b0d9716f233f73788293fb346b50a"
+    },
+    {
+      "path": "butter-provider/streamnest-episodes.js",
+      "sha256": "1380109c615dff2e220953a31b9cc72dcdd5c418b69acbb7b881cace9e2ca390"
+    },
+    {
+      "path": "butter-provider/streamnest-fresh.js",
+      "sha256": "3e845d924599bcb44dc689456b86a7f49e3df6648744b9e65d048eafd08fe945"
+    },
+    {
+      "path": "butter-provider/streamnest-hindi.js",
+      "sha256": "7074933465588ce99219458c2ed2817d03e068e88a908cc68fbb1bd63c7c7149"
+    },
+    {
+      "path": "butter-provider/streamnest-net.js",
+      "sha256": "1d5d7dc83c018cb77c27aa85b6b5ffaf6f8bf2bd6b665856ced617a067347597"
+    },
+    {
+      "path": "butter-provider/streamnest-org.js",
+      "sha256": "cd4bd4279699dddaf7be2637c507e90b427d89c2c1ab9f5199fff622957cc66e"
+    },
+    {
+      "path": "butter-provider/streamnest-paged.js",
+      "sha256": "6f159aa566b884943fc26138fe72c1efcac19417b8091048e3e79ec7a36f9434"
+    },
+    {
+      "path": "butter-provider/streamnest-releases.js",
+      "sha256": "a3c0a7f1d86039b18a434d2f9fcd10afc134b65143a7ffdc167ee4507abb9a32"
+    },
+    {
+      "path": "butter-provider/streamnest-series.js",
+      "sha256": "05334cf7f3cf5d3910bda4815097af3ac66224300654d94fdcb44d9a0f730400"
+    },
+    {
+      "path": "butter-provider/tv.js",
+      "sha256": "f6abd3c689b6cf505a7acd3241e443af23532f8e58eb1f1e3afb46ae6f52ef87"
+    },
+    {
+      "path": "butter-provider/yts.js",
+      "sha256": "4c2ecdd2264b98d0a5fff5b0236e0c05491fa4e302d8e46c5e3e01f25da4de6d"
+    },
+    {
+      "path": "global.js",
+      "sha256": "5a24ce229c1c4c79ceb92c56dd6b448ea8db0f28110fd9e5f45c58c4df430b5b"
+    },
+    {
+      "path": "lib/providers/opensubtitles.js",
+      "sha256": "5e70b1dc1b846b316214064c6bbf7de837a2ff723cc0afeb30920b6db5d95298"
+    },
+    {
+      "path": "lib/views/loading.js",
+      "sha256": "fdfa740fe431e524d9698ca501cb68a0eb22c004150e591c593512c698bd2009"
+    },
+    {
+      "path": "lib/views/play_control.js",
+      "sha256": "ff611309d8c0e5d93f60e99ceb60df94af513267ab4d35877d07b39275577a77"
+    },
+    {
+      "path": "lib/views/player.js",
+      "sha256": "64fea6d985304a68073050feeafe7253e536129c755a614c7e54711450b593ba"
+    },
+    {
+      "path": "lib/views/quality_selector.js",
+      "sha256": "db9d8b0ca434272dfd16db9da358c176c99dda78ea814e1bef434356f3a557f1"
+    },
+    {
+      "path": "lib/views/settings_container.js",
+      "sha256": "92d41be24b75c7270c4b334963fc3084bf7eda8791913b341f32b246d06c141d"
+    },
+    {
+      "path": "lib/views/show_detail.js",
+      "sha256": "965a399e0c5b525add857f0a30a707ade510c30c4fd6c2df6c7bcfc56db29d97"
+    },
+    {
+      "path": "streamer.js",
+      "sha256": "dc1e683e4552cf8fcadaef2f3668537a75099d9653bdee3dba011b5c1eca719b"
+    },
+    {
+      "path": "templates/filter-bar.tpl",
+      "sha256": "2db3bf9d1256263cebae9e98194f89f550774241cd19386d4d63da079a7d1364"
+    },
+    {
+      "path": "templates/settings-container.tpl",
+      "sha256": "e0f0ae1be55c5a8d4ca5caf4738529cce4ec3b34a6ceefc98f76b2b0c28b8e7f"
+    },
+    {
+      "path": "templates/show-detail.tpl",
+      "sha256": "ba33386678d260eb3d15939e88fbae0a6928a2e3aa6ee725fa11292d479bc714"
+    }
+  ]
+}

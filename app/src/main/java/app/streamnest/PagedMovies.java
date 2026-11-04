@@ -9,8 +9,7 @@ final class PagedMovies {
     JSONObject get(String path) throws Exception;
   }
 
-  static Fetcher fetcher =
-      path -> new JSONObject(Net.text(FreshMovies.BASE + path)).getJSONObject("data");
+  static Fetcher fetcher = MovieProvider::data;
   static final ThreadLocal<Boolean> remaining = new ThreadLocal<>();
   static final LinkedHashMap<String, Feed> feeds = new LinkedHashMap<>();
 

@@ -1,16 +1,17 @@
-# Desktop pending work
+# Desktop status — patch 0.8.0
 
-Desktop changes remain paused while the laptop is in use. This list distinguishes unfinished work from installed changes awaiting verification.
+The desktop backlog has been implemented in the overlay patch and applied to the local Popcorn Time 0.5.1 installation. See [desktop/README.md](desktop/README.md) for detailed behavior and validation.
 
-1. **Episode cache cleanup — not implemented on desktop.** Port mobile's cleanup on switching to a different anime/series episode, after the previous torrent stops. Preserve the current episode, unrelated custom-folder files and same-episode replay/quality changes.
-2. **Anime series — integration and playback verification pending.** An anime-series adapter is present, but the installed UI needs testing with populated series, episode navigation and active sources. Mobile's newer explicit absolute-to-season/episode mapping and trusted live-release attachment have not been ported.
-3. **Series pagination — end-to-end verification pending.** The complete-index adapter and session snapshots are installed. Verify browsing well beyond row 8, stable append behavior, end-of-list handling, search and filter changes, including Hindi series. Port any remaining mobile fixes found necessary.
-4. **OpenSubtitles.org anonymous access — activation and player verification pending.** The Use without account option and handler exist. Verify connection, language listing, search and actual subtitle download in the desktop player. The account-specific .org login rejection remains unresolved; anonymous access does not fix account login.
-5. **Catalog accuracy and sorting — regression verification pending.** Hindi inclusion and movie pagination/sorting were previously patched and checked, but the latest series/anime adapters still need live checks for all six sorts, both directions, combined language/genre/quality filters, duplicate identities and available HD sources. Trending currently uses recent-upload windows rather than a global popularity chart.
-6. **UI polish — pending.** Check current adapter integration, loading/error/end states, disabled quality choices and episode details in the installed desktop application.
+Implemented: movie endpoint recovery, episode cache cleanup, canonical anime/series metadata and explicit mappings, full-index series paging, Auto/SD episode qualities, alternative sources, indexed season packs, startup/manual source recovery, trusted live anime releases, anonymous OpenSubtitles.org access and episode UI fixes.
 
-Desktop already has its own full-screen player and cache-folder/exit-cache features. Their behavior should be regression-checked when desktop work resumes; this mobile release does not replace or certify them.
+Verified: six sort contracts/reverse ordering/filter tests, 12-page paging tests, live series page 15, populated desktop movie/anime/series grids, actual Attack on Titan playback and cleanup on switching to Episode 2. Anonymous subtitle login/search/download passed a service-level test.
 
-7. **Older episode quality fallback — not ported.** Match mobile 0.7.3: Auto and manual episode qualities, SD/DVD support, reported-seed alternatives, lower-quality anime release lookup, movie HD minimum unchanged. Alternative-provider/season-pack support remains future work on both clients.
+## Remaining verification and external limitations
 
-8. **Alternative episode sources and season packs — not ported.** Match mobile 0.7.4: episode-specific source discovery, exact file-index selection, bounded startup failover/manual retry, and isolated per-episode pack caches with cleanup after switching.
+- Exercise a complete six-source automatic failure chain and longer binge sessions on the installed desktop player.
+- Check more codecs, custom/external cache drives, subtitle languages and the Latest episodes view in the installed UI. Parser, source selection and cache behavior have automated tests; that does not cover every UI/device combination.
+- Confirm anonymous subtitle selection/download across additional titles in the desktop player. Direct anonymous login, English search and subtitle-file download succeeded.
+- Password-based OpenSubtitles.org account login can still be rejected upstream; anonymous access does not repair account authentication.
+- Movie/Hindi catalogs, reported seeds and playable sources remain dependent on external services. Trending uses recent provider windows rather than a global popularity chart.
+
+The actual Android projector test is still pending and belongs to mobile/device validation.

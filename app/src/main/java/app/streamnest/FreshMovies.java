@@ -6,7 +6,7 @@ import org.json.*;
 
 final class FreshMovies {
   static int discoveryThreads = 4;
-  static final String BASE = "https://movies-api.accel.li/api/v2/";
+  static final String BASE = "https://yts.gg/api/v2/";
   static final Map<String, JSONObject> cache = new ConcurrentHashMap<>();
   static final Map<String, Long> ages = new ConcurrentHashMap<>();
 
@@ -62,9 +62,7 @@ final class FreshMovies {
     if (cache.containsKey(imdb)
         && System.currentTimeMillis() - ages.getOrDefault(imdb, 0L) < 300000)
       return new JSONObject(cache.get(imdb).toString());
-    JSONObject data =
-        new JSONObject(Net.text(BASE + "list_movies.json?query_term=" + Net.q(imdb)))
-            .getJSONObject("data");
+    JSONObject data = MovieProvider.data("list_movies.json?query_term=" + Net.q(imdb));
     JSONArray a = data.optJSONArray("movies");
     JSONObject combined = null;
     if (a != null)
@@ -91,17 +89,14 @@ final class FreshMovies {
     String s =
         sort.equals("last added") ? "date_added" : sort.equals("seeds") ? "download_count" : sort;
     JSONObject data =
-        new JSONObject(
-                Net.text(
-                    BASE
-                        + "list_movies.json?limit=50&page="
-                        + page
-                        + "&quality=1080p&order_by=desc&sort_by="
-                        + Net.q(s)
-                        + "&query_term="
-                        + Net.q(query)
-                        + (genre.equals("All") ? "" : "&genre=" + Net.q(genre))))
-            .getJSONObject("data");
+        MovieProvider.data(
+            "list_movies.json?limit=50&page="
+                + page
+                + "&quality=1080p&order_by=desc&sort_by="
+                + Net.q(s)
+                + "&query_term="
+                + Net.q(query)
+                + (genre.equals("All") ? "" : "&genre=" + Net.q(genre)));
     JSONArray a = data.optJSONArray("movies");
     List<Catalog.Title> out = new ArrayList<>();
     Set<String> seen = new HashSet<>();

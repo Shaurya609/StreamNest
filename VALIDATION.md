@@ -1,7 +1,7 @@
-# Validation — StreamNest 0.7.4
+# Validation — StreamNest 0.7.5
 
 - Local Android build succeeded with JDK 17 and compile SDK 36.
-- 108 unit tests passed; Android lint reported zero errors.
+- 111 unit tests passed; Android lint reported zero errors.
 - Android 14 Samsung tablet: catalog pagination, movie quality selection, full-screen playback, subtitles, control hiding and cache cleanup were tested.
 - One Piece and Interstellar reached actual playback in earlier mobile checks.
 - Attack on Titan Season 2 Episode 1 played from a 97-file torrent pack. File index 33 was selected; a decoded frame and VLC Playing event were observed.
@@ -11,4 +11,6 @@
 - The 1 GB Android 14 projector remains untested.
 - GitHub Actions checks are separate from these local results; see the repository's Actions tab for their status.
 
-Live observations are specific to the device/network and test time. Source seed reports and previous successful playback do not guarantee continued peer availability. See RELEASE-0.7.4.md for detailed behavior and limits.
+Live observations are specific to the device/network and test time. Source seed reports and previous successful playback do not guarantee continued peer availability. See RELEASE-0.7.5.md for detailed behavior and limits.
+
+Movie outage recovery: a server returned HTTP 521; the replacement/fallback client loaded 48 titles on the Android tablet. Desktop movie browsing, canonical anime episodes, actual playback and next-episode cache cleanup were checked. See desktop/README.md for the desktop test limits.

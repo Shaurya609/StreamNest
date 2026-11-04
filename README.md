@@ -2,7 +2,7 @@
 
 Native Android app for browsing movies, series and anime, with torrent-based playback through libtorrent and LibVLC.
 
-**Current version: 0.7.4.** [Download an APK](https://github.com/Shaurya609/StreamNest/releases/latest) · [Release notes](RELEASE-0.7.4.md) · [Desktop backlog](DESKTOP-PENDING.md)
+**Current Android version: 0.7.5. Desktop patch: 0.8.0.** [Download an APK](https://github.com/Shaurya609/StreamNest/releases/latest) · [Release notes](RELEASE-0.7.5.md) · [Desktop backlog](DESKTOP-PENDING.md)
 
 ## Features
 
@@ -59,7 +59,7 @@ Use Back from the catalog or Settings → Exit StreamNest to clear video cache. 
 
 ## Project scope
 
-This repository contains the Android app. Desktop changes are tracked in [DESKTOP-PENDING.md](DESKTOP-PENDING.md); installed Popcorn Time files, desktop repair backups and desktop runtime settings are not included. Production signing, casting, a background download library and broader device testing remain future work.
+This repository contains the Android app and an overlay patch for Windows Popcorn Time 0.5.1. See [desktop installation and verification](desktop/README.md). Desktop runtime account settings, backups and media caches are excluded. Production signing, casting, a background download library and broader device testing remain future work.
 
 The interface and workflow were informed by Popcorn Time, with an independently implemented Android UI and original StreamNest artwork. This is not an official Popcorn Time release.
 

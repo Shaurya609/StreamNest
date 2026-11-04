@@ -7,6 +7,12 @@ on:
 permissions:
   contents: read
 jobs:
+  desktop-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Desktop adapter and cache tests
+        run: node --test desktop/tests/*.test.js
   build:
     runs-on: ubuntu-latest
     steps:
