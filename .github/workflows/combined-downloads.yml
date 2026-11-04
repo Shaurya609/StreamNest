@@ -13,14 +13,14 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           mkdir payload
-          gh release download desktop-v0.11.0 --dir payload
+          gh release download desktop-v0.11.1 --dir payload
           cd payload
-          sha256sum -c SHA256SUMS-Desktop-0.11.0.txt
+          sha256sum -c SHA256SUMS-Desktop-0.11.1.txt
           gh release upload v0.11.0 ./*
           python - <<'PY'
           import subprocess,json
           def release(tag):return json.loads(subprocess.check_output(['gh','api','repos/'+__import__('os').environ['GH_REPO']+'/releases/tags/'+tag]))
-          source=release('desktop-v0.11.0');target=release('v0.11.0')
+          source=release('desktop-v0.11.1');target=release('v0.11.0')
           assets={a['name']:a for a in target['assets']}
           for asset in source['assets']:
             assert assets[asset['name']]['digest']==asset['digest']
