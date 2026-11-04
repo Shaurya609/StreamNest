@@ -1,6 +1,10 @@
 # Pending fixes and verification
 
-Recorded from user feedback on 4 November 2026. These items are queued for later; recording them does not claim they are fixed.
+Updated 4 November 2026. Version 0.11.0 implements launch renewal, subtitle archive decoding and completed conversion writes, dynamic loopback subtitle serving, pinned anime pagination and broader independent discovery. Live desktop Percy Jackson S1E1 search/download produced 540 cues and the real video.js subtitle display rendered a downloaded cue in an isolated hidden renderer. Android fresh/expired anonymous access is covered by regression probes; tablet playback survives subtitle settings return.
+
+TV correction: the reported Percy Jackson S1E1 stall occurred on the user's TV, not the tablet. Android now waits for verified video headers/footer, detects actual video output and retries startup twice (including one software decoder attempt). The original TV/source combination still needs a TV retest. Local fixtures do not establish that it is fixed on that TV.
+
+The remaining checks below describe broader verification, not a claim that every title or service is available.
 
 ## OpenSubtitles.org — desktop (priority)
 

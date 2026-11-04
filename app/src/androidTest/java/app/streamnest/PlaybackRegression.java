@@ -232,7 +232,10 @@ public class PlaybackRegression extends Instrumentation {
                   values.put(key, value);
                 }
               });
-      api.anonymous();
+      api.ensureAnonymous(false);
+      if (values.getOrDefault("orgToken", "").isEmpty())
+        throw new AssertionError("Fresh anonymous session missing");
+      values.put("orgAnonymousUntil", "0");
       List<SubtitleQuery.Result> percy =
           api.search(
               "tt12324366", 1, 1, "Percy Jackson · S1 E1", "en", "0123456789abcdef", 500000000);

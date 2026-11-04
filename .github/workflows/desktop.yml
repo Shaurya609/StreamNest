@@ -38,11 +38,11 @@ jobs:
       - name: Build from pinned sources and frozen dependencies
         run: python desktop/packaging/build.py
       - name: Verify package identity and clean payload
-        run: python desktop/packaging/verify.py --app reference/standalone-build/0.10.0/StreamNest
+        run: python desktop/packaging/verify.py --app reference/standalone-build/0.11.0/StreamNest
       - name: Hidden clean-profile renderer check
-        run: python desktop/packaging/smoke.py --app reference/standalone-build/0.10.0/StreamNest
+        run: python desktop/packaging/smoke.py --app reference/standalone-build/0.11.0/StreamNest
       - name: Per-user install and safe uninstall
-        run: python desktop/packaging/test_installer.py --installer dist/standalone/StreamNest-Desktop-0.10.0-win-x64-Setup.exe
+        run: python desktop/packaging/test_installer.py --installer dist/standalone/StreamNest-Desktop-0.11.0-win-x64-Setup.exe
       - uses: actions/upload-artifact@v4
         with:
           name: streamnest-desktop-win-x64

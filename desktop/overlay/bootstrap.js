@@ -2,6 +2,11 @@
 { const appRoot=require('path').dirname(process.execPath);if(require('fs').existsSync(require('path').join(appRoot,'src','app')))process.chdir(appRoot); }
 (function(App) {
   'use strict';
+      // Database settings decide whether an existing account or anonymous mode is selected.
+      App.vent.once('db:ready',function(){
+        if (AdvSettings.get('opensubtitlesAnonymous') || !AdvSettings.get('opensubtitlesAuthenticated') || !AdvSettings.get('opensubtitlesUsername'))
+          require('./butter-provider/streamnest-org').login(true).then(function(){AdvSettings.set('opensubtitlesAnonymous',true);AdvSettings.set('opensubtitlesAuthenticated',true);}).catch(function(error){win.warn('Anonymous subtitle session will retry when requested: '+error.message);});
+      });
   App.start();
 
   /* load all the things ! */
@@ -122,11 +127,6 @@
       if(!AdvSettings.get('streamnestEpisodeControlsV1')){
         AdvSettings.set('playNextEpisodeAuto',true);AdvSettings.set('streamnestEpisodeControlsV1',true);
       }
-      // Warm the anonymous session after settings are loaded; requests also renew on expiry.
-      if (AdvSettings.get('opensubtitlesAnonymous') || !AdvSettings.get('opensubtitlesAuthenticated') || !AdvSettings.get('opensubtitlesUsername'))
-        require('./butter-provider/streamnest-org').login(true).catch(function(error) {
-          win.warn('Anonymous subtitle session will retry when requested: '+error.message);
-        });
       return providers;
     });
   App.bootstrapPromise.catch(function(error){

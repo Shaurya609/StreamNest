@@ -1,10 +1,10 @@
 {
-  "version": "0.9.0",
+  "version": "0.11.0",
   "target": "Popcorn Time 0.5.1",
   "files": [
     {
       "path": "bootstrap.js",
-      "sha256": "94d4b334c22fe18ac3e6ce63287a63339c1fdab0142805b68fdafa9594dbbcfe"
+      "sha256": "ad7527b26e478f39164d18b31da1b330a2104baadc862e3b0c501170045c655e"
     },
     {
       "path": "butter-provider/anime-series-v6.json",
@@ -60,7 +60,7 @@
     },
     {
       "path": "butter-provider/streamnest-anime.js",
-      "sha256": "1e4494aa564f6c466d00c680296c65480e1222c35d336b365f9af6d0aa66b28c"
+      "sha256": "24c810eb762d710fe7e0a5f12cfb4a32056822e6abd9addef7193cd1abceb300"
     },
     {
       "path": "butter-provider/streamnest-api.js",
@@ -92,7 +92,7 @@
     },
     {
       "path": "butter-provider/streamnest-org.js",
-      "sha256": "dccbcbe521689573b531badb81bfe794eb690f263a6de686c4985bb8bad2474c"
+      "sha256": "3a96f628a41f1877cf6eed5475d7e56bf002f7ec65dd0bce70f21959036dfbc9"
     },
     {
       "path": "butter-provider/streamnest-paged.js",
@@ -115,6 +115,10 @@
       "sha256": "ee01e11b3f7bdc5216051a66a749a3d35951404c38ae458e5571a4d4c1cb08c0"
     },
     {
+      "path": "butter-provider/streamnest-subtitles.js",
+      "sha256": "d98e87e53b79c8fd2f8d56e42bc8948471827a6f0fa2ef52804403c1e71af345"
+    },
+    {
       "path": "butter-provider/tv.js",
       "sha256": "f6abd3c689b6cf505a7acd3241e443af23532f8e58eb1f1e3afb46ae6f52ef87"
     },
@@ -129,6 +133,14 @@
     {
       "path": "lib/providers/opensubtitles.js",
       "sha256": "5e70b1dc1b846b316214064c6bbf7de837a2ff723cc0afeb30920b6db5d95298"
+    },
+    {
+      "path": "lib/subtitle/generic.js",
+      "sha256": "388e9977199c53a7b3e0c6ea9217cda48ceb2f988382525e7ce4a135df02b112"
+    },
+    {
+      "path": "lib/subtitle/server.js",
+      "sha256": "02880d9deaa3dcc39c84f1d38ebe8854aa374d4c789168dcf29bc6c163836c7c"
     },
     {
       "path": "lib/views/loading.js",
@@ -156,7 +168,7 @@
     },
     {
       "path": "streamer.js",
-      "sha256": "dc1e683e4552cf8fcadaef2f3668537a75099d9653bdee3dba011b5c1eca719b"
+      "sha256": "72be417957908b378346a614a4f05c922ed405bd3b987da1b2eaf6841f91291a"
     },
     {
       "path": "templates/filter-bar.tpl",
@@ -164,11 +176,15 @@
     },
     {
       "path": "templates/settings-container.tpl",
-      "sha256": "743bdac1c516e70da4e047f7a611b64e54abf6b2ac590970ef60ab503c5523cd"
+      "sha256": "f2772ddd59695e395ac8c488cdac3d4462d479a7c08cd554e59b8439cb697075"
     },
     {
       "path": "templates/show-detail.tpl",
       "sha256": "ba33386678d260eb3d15939e88fbae0a6928a2e3aa6ee725fa11292d479bc714"
+    },
+    {
+      "path": "vendor/videojshooks.js",
+      "sha256": "7e1711ad4e429833989858df07ab1bfd95a2004706644af130a6ceefb4ca5b18"
     }
   ]
 }

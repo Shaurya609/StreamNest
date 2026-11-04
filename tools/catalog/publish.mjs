@@ -29,11 +29,19 @@ for(const sort of ['seeds','dateadded']){const seen=new Set();for(let p=1;p<=300
 let tvNext=0;async function maze(url){const delay=Math.max(0,tvNext-Date.now());tvNext=Math.max(Date.now(),tvNext)+550;if(delay)await new Promise(r=>setTimeout(r,delay));return json(url);}
 console.log('Adding independent TVmaze metadata through exact IMDb IDs');
 try{const updates=await maze('https://api.tvmaze.com/updates/shows?since=day');const ids=Object.entries(updates).sort((a,b)=>b[1]-a[1]).slice(0,80).map(x=>x[0]);await parallel(ids,2,async id=>{try{const m=tvmaze(await maze('https://api.tvmaze.com/shows/'+id));if(!m)return;const map=m.animeSeries?anime:shows;if(!map.has(m.imdb))map.set(m.imdb,m);metrics.tvmaze++;}catch(e){}});}catch(e){console.log('Independent metadata retained from previous snapshot');}
+console.log('Expanding anime coverage with paged independent metadata');
+let animeCursor=Number(oldAnime.discoveryPage)||0;
+for(let scanned=0;scanned<24;scanned++)try{
+ const rows=await maze('https://api.tvmaze.com/shows?page='+animeCursor);
+ if(!Array.isArray(rows)||!rows.length){animeCursor=0;break;}
+ for(const raw of rows){const m=tvmaze(raw);if(!m||!m.animeSeries)continue;const old=anime.get(m.imdb);anime.set(m.imdb,old?{...m,...old}:m);metrics.tvmaze++;}
+ animeCursor++;
+}catch(error){console.log('Anime discovery retained at page',animeCursor);break;}
 const oldLatest=previous.latest||(fs.existsSync('app/src/main/assets/catalog-latest-v1.json')?JSON.parse(fs.readFileSync('app/src/main/assets/catalog-latest-v1.json','utf8')):{});
 const latestMap=new Map((oldLatest.releases||[]).map(m=>[m.imdb,m]));
 try{const rss=await text('https://nyaa.si/?page=rss&c=1_2&f=2&q=1080p');if(/<!DOCTYPE|<!ENTITY/i.test(rss))throw Error('Unsafe RSS');const doc=await parseStringPromise(rss,{explicitArray:false});const items=doc.rss?.channel?.item||[];const R=await import('../../desktop/overlay/butter-provider/streamnest-releases.js');const rows=R.default.records(Array.isArray(items)?items:[items]);for(const m of rows){latestMap.set(m.imdb,m);metrics.rss++;}}catch(e){console.log('Latest anime feed retained from prior snapshot');}
 const stamp=(count,old)=>count?now:old?.saved||now;
-const documents={movies:{saved:stamp(metrics.moviePages,oldMovies),movies:[...movieMap.values()]},shows:{saved:stamp(metrics.seriesPages+metrics.tvmaze,oldShows),series:[...shows.values()]},animes:{saved:stamp(metrics.tvmaze,oldAnime),series:[...anime.values()]},latest:{saved:stamp(metrics.rss,oldLatest),releases:[...latestMap.values()].sort((a,b)=>(b.uploaded||0)-(a.uploaded||0)).slice(0,300)}};
+const documents={movies:{saved:stamp(metrics.moviePages,oldMovies),movies:[...movieMap.values()]},shows:{saved:stamp(metrics.seriesPages+metrics.tvmaze,oldShows),series:[...shows.values()]},animes:{saved:stamp(metrics.tvmaze,oldAnime),discoveryPage:animeCursor,series:[...anime.values()]},latest:{saved:stamp(metrics.rss,oldLatest),releases:[...latestMap.values()].sort((a,b)=>(b.uploaded||0)-(a.uploaded||0)).slice(0,300)}};
 if(!documents.movies.movies.length||!documents.shows.series.length||!documents.animes.series.length)throw Error('Refusing to publish an empty core catalog');
 const keyText=process.env.CATALOG_SIGNING_KEY;if(!keyText)throw Error('CATALOG_SIGNING_KEY is required');const key=crypto.createPrivateKey(keyText);const pub=crypto.createPublicKey(key).export({type:'spki',format:'pem'});if(pub!==fs.readFileSync('catalogs/public-key.pem','utf8'))throw Error('Signing key does not match the pinned catalog key');
 fs.mkdirSync(output+'/data',{recursive:true});const files={};for(const [kind,doc]of Object.entries(documents)){const bytes=Buffer.from(JSON.stringify(doc));const hash=digest(bytes),name=output+'/data/'+kind+'-'+hash.slice(0,16)+'.json';fs.writeFileSync(name,bytes);files[kind]={path:name,sha256:hash,bytes:bytes.length,count:(doc.movies||doc.series||doc.releases).length,saved:doc.saved};}

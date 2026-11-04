@@ -104,7 +104,8 @@ class OrgSubtitles {
 
   boolean anonymousMode() {
     try {
-      return secrets.get("orgAnonymous").equals("true");
+      String mode = secrets.get("orgAnonymous");
+      return mode.equals("true") || (mode.isEmpty() && secrets.get("orgToken").isEmpty());
     } catch (Exception e) {
       return false;
     }

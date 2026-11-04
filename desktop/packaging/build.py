@@ -113,6 +113,9 @@ def assemble(skip_install=False):
         if file.is_file() and file.suffix in ('.js', '.html', '.tpl', '.css'):
             text = file.read_text(encoding='utf8')
             text = text.replace('Popcorn-Time', 'StreamNest').replace('Popcorn Time', 'StreamNest')
+            # Protocol client identifiers belong to the inherited subtitle integration, not UI branding.
+            if file.name in ('streamnest-org.js','opensubtitles.js'):
+                text = text.replace('StreamNest NodeJS','Popcorn Time NodeJS')
             file.write_text(text, encoding='utf8')
     # Defaults are overridden after the npm settings package has loaded, before providers start.
     replace(app / 'src/app/bootstrap.js', '.then(loadProviders)', ".then(function(){require('./butter-provider/streamnest-standalone').configure(Settings);})\n    .then(loadProviders)")

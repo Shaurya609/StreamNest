@@ -1,6 +1,7 @@
 'use strict';
 const https=require('https'),zlib=require('zlib');
 let token='',expires=0,loginTask=null;
+const downloads=new Map();
 const array=value=>Array.isArray(value)?value:value?[value]:[];
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 function encode(value) {
@@ -59,8 +60,15 @@ async function search(query) {
  for(const item of array(response.data)) {
   if(item.SubFormat!=='srt'||!/^https?:\/\//.test(item.SubDownloadLink||''))continue;
   const language=item.ISO639||item.SubLanguageID;if(!language)continue;
+  if(item.IDSubtitleFile){downloads.set(item.SubDownloadLink,String(item.IDSubtitleFile));while(downloads.size>1000)downloads.delete(downloads.keys().next().value);}
   (out[language]||(out[language]=[])).push({url:item.SubDownloadLink,langcode:language});
  }
  return out;
 }
-module.exports={login,search,encode,decode,sessionRpc};
+async function download(url) {
+ const id=downloads.get(url);if(!id)return null;
+ const result=await sessionRpc('DownloadSubtitles',[[id]]);
+ const row=array(result.data)[0];if(!row||!row.data)throw Error('Subtitle download was empty');
+ return zlib.gunzipSync(Buffer.from(row.data,'base64'),{maxOutputLength:8000000});
+}
+module.exports={login,search,download,encode,decode,sessionRpc};

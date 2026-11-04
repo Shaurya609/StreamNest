@@ -34,4 +34,4 @@ foreach ($entry in $manifest.files) {
   New-Item -ItemType Directory -Force -Path ([IO.Path]::GetDirectoryName($target)) | Out-Null
   Copy-Item -LiteralPath (Join-Path $overlayRoot $entry.path) -Destination $target
 }
-Write-Output ('Installed StreamNest desktop patch 0.9.0. Backup: ' + $backupFolder)
+Write-Output ('Installed StreamNest desktop patch 0.11.0. Backup: ' + $backupFolder)

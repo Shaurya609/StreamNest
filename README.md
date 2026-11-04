@@ -2,9 +2,12 @@
 
 Native Android app for browsing movies, series and anime, with torrent-based playback through libtorrent and LibVLC.
 
-**Current Android version: 0.9.0. Desktop patch: 0.9.0.** [Download an APK](https://github.com/Shaurya609/StreamNest/releases/latest) · [Release notes](RELEASE-0.9.0.md) · [Desktop backlog](DESKTOP-PENDING.md)
+| Download | Package |
+| --- | --- |
+| [Android / Google TV / projector](https://github.com/Shaurya609/StreamNest/releases/latest) | Universal APK — includes ARM32 and ARM64 |
+| [Windows desktop — standalone preview](https://github.com/Shaurya609/StreamNest/releases/tag/desktop-v0.10.0) | Installer or portable ZIP; Popcorn Time is not required |
 
-**Standalone Windows desktop preview 0.10.0:** [Installer and portable downloads](https://github.com/Shaurya609/StreamNest/releases/tag/desktop-v0.10.0). Popcorn Time is not required. [Setup and build details](desktop/STANDALONE.md).
+[All releases](https://github.com/Shaurya609/StreamNest/releases) · [Desktop setup](desktop/STANDALONE.md) · [Pending verification](PENDING-FIXES.md)
 
 ## Features
 

@@ -48,6 +48,10 @@ public class PlayerActivity extends Activity {
   int attempt;
   long attemptStarted, resumeAfterSwitch, lastProgressAt, lastReceived;
   boolean mediaSet, playedVideo, sourceFailed, userPaused;
+  int startupRetries;
+  long mediaOpenedAt;
+  boolean softwareDecoder;
+  int videoOutputs;
   ImageButton nextSource;
 
   public void onCreate(Bundle state) {
@@ -193,6 +197,7 @@ public class PlayerActivity extends Activity {
               || e.type == MediaPlayer.Event.Playing
               || e.type == MediaPlayer.Event.EncounteredError)
             android.util.Log.d("StreamNest", "VLC event " + e.type);
+          if (e.type == MediaPlayer.Event.Vout) videoOutputs = e.getVoutCount();
           if (e.type == MediaPlayer.Event.EncounteredError) {
             if (mediaSet) sourceFailed = true;
             setControlsVisible(true);
@@ -366,6 +371,9 @@ public class PlayerActivity extends Activity {
                   lastLength = 0;
                   opened = false;
                   mediaSet = false;
+                  startupRetries = 0;
+                  videoOutputs = 0;
+                  softwareDecoder = false;
                   playedVideo = false;
                   sourceFailed = false;
                   userPaused = false;
@@ -488,6 +496,9 @@ public class PlayerActivity extends Activity {
     subtitleBusy = false;
     opened = false;
     mediaSet = false;
+    startupRetries = 0;
+    videoOutputs = 0;
+    softwareDecoder = false;
     playedVideo = false;
     sourceFailed = false;
     userPaused = false;
@@ -740,7 +751,26 @@ public class PlayerActivity extends Activity {
         public void run() {
           if (isFinishing()) return;
           TorrentEngine e = StreamService.engine;
-          if (mediaSet && player.isPlaying() && player.getTime() > 1000) playedVideo = true;
+          if (mediaSet && videoOutputs > 0 && player.isPlaying() && player.getTime() > 1000)
+            playedVideo = true;
+          long now = SystemClock.elapsedRealtime();
+          if (mediaSet
+              && mediaOpenedAt > 0
+              && !playedVideo
+              && !userPaused
+              && hasWindowFocus()
+              && StartupRecovery.reopen(now, mediaOpenedAt, startupRetries, sourceFailed)) {
+            resumeAfterSwitch = Math.max(0, player.getTime());
+            player.stop();
+            videoOutputs = 0;
+            ++playbackVersion;
+            opened = false;
+            subtitleBusy = false;
+            mediaSet = false;
+            sourceFailed = false;
+            softwareDecoder = ++startupRetries == 2;
+            lastProgressAt = now;
+          }
           if (e != null && source.equals(e.sourceUrl) && e.receivedBytes > lastReceived) {
             lastReceived = e.receivedBytes;
             lastProgressAt = SystemClock.elapsedRealtime();
@@ -748,6 +778,7 @@ public class PlayerActivity extends Activity {
           if (!playedVideo
               && !userPaused
               && alternatives.size() > attempt + 1
+              && (!mediaSet || startupRetries >= 2)
               && hasWindowFocus()
               && EpisodeRecovery.retry(
                   SystemClock.elapsedRealtime(), attemptStarted, lastProgressAt, sourceFailed)) {
@@ -769,11 +800,13 @@ public class PlayerActivity extends Activity {
               Media media = new Media(vlc, Uri.parse(e.url));
               media.addOption(":http-proxy=");
               if (DeviceProfile.lite(PlayerActivity.this)) media.addOption(":avcodec-threads=2");
-              media.setHWDecoderEnabled(true, false);
+              media.addOption(":http-reconnect");
+              media.setHWDecoderEnabled(!softwareDecoder, false);
               player.setMedia(media);
               media.release();
               player.play();
               mediaSet = true;
+              mediaOpenedAt = SystemClock.elapsedRealtime();
             }
           }
           long len = player.getLength(), p = player.getTime();

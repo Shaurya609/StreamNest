@@ -50,13 +50,13 @@ public class OrgSessionTest {
     Memory store = new Memory();
     Service api = new Service(store);
     api.ensureAnonymous(true);
-    assertEquals(0, api.logins);
+    assertEquals(1, api.logins);
     api.anonymous();
     api.ensureAnonymous(true);
-    assertEquals(2, api.logins);
+    assertEquals(3, api.logins);
     api.logout();
     api.ensureAnonymous(true);
-    assertEquals(2, api.logins);
+    assertEquals(3, api.logins);
     assertFalse(api.signedIn());
   }
 

@@ -420,7 +420,7 @@
                         <label class="settings-label" for="multipleExtSubtitles"><%= i18n.__("Show all available subtitles for default language in flag menu") %></label>
                     </span>
                     <span>
-                        <em>* <%= !Settings.opensubtitlesAnonymous && Settings.opensubtitlesUsername ? i18n.__("You are currently connected to %s", "OpenSubtitles.org") : "Connected to OpenSubtitles.org without account" %>.
+                        <em>* <%= !Settings.opensubtitlesAnonymous && Settings.opensubtitlesUsername ? i18n.__("You are currently connected to %s", "OpenSubtitles.org") : "Anonymous OpenSubtitles.org mode — reconnects automatically" %>.
                         <a id="unauthOpensubtitles" class="unauthtext" href="#"><%= i18n.__("Disconnect account") %></a></em>
                     </span>
                 <% if (!Settings.opensubtitlesAnonymous) { %><button id="anonymousOpensubtitles" type="button" style="padding:8px 14px;background:#279be8;color:white;border:0;border-radius:3px;cursor:pointer">Use without account</button><% } %>

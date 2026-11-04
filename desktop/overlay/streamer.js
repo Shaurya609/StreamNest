@@ -813,7 +813,9 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                     this.subtitleReady = true;
                 } else {
                     // after downloaded subtitles, we set the srt file to streamInfo
-                    App.vent.on('subtitle:downloaded', function(subtitlePath) {
+                    const subtitleGeneration=this._runGeneration;
+                    App.vent.once('subtitle:downloaded', function(subtitlePath) {
+                        if(subtitleGeneration!==this._runGeneration)return;
                         if(!this.torrentModel||!this.torrentModel.get('video_file'))return;
                         if(subtitlePath&&!path.resolve(subtitlePath).startsWith(path.dirname(path.resolve(this.torrentModel.get('video_file').path))+path.sep))return;
                         if (subtitlePath) {
@@ -823,6 +825,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                                 language: defaultSubtitle
                             }, function(err, res) {
                                 if (err) {
+                                    this.subtitleReady = true;
                                     win.error('error converting subtitles', err);
                                     this.streamInfo.set('subFile', null);
                                     App.vent.trigger('notification:show', new App.Model.Notification({
@@ -833,9 +836,10 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                                         autoclose: true
                                     }));
                                 } else {
-                                    App.SubtitlesServer.start(res);
-                                    this.subtitleReady = true;
-                                    this.streamInfo.set('subServer', 'http://127.0.0.1/data.vtt');
+                                    App.SubtitlesServer.start(res,function(error){
+                                        this.subtitleReady = true;
+                                        this.streamInfo.set('subServer',error?null:App.SubtitlesServer.url('vtt'));
+                                    }.bind(this));
                                 }
                             }.bind(this));
                         } else {
@@ -862,7 +866,8 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                 path: localPath
             }, function(err, res) {
                 if (err) {
-                    win.error('error converting subtitles', err);
+                    this.subtitleReady = true;
+                                    win.error('error converting subtitles', err);
                     this.streamInfo.set('subFile', null);
                     App.vent.trigger('notification:show', new App.Model.Notification({
                         title: i18n.__('Error converting subtitle'),

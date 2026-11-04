@@ -215,13 +215,19 @@ final class TorrentEngine implements AutoCloseable {
           }
         };
     server.start(60000, false);
-    url = "http://127.0.0.1:" + server.getListeningPort() + token;
+    String readyUrl = "http://127.0.0.1:" + server.getListeningPort() + token;
     System.out.println("StreamNest URL " + url);
     message = "Buffering · " + video.getName();
     while (!closed) {
+      if (url == null && startupReady()) url = readyUrl;
       message = updateStatus();
       Thread.sleep(1000);
     }
+  }
+
+  boolean startupReady() {
+    if (closed || handle == null || !handle.isValid() || size <= 0) return false;
+    return StartupBuffer.ready(size, offset, pieceLength, piece -> handle.havePiece(piece));
   }
 
   void prioritize(long position) {
@@ -247,7 +253,7 @@ final class TorrentEngine implements AutoCloseable {
             "%s · %.1f%% · %.0f KB/s · %d peers",
             s.state().toString().toLowerCase(Locale.ROOT).contains("check")
                 ? "Checking cache"
-                : url == null ? message : "Downloading",
+                : url == null ? "Buffering video headers" : "Downloading",
             s.progress() * 100,
             s.downloadRate() / 1024.0,
             s.numPeers());
