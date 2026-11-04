@@ -1,0 +1,30 @@
+name: Add Windows downloads to latest release
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  copy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copy verified Windows preview assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          mkdir payload
+          gh release download desktop-v0.11.0 --dir payload
+          cd payload
+          sha256sum -c SHA256SUMS-Desktop-0.11.0.txt
+          gh release upload v0.11.0 ./*
+          python - <<'PY'
+          import subprocess,json
+          def release(tag):return json.loads(subprocess.check_output(['gh','api','repos/'+__import__('os').environ['GH_REPO']+'/releases/tags/'+tag]))
+          source=release('desktop-v0.11.0');target=release('v0.11.0')
+          assets={a['name']:a for a in target['assets']}
+          for asset in source['assets']:
+            assert assets[asset['name']]['digest']==asset['digest']
+            assert assets[asset['name']]['size']==asset['size']
+          print('All Windows release assets verified on the combined download page')
+          PY
+          gh release edit v0.11.0 --title 'StreamNest 0.11.0 — Android + Windows desktop preview'
