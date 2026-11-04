@@ -31,7 +31,7 @@ public class MovieIndexCacheTest {
             .put("saved", System.currentTimeMillis())
             .put("movies", new JSONArray().put(new JSONObject().put("title", "Cached title")));
     Files.write(
-        new File(folder, "movies-index-v5.json").toPath(),
+        new File(folder, "movies-index-v7.json").toPath(),
         doc.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
     MovieIndex.configure(folder);
     assertEquals("Cached title", MovieIndex.pool().get(0).getString("title"));
@@ -40,7 +40,7 @@ public class MovieIndexCacheTest {
   @Test
   public void malformedCacheIsIgnored() throws Exception {
     File folder = temp.newFolder();
-    Files.write(new File(folder, "movies-index-v5.json").toPath(), new byte[] {1, 2, 3});
+    Files.write(new File(folder, "movies-index-v7.json").toPath(), new byte[] {1, 2, 3});
     MovieIndex.configure(folder);
     assertNull(MovieIndex.snapshot);
   }
@@ -53,7 +53,7 @@ public class MovieIndexCacheTest {
             .put("saved", System.currentTimeMillis() - 48 * 60 * 60 * 1000L)
             .put("movies", new JSONArray());
     Files.write(
-        new File(folder, "movies-index-v5.json").toPath(),
+        new File(folder, "movies-index-v7.json").toPath(),
         doc.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
     MovieIndex.configure(folder);
     assertNull(MovieIndex.snapshot);

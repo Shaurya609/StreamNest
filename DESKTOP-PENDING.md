@@ -1,8 +1,10 @@
-# Desktop status — patch 0.8.0
+# Desktop status — patch 0.8.1
 
 The desktop backlog has been implemented in the overlay patch and applied to the local Popcorn Time 0.5.1 installation. See [desktop/README.md](desktop/README.md) for detailed behavior and validation.
 
-Implemented: movie endpoint recovery, episode cache cleanup, canonical anime/series metadata and explicit mappings, full-index series paging, Auto/SD episode qualities, alternative sources, indexed season packs, startup/manual source recovery, trusted live anime releases, anonymous OpenSubtitles.org access and episode UI fixes.
+Implemented in 0.8.1: visible Hindi Trending films, confirmed-HD Hindi movie discovery/snapshot, regional series ranking and automatic anonymous subtitle session renewal.
+
+Previously implemented: movie endpoint recovery, episode cache cleanup, canonical anime/series metadata and explicit mappings, full-index series paging, Auto/SD episode qualities, alternative sources, indexed season packs, startup/manual source recovery, trusted live anime releases, anonymous OpenSubtitles.org access and episode UI fixes.
 
 Verified: six sort contracts/reverse ordering/filter tests, 12-page paging tests, live series page 15, populated desktop movie/anime/series grids, actual Attack on Titan playback and cleanup on switching to Episode 2. Anonymous subtitle login/search/download passed a service-level test.
 

@@ -6,3 +6,11 @@ assert.equal(B.select(pool,{sorter:'trending',order:1},'all').rows[0].imdb,'tt1'
 const rows=Array.from({length:30},(_,i)=>m('tt'+(100+i),'Title'+i,'en',2000+i,5,i,i,30-i));assert.equal(B.select(rows,{sorter:'year',page:1},'all').rows[23].year,2006);assert.equal(B.select(rows,{sorter:'year',page:2},'all').rows[0].year,2005);console.log('Desktop: all six sorts, reverse order, intersecting filters and pagination passed');
 
 const S=require('../overlay/butter-provider/streamnest-series');const shows=[{imdb:'tt1',title:'Zulu',year:2025,rating:9,trendRank:3,latestRank:2,popularity:'100-0-0',language:'en'},{imdb:'tt2',title:'Alpha',year:2026,rating:6,trendRank:1,latestRank:3,popularity:'50-0-0',language:'en'},{imdb:'tt3',title:'Beta',year:2024,rating:8,trendRank:2,latestRank:1,popularity:'25-0-0',language:'en'}];for(const [sort,id]of Object.entries({trending:'tt2',popularity:'tt1','last added':'tt3',year:'tt2',title:'tt2',rating:'tt1'}))assert.equal(S.select(shows,{sorter:sort},'all').rows[0].imdb,id,sort);assert.equal(S.select(shows,{sorter:'title',order:-1},'all').rows[0].title,'Zulu');console.log('Desktop: all six series sorts and reverse direction passed');
+
+const mixed=Array.from({length:50},(_,i)=>({imdb:'tt'+(100+i),title:'English '+i,language:'en',trendRank:i+1,latestRank:i+1}));
+const hindi={imdb:'tt999',title:'Hindi series',language:'hi',trendRank:10000,latestRank:10000};mixed.push(hindi);
+assert(S.select(mixed,{sorter:'trending',page:1},'all').rows.some(m=>m.imdb==='tt999'));
+assert.equal(S.select(mixed,{sorter:'trending'},'hi').rows[0].imdb,'tt999');assert.equal(hindi.trendRank,10000);
+
+const raw=require('../overlay/butter-provider/movies-hindi-v1.json');const fresh=require('../overlay/butter-provider/streamnest-fresh');
+assert(raw.movies.length>0);for(const rawMovie of raw.movies){const m=fresh.normalize(rawMovie);assert.equal(m.language,'hi');assert(m.items.length);assert(m.items.every(t=>['1080p','2160p'].includes(t.quality)));}

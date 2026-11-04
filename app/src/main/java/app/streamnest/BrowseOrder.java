@@ -71,6 +71,20 @@ final class BrowseOrder {
       String language,
       int order)
       throws Exception {
+    return select(pool, page, q, sort, genre, quality, language, order, 24);
+  }
+
+  static List<Catalog.Title> select(
+      List<JSONObject> pool,
+      int page,
+      String q,
+      String sort,
+      String genre,
+      String quality,
+      String language,
+      int order,
+      int pageSize)
+      throws Exception {
     List<JSONObject> chosen = new ArrayList<>();
     Set<String> ids = new HashSet<>();
     for (JSONObject m : pool) {
@@ -106,8 +120,8 @@ final class BrowseOrder {
     Comparator<JSONObject> ordering = comparator(sort).thenComparing(m -> m.optString("imdb_code"));
     if (order != (sort.equals("title") ? 1 : -1)) ordering = ordering.reversed();
     chosen.sort(ordering);
-    int start = Math.min(chosen.size(), Math.max(0, page - 1) * 24),
-        end = Math.min(chosen.size(), start + 24);
+    int start = Math.min(chosen.size(), Math.max(0, page - 1) * pageSize),
+        end = Math.min(chosen.size(), start + pageSize);
     List<Catalog.Title> out = new ArrayList<>();
     for (JSONObject m : chosen.subList(start, end)) out.add(Catalog.parse(m, "movies"));
     return out;

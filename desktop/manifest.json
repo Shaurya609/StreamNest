@@ -1,10 +1,10 @@
 {
-  "version": "0.8.0",
+  "version": "0.8.1",
   "target": "Popcorn Time 0.5.1",
   "files": [
     {
       "path": "bootstrap.js",
-      "sha256": "32a4c5b383b54861b4e1a75914b1788695da6d668e7d7988860d99bad058941c"
+      "sha256": "10ff33cc1531319b85ddeae8e39dfba0edf22ac9a411dec8677c82731171dc54"
     },
     {
       "path": "butter-provider/anime-series-v6.json",
@@ -31,6 +31,10 @@
       "sha256": "2a6161725175d1f0f94ea0df9f41988f145f53fe3e93ef803231016a45a237bb"
     },
     {
+      "path": "butter-provider/movies-hindi-v1.json",
+      "sha256": "3117d2b7e3400ce6e6a3c1d7217855ca4a68a4b2bafabaea3e94e67793eb7ab8"
+    },
+    {
       "path": "butter-provider/series-index-v6.json",
       "sha256": "74d74377797a53682d452aa36c04b3899d6ade00e0d3e65554e025fd1d69888d"
     },
@@ -44,7 +48,7 @@
     },
     {
       "path": "butter-provider/streamnest-browse.js",
-      "sha256": "068cb2616e55a54fb35a4e792b1cc425c0e66208b3750f1571d0a1990e0b9e24"
+      "sha256": "14f61ac08f7aef8f7e943fa035275733dc4213f3c3327e7e7aa85e5b696428c6"
     },
     {
       "path": "butter-provider/streamnest-cache.js",
@@ -68,11 +72,11 @@
     },
     {
       "path": "butter-provider/streamnest-org.js",
-      "sha256": "cd4bd4279699dddaf7be2637c507e90b427d89c2c1ab9f5199fff622957cc66e"
+      "sha256": "dccbcbe521689573b531badb81bfe794eb690f263a6de686c4985bb8bad2474c"
     },
     {
       "path": "butter-provider/streamnest-paged.js",
-      "sha256": "6f159aa566b884943fc26138fe72c1efcac19417b8091048e3e79ec7a36f9434"
+      "sha256": "e905db0ba9aa53da091f0ad01080076a925ad3e3e421382dadf9720999467a45"
     },
     {
       "path": "butter-provider/streamnest-releases.js",
@@ -80,7 +84,7 @@
     },
     {
       "path": "butter-provider/streamnest-series.js",
-      "sha256": "05334cf7f3cf5d3910bda4815097af3ac66224300654d94fdcb44d9a0f730400"
+      "sha256": "ea0de2bc78b625f8cb363c5af997a41fa07fea0e547d1e142de35a628756eae7"
     },
     {
       "path": "butter-provider/tv.js",

@@ -1,6 +1,6 @@
 'use strict';
 const https=require('https'),zlib=require('zlib');
-let token='',expires=0;
+let token='',expires=0,loginTask=null;
 const array=value=>Array.isArray(value)?value:value?[value]:[];
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 function encode(value) {
@@ -35,10 +35,18 @@ function rpc(method,params) {
   });req.setTimeout(12000,()=>req.destroy(Error('OpenSubtitles.org timed out')));req.on('error',reject);req.end(body);
  });
 }
-async function login() {
- if(token&&Date.now()<expires)return true;
- const result=await rpc('LogIn',['','','en','Popcorn Time NodeJS']);
- if(!result.token)throw Error('No anonymous subtitle session');token=result.token;expires=Date.now()+600000;return true;
+async function login(force=false) {
+ if(!force&&token&&Date.now()<expires)return true;
+ if(loginTask)return loginTask;
+ loginTask=(async()=>{const result=await rpc('LogIn',['','','en','Popcorn Time NodeJS']);
+ if(!result.token)throw Error('No anonymous subtitle session');token=result.token;expires=Date.now()+600000;return true;})();
+ try{return await loginTask;}finally{loginTask=null;}
+}
+async function sessionRpc(method,params) {
+ await login();
+ try{return await rpc(method,[token,...params]);}
+ catch(error){if(!/\b(?:401|406)\b/.test(error.message))throw error;
+ token='';expires=0;await login();return rpc(method,[token,...params]);}
 }
 async function search(query) {
  await login();const criteria={sublanguageid:'all'};
@@ -47,7 +55,7 @@ async function search(query) {
  if(!criteria.imdbid&&query.filename)criteria.query=query.filename;
  if(!criteria.imdbid&&!criteria.query)return {};
  const requested=[Object.assign({},criteria,{sublanguageid:'eng'}),Object.assign({},criteria,{sublanguageid:'hin'}),criteria];
- const response=await rpc('SearchSubtitles',[token,requested,{limit:500}]);const out={};
+ const response=await sessionRpc('SearchSubtitles',[requested,{limit:500}]);const out={};
  for(const item of array(response.data)) {
   if(item.SubFormat!=='srt'||!/^https?:\/\//.test(item.SubDownloadLink||''))continue;
   const language=item.ISO639||item.SubLanguageID;if(!language)continue;
@@ -55,4 +63,4 @@ async function search(query) {
  }
  return out;
 }
-module.exports={login,search,encode,decode};
+module.exports={login,search,encode,decode,sessionRpc};

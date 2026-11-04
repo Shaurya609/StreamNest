@@ -7,7 +7,7 @@ import java.security.KeyStore;
 import javax.crypto.*;
 import javax.crypto.spec.GCMParameterSpec;
 
-final class SecretStore {
+final class SecretStore implements OrgSubtitles.Store {
   private final android.content.SharedPreferences prefs;
   private static final String ALIAS = "StreamNest.OpenSubtitles";
 
@@ -31,7 +31,7 @@ final class SecretStore {
     return (javax.crypto.SecretKey) store.getKey(ALIAS, null);
   }
 
-  synchronized void put(String name, String value) throws Exception {
+  public synchronized void put(String name, String value) throws Exception {
     if (value == null || value.isEmpty()) {
       prefs.edit().remove(name).apply();
       return;
@@ -47,7 +47,7 @@ final class SecretStore {
     prefs.edit().putString(name, data).apply();
   }
 
-  synchronized String get(String name) throws Exception {
+  public synchronized String get(String name) throws Exception {
     String data = prefs.getString(name, "");
     if (data.isEmpty()) return "";
     String[] parts = data.split(":", 2);

@@ -25,7 +25,8 @@ final class HindiCatalog {
                   m.optString(
                       "description",
                       "Hindi title. Playback sources will be checked when you choose this title."))
-              .put("regionalCatalog", true);
+              .put("regionalCatalog", true)
+              .put("language", "hi");
       out.add(Catalog.parse(normalized, kind));
     }
     return out;
@@ -35,6 +36,27 @@ final class HindiCatalog {
     String type = kind.equals("movies") ? "movie" : "series",
         id = kind.equals("movies") ? "hi" : "hi_series";
     return "catalog/" + type + "/" + id + (page <= 1 ? "" : "/skip=" + ((page - 1) * 20)) + ".json";
+  }
+
+  static List<Catalog.Title> mixedMovies(
+      int page, String sort, String quality, String genre, int order) throws Exception {
+    List<Catalog.Title> english =
+        PagedMovies.list(page, "", sort, genre, quality, "en", order, false, 18);
+    boolean more = Boolean.TRUE.equals(PagedMovies.remaining.get());
+    List<JSONObject> pool =
+        MovieIndex.records("mixed|" + sort + "|" + quality + "|" + genre + "|" + order, page);
+    List<Catalog.Title> hindi =
+        BrowseOrder.select(pool, page, "", sort, genre, quality, "hi", order, 6);
+    more |= !BrowseOrder.select(pool, page + 1, "", sort, genre, quality, "hi", order, 6).isEmpty();
+    List<Catalog.Title> out = new ArrayList<>();
+    int h = 0;
+    for (int i = 0; i < english.size(); i++) {
+      out.add(english.get(i));
+      if ((i + 1) % 3 == 0 && h < hindi.size()) out.add(hindi.get(h++));
+    }
+    while (h < hindi.size()) out.add(hindi.get(h++));
+    PagedMovies.remaining.set(more);
+    return out;
   }
 
   static List<Catalog.Title> list(

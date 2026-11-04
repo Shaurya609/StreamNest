@@ -183,16 +183,16 @@ public class SubtitleSettingsActivity extends Activity {
     help.setText(
         org
             ? "Uses the installed desktop client's legacy .org login request format. Sign in with"
-                + " your .org username. Website login, subtitle search and subtitle download are"
-                + " separate checks. If account login fails, try Use without account. Anonymous"
-                + " access is subject to service limits. Your password is not saved; sessions are"
-                + " stored encrypted."
+                  + " your .org username. Website login, subtitle search and subtitle download are"
+                  + " separate checks. If account login fails, try Use without account. Anonymous"
+                  + " access reconnects at launch and renews when needed; service limits still"
+                  + " apply. Your password is not saved; sessions are stored encrypted."
             : "Create a consumer named StreamNest in your OpenSubtitles.com profile, paste its API"
                 + " key here, then sign in with your .com account. The API key and session are"
                 + " stored encrypted. Your password is not saved.");
     status.setText(
         org && api.signedIn() && new OrgSubtitles(this).anonymousMode()
-            ? "Connected to .org without account"
+            ? "Anonymous .org mode - reconnects automatically"
             : api.signedIn()
                 ? "Signed in to OpenSubtitles." + (org ? "org" : "com")
                 : "Not signed in");

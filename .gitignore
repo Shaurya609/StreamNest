@@ -7,10 +7,10 @@ desktop-repair/
 scripts/
 branding/options/
 branding/icon-design.txt
-branding/streamnest-icon.svg
 RELEASE-*.md
 !RELEASE-0.7.4.md
 !RELEASE-0.7.5.md
+!RELEASE-0.7.6.md
 STREAMING-VALIDATION.md
 .idea/
 *.iml

@@ -60,6 +60,20 @@ final class PagedMovies {
       int order,
       boolean anime)
       throws Exception {
+    return list(page, query, sort, genre, quality, language, order, anime, 24);
+  }
+
+  static synchronized List<Catalog.Title> list(
+      int page,
+      String query,
+      String sort,
+      String genre,
+      String quality,
+      String language,
+      int order,
+      boolean anime,
+      int pageSize)
+      throws Exception {
     String g = anime ? "Animation" : genre;
     String prefix =
         "list_movies.json?limit=50&quality="
@@ -71,14 +85,15 @@ final class PagedMovies {
             + "&query_term="
             + Net.q(query)
             + (g.equals("All") ? "" : "&genre=" + Net.q(g));
-    String key = prefix + "|" + quality + "|" + language + "|" + anime + "|" + genre;
+    String key =
+        prefix + "|" + quality + "|" + language + "|" + anime + "|" + genre + "|" + pageSize;
     Feed feed = feeds.get(key);
     if (feed == null || page == 1 && System.currentTimeMillis() - feed.created > 600000) {
       feed = new Feed();
       feeds.put(key, feed);
       while (feeds.size() > 2) feeds.remove(feeds.keySet().iterator().next());
     }
-    int end = Math.max(1, page) * 24;
+    int end = Math.max(1, page) * pageSize;
     while (feed.rows.size() < end && !feed.done) {
       if (Thread.currentThread().isInterrupted())
         throw new InterruptedException("Catalog request replaced");
@@ -151,7 +166,7 @@ final class PagedMovies {
                   && (feed.next - 1) * 50 >= data.optInt("movie_count"));
     }
     List<Catalog.Title> out = new ArrayList<>();
-    int start = Math.min(feed.rows.size(), end - 24);
+    int start = Math.min(feed.rows.size(), end - pageSize);
     for (int i = start; i < Math.min(feed.rows.size(), end); i++)
       out.add(Catalog.parse(feed.rows.get(i), "movies"));
     remaining.set(feed.rows.size() > end || !feed.done);

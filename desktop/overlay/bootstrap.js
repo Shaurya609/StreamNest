@@ -118,6 +118,11 @@
         App.TabTypes[provider.type] = p.name;
       });
 
+      // Warm the anonymous session after settings are loaded; requests also renew on expiry.
+      if (AdvSettings.get('opensubtitlesAnonymous') || !AdvSettings.get('opensubtitlesAuthenticated') || !AdvSettings.get('opensubtitlesUsername'))
+        require('./butter-provider/streamnest-org').login(true).catch(function(error) {
+          win.warn('Anonymous subtitle session will retry when requested: '+error.message);
+        });
       return providers;
     });
   App.bootstrapPromise.catch(function(error){

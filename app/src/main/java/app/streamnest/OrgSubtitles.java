@@ -6,8 +6,18 @@ import java.net.*;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
 
-final class OrgSubtitles {
-  final SecretStore secrets;
+class OrgSubtitles {
+  interface Store {
+    String get(String name) throws Exception;
+
+    void put(String name, String value) throws Exception;
+  }
+
+  final Store secrets;
+
+  OrgSubtitles(Store store) {
+    secrets = store;
+  }
 
   OrgSubtitles(Context c) {
     secrets = new SecretStore(c);
@@ -60,7 +70,7 @@ final class OrgSubtitles {
 
   boolean signedIn() {
     try {
-      return !secrets.get("orgToken").isEmpty();
+      return anonymousMode() || !secrets.get("orgToken").isEmpty();
     } catch (Exception e) {
       return false;
     }
@@ -75,7 +85,15 @@ final class OrgSubtitles {
     secrets.put("orgAnonymous", "false");
   }
 
+  static final Object SESSION_LOCK = new Object();
+
   void anonymous() throws Exception {
+    synchronized (SESSION_LOCK) {
+      renewAnonymous();
+    }
+  }
+
+  private void renewAnonymous() throws Exception {
     Map<String, Object> result = rpc("LogIn", "", "", "en", "Popcorn Time NodeJS");
     String token = String.valueOf(result.getOrDefault("token", ""));
     if (token.isEmpty()) throw new IOException("No anonymous subtitle session returned");
@@ -89,6 +107,31 @@ final class OrgSubtitles {
       return secrets.get("orgAnonymous").equals("true");
     } catch (Exception e) {
       return false;
+    }
+  }
+
+  void ensureAnonymous(boolean force) throws Exception {
+    synchronized (SESSION_LOCK) {
+      if (!anonymousMode()) return;
+      long until = 0;
+      try {
+        until = Long.parseLong(secrets.get("orgAnonymousUntil"));
+      } catch (NumberFormatException ignored) {
+      }
+      if (force || secrets.get("orgToken").isEmpty() || System.currentTimeMillis() >= until)
+        renewAnonymous();
+    }
+  }
+
+  Map<String, Object> sessionRpc(String method, Object payload) throws Exception {
+    ensureAnonymous(false);
+    try {
+      return rpc(method, secrets.get("orgToken"), payload);
+    } catch (IOException error) {
+      if (!anonymousMode() || !String.valueOf(error.getMessage()).matches(".*\\b(401|406)\\b.*"))
+        throw error;
+      ensureAnonymous(true);
+      return rpc(method, secrets.get("orgToken"), payload);
     }
   }
 
@@ -106,15 +149,7 @@ final class OrgSubtitles {
   List<SubtitleQuery.Result> search(
       String imdb, int season, int episode, String title, String language, String hash)
       throws Exception {
-    if (anonymousMode()) {
-      long until;
-      try {
-        until = Long.parseLong(secrets.get("orgAnonymousUntil"));
-      } catch (Exception e) {
-        until = 0;
-      }
-      if (System.currentTimeMillis() >= until) anonymous();
-    }
+    ensureAnonymous(false);
     String token = secrets.get("orgToken");
     if (token.isEmpty()) throw new IOException("Connect to OpenSubtitles.org in Settings");
     Map<String, Object> q = new LinkedHashMap<>();
@@ -126,7 +161,7 @@ final class OrgSubtitles {
       q.put("episode", String.valueOf(episode));
     }
     if (hash != null && !hash.isEmpty()) q.put("moviehash", hash);
-    Map<String, Object> response = rpc("SearchSubtitles", token, Collections.singletonList(q));
+    Map<String, Object> response = sessionRpc("SearchSubtitles", Collections.singletonList(q));
     List<SubtitleQuery.Result> results = new ArrayList<>();
     Object data = response.get("data");
     if (data instanceof List)
@@ -153,10 +188,7 @@ final class OrgSubtitles {
 
   File download(SubtitleQuery.Result result, File directory) throws Exception {
     Map<String, Object> response =
-        rpc(
-            "DownloadSubtitles",
-            secrets.get("orgToken"),
-            Collections.singletonList(String.valueOf(result.fileId)));
+        sessionRpc("DownloadSubtitles", Collections.singletonList(String.valueOf(result.fileId)));
     Object data = response.get("data");
     if (!(data instanceof List) || ((List<?>) data).isEmpty())
       throw new IOException("No subtitle data returned");

@@ -19,6 +19,7 @@ public class PlayerActivity extends Activity {
   SeekBar seek;
   Handler ui = new Handler(Looper.getMainLooper());
   boolean opened, dragging;
+  boolean viewsAttached, resumeOnReturn;
   FrameLayout root;
   View topControls, bottomControls;
   boolean controlsVisible = true;
@@ -146,7 +147,8 @@ public class PlayerActivity extends Activity {
                     "--network-caching=" + (DeviceProfile.lite(this) ? 1000 : 2000),
                     "--http-reconnect")));
     player = new MediaPlayer(vlc);
-    player.attachViews(video, null, true, false);
+    player.attachViews(video, null, true, true);
+    viewsAttached = true;
     player.setEventListener(
         e -> {
           if (e.type == MediaPlayer.Event.Opening
@@ -504,7 +506,7 @@ public class PlayerActivity extends Activity {
                         ? "Source " + (attempt + 1) + "/" + alternatives.size() + " · "
                         : "")
                     + e.status());
-            if (e.url != null && !mediaSet) {
+            if (e.url != null && !mediaSet && viewsAttached && hasWindowFocus()) {
               Media media = new Media(vlc, Uri.parse(e.url));
               media.addOption(":http-proxy=");
               if (DeviceProfile.lite(PlayerActivity.this)) media.addOption(":avcodec-threads=2");
@@ -571,11 +573,35 @@ public class PlayerActivity extends Activity {
     }
   }
 
+  @Override
+  protected void onStart() {
+    super.onStart();
+    if (player != null && !viewsAttached) {
+      player.attachViews(video, null, true, true);
+      viewsAttached = true;
+    }
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    if (player != null && resumeOnReturn) {
+      resumeOnReturn = false;
+      player.play();
+      pause.setImageResource(R.drawable.ic_pause);
+      pause.setContentDescription("Pause");
+    }
+  }
+
+  @Override
   protected void onStop() {
-    if (player != null && player.isPlaying()) {
-      player.pause();
-      pause.setImageResource(R.drawable.ic_play);
-      pause.setContentDescription("Play");
+    if (player != null) {
+      resumeOnReturn = !isFinishing() && player.isPlaying() && !userPaused;
+      if (player.isPlaying()) player.pause();
+      if (viewsAttached) {
+        player.detachViews();
+        viewsAttached = false;
+      }
     }
     super.onStop();
   }
@@ -589,7 +615,7 @@ public class PlayerActivity extends Activity {
     if (player != null) {
       getPreferences(0).edit().putLong(key, Math.max(0, player.getTime())).apply();
       player.stop();
-      player.detachViews();
+      if (viewsAttached) player.detachViews();
       player.release();
     }
     if (vlc != null) vlc.release();

@@ -2,7 +2,7 @@
 
 Native Android app for browsing movies, series and anime, with torrent-based playback through libtorrent and LibVLC.
 
-**Current Android version: 0.7.5. Desktop patch: 0.8.0.** [Download an APK](https://github.com/Shaurya609/StreamNest/releases/latest) · [Release notes](RELEASE-0.7.5.md) · [Desktop backlog](DESKTOP-PENDING.md)
+**Current Android version: 0.7.6. Desktop patch: 0.8.1.** [Download an APK](https://github.com/Shaurya609/StreamNest/releases/latest) · [Release notes](RELEASE-0.7.6.md) · [Desktop backlog](DESKTOP-PENDING.md)
 
 ## Features
 
@@ -11,7 +11,8 @@ Native Android app for browsing movies, series and anime, with torrent-based pla
 - Movies in 1080p/2160p. Episodes default to Auto with 720p/SD fallback and explicit manual choices.
 - Additional episode source discovery, exact season-pack member selection and bounded startup source recovery.
 - Full-screen landscape playback, automatically hiding icon controls, seeking and remote navigation.
-- Embedded/local subtitles and OpenSubtitles.com integration; API key and account details are entered inside the app.
+- Transparent SVG branding and Android vector launcher/TV artwork.
+- Embedded/local subtitles, automatically renewed anonymous OpenSubtitles.org access and OpenSubtitles.com integration; API key and account details are entered inside the app.
 - Configurable video-cache location, episode-by-episode cleanup and cleanup on app exit.
 - TV launcher support and a projector/low-memory mode.
 

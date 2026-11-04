@@ -8,5 +8,14 @@ const m=(i,lang='en')=>({imdb_code:'tt'+i,title:'T'+i,language:lang,genres:['Ani
  assert.equal(ids.size,288);assert.equal((await P.list({page:1,sorter:'rating'},'all',false,fetch)).rows[0].imdb,'tt0');
  P.clear();const anime=await P.list({page:1,sorter:'trending'},'all',true,async()=>({movies:[m(1),m(2,'jpn')]}));assert.equal(anime.rows.length,1);assert.equal(anime.rows[0].imdb,'tt2');
  P.clear();const trend=await P.list({page:1,sorter:'trending'},'all',false,async(o)=>{assert.equal(o.sort,'date_added');return {movies:[m(1),m(9)]};});assert.equal(trend.rows[0].imdb,'tt9');
+ P.clear();const mixedIds=new Set();const B=require(root+'/streamnest-browse');
+ const hindi=Array.from({length:40},(_,i)=>({imdb:'tt'+(9000+i),title:'Hindi '+i,language:'hi',items:[{quality:'1080p',torrent_seeds:100-i}]}));
+ for(let page=1;page<=5;page++){
+  const en=await P.list({page,sorter:'trending'},'en',false,fetch,18);
+  const hi=B.select(hindi,{page,sorter:'trending'},'hi',6);
+  const rows=B.interleave(en.rows,hi.rows);assert.equal(rows.length,24);assert.equal(rows[3].language,'hi');
+  for(const row of rows){assert(!mixedIds.has(row.imdb));mixedIds.add(row.imdb);}
+ }
+ assert.equal(mixedIds.size,120);assert(mixedIds.has('tt89'));assert(mixedIds.has('tt9029'));
  console.log('Pagination: 12 pages / 288 unique titles, revisits, anime filter, language aliases and recent-window seed ranking passed');
 })().catch(e=>{console.error(e);process.exitCode=1;});

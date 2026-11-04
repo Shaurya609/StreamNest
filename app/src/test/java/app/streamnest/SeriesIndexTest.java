@@ -54,4 +54,18 @@ public class SeriesIndexTest {
         SeriesIndex.popularity(new JSONObject().put("popularity", "100-0-0"))
             > SeriesIndex.popularity(new JSONObject().put("popularity", "99-0-0")));
   }
+
+  @Test
+  public void regionalShowsAreVisibleInMixedTrendingAndStayHindi() throws Exception {
+    List<JSONObject> rows = new ArrayList<>();
+    for (int i = 1; i <= 50; i++) rows.add(s("tt" + i, "English " + i, 2025, 7, i, i, "10-0-0"));
+    JSONObject hindi =
+        s("tt999", "Hindi series", 2026, 8, 10000, 10000, "0-0-0").put("language", "hi");
+    rows.add(hindi);
+    assertTrue(
+        SeriesIndex.select(rows, 1, "", "trending", "All", "all", -1).stream()
+            .anyMatch(t -> t.id.equals("tt999")));
+    assertEquals("tt999", SeriesIndex.select(rows, 1, "", "trending", "All", "hi", -1).get(0).id);
+    assertEquals(10000, hindi.getInt("trendRank"));
+  }
 }

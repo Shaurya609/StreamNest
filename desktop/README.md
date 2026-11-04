@@ -1,8 +1,12 @@
-# StreamNest desktop patch 0.8.0
+# StreamNest desktop patch 0.8.1
 
 This is an overlay patch for the installed Windows Popcorn Time **0.5.1** application. It is not a standalone installer or a replacement for its native dependencies.
 
 ## Included
+
+- Hindi movie snapshot with 91 exact IMDb matches and confirmed-by-provider HD sources, background refresh, a working Hindi filter and language-balanced mixed Trending pages.
+- Regional Hindi series rank correction so Trending/Last added no longer bury them behind thousands of English entries.
+- Anonymous subtitle session renewal at launch/on expiry, shared concurrent login and one retry after a 401/406 session rejection.
 
 - Movie API endpoint failover after the former endpoint began returning HTTP 521.
 - Full-index series browsing with stable page snapshots, Hindi inclusion and six sort options.
@@ -27,7 +31,7 @@ For rollback, close the app and restore the corresponding files from the backup 
 
 ## Verification
 
-- 11 Node test groups passed, including six sort contracts/reverse direction, filter intersection, 12-page pagination, exact file selection, quality fallback, canonical numbering, live-release matching and cache-boundary tests.
+- 14 Node test groups passed, including six sort contracts/reverse direction, filter intersection, 12-page pagination, exact file selection, quality fallback, canonical numbering, live-release matching and cache-boundary tests.
 - Live movie catalog returned 24 titles with additional pages. The installed movie grid was inspected.
 - Live series page 15 returned 24 titles. The installed series grid appended more results while scrolling.
 - One Piece metadata mapped absolute episode 1179 to Season 23 Episode 24; 1,209 canonical/special entries were returned at the test time.

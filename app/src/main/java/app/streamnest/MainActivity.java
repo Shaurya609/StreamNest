@@ -70,6 +70,18 @@ public class MainActivity extends Activity {
   public void onCreate(Bundle state) {
     super.onCreate(state);
     PlaybackCache.enter(this);
+    // Refresh the selected anonymous service without blocking catalog or UI work.
+    new Thread(
+            () -> {
+              try {
+                OpenSubtitles api = new OpenSubtitles(getApplicationContext());
+                if (api.orgMode()) new OrgSubtitles(getApplicationContext()).ensureAnonymous(true);
+              } catch (Exception ignored) {
+                /* A subtitle request retries when connectivity returns. */
+              }
+            },
+            "subtitle-session")
+        .start();
     if (Build.VERSION.SDK_INT >= 33)
       getOnBackInvokedDispatcher()
           .registerOnBackInvokedCallback(
@@ -92,7 +104,7 @@ public class MainActivity extends Activity {
     FreshMovies.discoveryThreads = DeviceProfile.lite(this) ? 2 : 4;
     activeLite = DeviceProfile.lite(this);
     posters = new PosterLoader(this);
-    MovieIndex.configure(getCacheDir());
+    MovieIndex.configure(getAssets(), getCacheDir());
     SeriesIndex.configure(getAssets(), getCacheDir());
     AnimeCatalog.configure(getAssets(), getCacheDir());
     getWindow().setStatusBarColor(0xff17181b);
@@ -335,16 +347,27 @@ public class MainActivity extends Activity {
                           ? AnimeReleases.list(p, q, s, qual, direction)
                           : k.equals("animes") && format.equals("series")
                               ? AnimeCatalog.list(p, q, s, g, qual, direction)
-                              : k.equals("movies") && Catalog.legacy(b)
-                                  ? PagedMovies.list(p, q, s, g, qual, lang, direction, false)
-                                  : k.equals("shows") && Catalog.legacy(b)
-                                      ? SeriesIndex.list(b, p, q, s, g, lang, direction)
-                                      : hindi
-                                          ? HindiCatalog.list(
-                                              this, b, k, p, q, s, qual, g, direction)
-                                          : Catalog.list(b, k, p, q, s, g, qual, direction);
+                              : k.equals("movies") && hindi
+                                  ? HindiCatalog.list(this, b, k, p, q, s, qual, g, direction)
+                                  : k.equals("movies")
+                                          && Catalog.legacy(b)
+                                          && lang.equals("all")
+                                          && BrowseOrder.key(s).equals("trending")
+                                          && q.isBlank()
+                                      ? HindiCatalog.mixedMovies(p, s, qual, g, direction)
+                                      : k.equals("movies") && Catalog.legacy(b)
+                                          ? PagedMovies.list(
+                                              p, q, s, g, qual, lang, direction, false)
+                                          : k.equals("shows") && Catalog.legacy(b)
+                                              ? SeriesIndex.list(b, p, q, s, g, lang, direction)
+                                              : hindi
+                                                  ? HindiCatalog.list(
+                                                      this, b, k, p, q, s, qual, g, direction)
+                                                  : Catalog.list(b, k, p, q, s, g, qual, direction);
                 boolean more = found.size() == 24;
-                if (!saved && k.equals("shows") && Catalog.legacy(b))
+                if (!saved && k.equals("movies") && hindi)
+                  more = !HindiCatalog.list(this, b, k, p + 1, q, s, qual, g, direction).isEmpty();
+                else if (!saved && k.equals("shows") && Catalog.legacy(b))
                   more = !SeriesIndex.list(b, p + 1, q, s, g, lang, direction).isEmpty();
                 else if (!saved && k.equals("animes") && format.equals("latest"))
                   more = !AnimeReleases.list(p + 1, q, s, qual, direction).isEmpty();

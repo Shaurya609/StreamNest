@@ -188,6 +188,20 @@ final class SeriesIndex {
     return new ArrayList<>(all.values());
   }
 
+  static List<JSONObject> regionalRanks(List<JSONObject> records) throws Exception {
+    List<JSONObject> out = new ArrayList<>();
+    int regional = 0;
+    for (JSONObject row : records) {
+      if (row.optString("language").equals("hi") && row.optInt("trendRank", 10000) >= 10000) {
+        JSONObject copy = new JSONObject(row.toString());
+        int rank = ++regional * 4;
+        copy.put("trendRank", rank).put("latestRank", rank);
+        out.add(copy);
+      } else out.add(row);
+    }
+    return out;
+  }
+
   static List<Catalog.Title> select(
       List<JSONObject> records,
       int page,
@@ -197,6 +211,7 @@ final class SeriesIndex {
       String language,
       int order)
       throws Exception {
+    records = regionalRanks(records);
     List<JSONObject> a = new ArrayList<>();
     Set<String> seen = new HashSet<>();
     for (JSONObject m : records) {

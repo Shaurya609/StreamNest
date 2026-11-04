@@ -42,4 +42,99 @@ public class HindiCatalogTest {
             .get(0)
             .id);
   }
+
+  @Test
+  public void confirmedDiscoveryRejectsCameraLowQualityAndEnglishRecords() throws Exception {
+    JSONObject record =
+        new JSONObject()
+            .put("language", "hin")
+            .put("imdb_code", "tt1")
+            .put(
+                "torrents",
+                new JSONArray()
+                    .put(
+                        new JSONObject()
+                            .put("quality", "1080p")
+                            .put("type", "web")
+                            .put("hash", "abc")));
+    assertTrue(MovieIndex.confirmedHindi(FreshMovies.normalize(record)));
+    record.put("language", "en");
+    assertFalse(MovieIndex.confirmedHindi(FreshMovies.normalize(record)));
+    record.put("language", "hi");
+    record.getJSONArray("torrents").getJSONObject(0).put("quality", "720p");
+    assertFalse(MovieIndex.confirmedHindi(FreshMovies.normalize(record)));
+    record
+        .getJSONArray("torrents")
+        .getJSONObject(0)
+        .put("quality", "1080p")
+        .put("name", "Movie HDCAM");
+    assertFalse(MovieIndex.confirmedHindi(FreshMovies.normalize(record)));
+  }
+
+  @Test
+  public void mixedPagesKeepEveryEnglishAndHindiCardWithoutSkipping() throws Exception {
+    java.util.List<JSONObject> old = MovieIndex.snapshot;
+    long age = MovieIndex.refreshed;
+    PagedMovies.Fetcher fetcher = PagedMovies.fetcher;
+    try {
+      MovieIndex.snapshot = new java.util.ArrayList<>();
+      MovieIndex.refreshed = System.currentTimeMillis();
+      for (int i = 0; i < 40; i++)
+        MovieIndex.snapshot.add(
+            new JSONObject()
+                .put("imdb_code", "tt" + (9000 + i))
+                .put("title", "Hindi " + i)
+                .put("language", "hi")
+                .put(
+                    "torrents",
+                    new JSONArray()
+                        .put(
+                            new JSONObject()
+                                .put("quality", "1080p")
+                                .put("type", "web")
+                                .put("hash", "h" + i)
+                                .put("seeds", 100 - i))));
+      PagedMovies.feeds.clear();
+      PagedMovies.fetcher =
+          path -> {
+            int page = Integer.parseInt(path.substring(path.lastIndexOf("&page=") + 6));
+            JSONArray rows = new JSONArray();
+            for (int i = 0; i < 50; i++) {
+              int id = (page - 1) * 50 + i;
+              rows.put(
+                  new JSONObject()
+                      .put("imdb_code", "tt" + (1000 + id))
+                      .put("title", "English " + id)
+                      .put("language", "en")
+                      .put(
+                          "torrents",
+                          new JSONArray()
+                              .put(
+                                  new JSONObject()
+                                      .put("quality", "1080p")
+                                      .put("type", "web")
+                                      .put("hash", "e" + id)
+                                      .put("seeds", 1000 - id))));
+            }
+            return new JSONObject().put("movie_count", 1000).put("movies", rows);
+          };
+      java.util.Set<String> ids = new java.util.HashSet<>();
+      for (int page = 1; page <= 5; page++) {
+        java.util.List<Catalog.Title> rows =
+            HindiCatalog.mixedMovies(page, "trending", "All", "All", -1);
+        assertEquals(24, rows.size());
+        assertEquals("hi", rows.get(3).raw.getString("language"));
+        for (Catalog.Title row : rows) assertTrue(ids.add(row.id));
+      }
+      assertEquals(120, ids.size());
+      assertTrue(ids.contains("tt1089"));
+      assertTrue(ids.contains("tt9029"));
+    } finally {
+      MovieIndex.sessions.clear();
+      MovieIndex.snapshot = old;
+      MovieIndex.refreshed = age;
+      PagedMovies.fetcher = fetcher;
+      PagedMovies.feeds.clear();
+    }
+  }
 }

@@ -1,1 +1,4 @@
-<bitmap xmlns:android="http://schemas.android.com/apk/res/android" android:src="@drawable/tv_art" android:gravity="fill" android:filter="true"/>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+  <item><shape><size android:width="320dp" android:height="180dp"/><solid android:color="#17181b"/></shape></item>
+  <item android:width="160dp" android:height="160dp" android:gravity="center" android:drawable="@drawable/ic_logo"/>
+</layer-list>
