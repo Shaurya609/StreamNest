@@ -1,5 +1,7 @@
 # Desktop status — patch 0.9.0
 
+New user-reported regressions and follow-up work: see [PENDING-FIXES.md](PENDING-FIXES.md). Desktop anonymous subtitle login/rendering and standalone release discoverability remain pending, despite earlier service-level checks. Mobile anonymous auto-login also needs fresh-launch verification.
+
 The desktop backlog has been implemented in the overlay patch and applied to the local Popcorn Time 0.5.1 installation. See [desktop/README.md](desktop/README.md) for detailed behavior and validation.
 
 Implemented in 0.9.0: previous/next episode controls, season-boundary navigation, natural-end autoplay, validated intro/credits timestamps and playback toggles. Full desktop player UI verification remains pending while the owner is working; background fixtures cover the new paths.
