@@ -66,3 +66,5 @@ An anonymous live IntroDB lookup for Breaking Bad S1E1 returned a matching outro
 - Desktop Scorpion movie: 4 English choices and a 54,174-byte timed SRT downloaded anonymously. No movie scene synchronization claim.
 - Signed catalog publication 41867874027 passed; remote manifest signature and anime payload digest independently verified. Expanded snapshot has 302 anime series, including 280 metadata-only entries; desktop adapter returned 13 unique pages / 302 titles. Torrent availability remains a separate resolution step.
 - Reported Percy Jackson stall happened on the TV. Exact TV codec/source and long-form playback require user retesting; tablet checks do not verify that TV.
+
+- Public Windows preview desktop-v0.11.0 was published by workflow 41870009937 directly from successful build 41867838077; the complete three-file checksum list and all four uploaded asset sizes/digests were verified before publication. Android v0.11.0 uploaded asset sizes/SHA256 digests were independently matched against the local APKs before publication.

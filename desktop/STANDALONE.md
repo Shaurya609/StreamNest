@@ -1,10 +1,10 @@
-# StreamNest Desktop 0.10.0 preview
+# StreamNest Desktop 0.11.0 preview
 
 This is a standalone Windows x64 application. Popcorn Time does not need to be installed. Windows 10/11 x64 are the initial targets; Linux, macOS and ARM desktop packages are not provided.
 
 ## Install or run portable
 
-Use the per-user `StreamNest-Desktop-0.10.0-win-x64-Setup.exe`, or extract the portable ZIP and run `StreamNest.exe`. The installer needs no administrator access and creates a Start-menu entry. It does not launch the app automatically. Both packages share StreamNest's own profile; portable means no installation, not that accounts/settings travel with the ZIP.
+Use the per-user `StreamNest-Desktop-0.11.0-win-x64-Setup.exe`, or extract the portable ZIP and run `StreamNest.exe`. The installer needs no administrator access and creates a Start-menu entry. It does not launch the app automatically. Both packages share StreamNest's own profile; portable means no installation, not that accounts/settings travel with the ZIP.
 
 Default locations:
 
@@ -30,9 +30,9 @@ Requires Windows x64, Node 22 and Python 3.12 or later:
 ```powershell
 npm ci --prefix desktop/packaging --ignore-scripts
 python desktop/packaging/build.py
-python desktop/packaging/verify.py --app reference/standalone-build/0.10.0/StreamNest
-python desktop/packaging/smoke.py --app reference/standalone-build/0.10.0/StreamNest
-python desktop/packaging/test_installer.py --installer dist/standalone/StreamNest-Desktop-0.10.0-win-x64-Setup.exe
+python desktop/packaging/verify.py --app reference/standalone-build/0.11.0/StreamNest
+python desktop/packaging/smoke.py --app reference/standalone-build/0.11.0/StreamNest
+python desktop/packaging/test_installer.py --installer dist/standalone/StreamNest-Desktop-0.11.0-win-x64-Setup.exe
 ```
 
 The build never reads an installed app or a real profile. `desktop/upstream` preserves legacy Popcorn Time source commit `e484724a821a681bdd2a4c0a3de01f50dfbad60a`, recovered from the matching archived fork. Dependencies use its frozen Yarn lockfile. Install scripts are disabled; two audited upstream dependency patches are applied explicitly. Themes compile directly from Stylus. The shared overlay and standalone changes are applied to a generated staging folder, then branding and executable resources are generated from the approved SVG.
@@ -58,7 +58,7 @@ A private local-torrent diagnostic verified all 11,053,871 fixture bytes, served
 To repeat that extended check on a generated build with a local media fixture:
 
 ```powershell
-python desktop/packaging/smoke.py --app reference/standalone-build/0.10.0/StreamNest --video path/to/local-test.mp4 --loopback
+python desktop/packaging/smoke.py --app reference/standalone-build/0.11.0/StreamNest --video path/to/local-test.mp4 --loopback
 ```
 
 The loopback diagnostic temporarily substitutes only the generated app's opt-in smoke helper, restores it afterward and refuses to modify a real installed application. Normal product files and user profiles are not used for test state.
