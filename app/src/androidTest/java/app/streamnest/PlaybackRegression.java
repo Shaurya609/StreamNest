@@ -15,7 +15,7 @@ import org.videolan.libvlc.Media;
 public class PlaybackRegression extends Instrumentation {
   PlayerActivity activity;
   String watchSyncCode;
-  boolean catalog, subtitles, storage, resilience, episodes, appUpdates, watchSyncUi, resumeUi;
+  boolean skipLive, catalog, subtitles, storage, resilience, episodes, appUpdates, watchSyncUi, resumeUi;
 
   @Override
   public void onCreate(Bundle args) {
@@ -29,11 +29,31 @@ public class PlaybackRegression extends Instrumentation {
     appUpdates = args != null && "true".equals(args.getString("appUpdates"));
     watchSyncUi = args != null && "true".equals(args.getString("watchSyncUi"));
     resumeUi = args != null && "true".equals(args.getString("resumeUi"));
+    skipLive = args != null && "true".equals(args.getString("skipLive"));
     start();
   }
 
   @Override
   public void onStart() {
+    if (skipLive) {
+      Bundle result = new Bundle();
+      try {
+        String url = "https://api.skipdb.tv/api/segments?imdb_id=tt10919420&season=1&episode=1&duration=3655&adjust=none";
+        JSONObject doc = CatalogHttp.object(url, null);
+        List<SkipSegments.Segment> rows = SkipSegments.skipdb(doc, "tt10919420", 1, 1, 3655000);
+        if (rows.isEmpty()) throw new AssertionError("No exact-match live fallback segment");
+        if (!SkipSegments.skipdb(doc, "tt10919420", 1, 2, 3655000).isEmpty())
+          throw new AssertionError("Wrong episode accepted");
+        result.putLong("creditsStartMs", rows.get(0).start);
+        result.putLong("creditsEndMs", rows.get(0).end);
+        result.putString("result", "PASS: live anonymous fallback parsed on installed Android; wrong episode rejected");
+        finish(Activity.RESULT_OK, result);
+      } catch (Throwable error) {
+        result.putString("result", "FAIL: " + error);
+        finish(Activity.RESULT_CANCELED, result);
+      }
+      return;
+    }
     if (resumeUi) {
       Bundle result=new Bundle();
       try { finish(Activity.RESULT_OK, ResumeSelectionRegression.run(this)); }
