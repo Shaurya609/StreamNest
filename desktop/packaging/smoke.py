@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[2]
 parser=argparse.ArgumentParser()
 parser.add_argument('--app',type=Path,required=True)
 parser.add_argument('--video',type=Path)
+parser.add_argument('--sync',action='store_true',help='Exercise actual Settings button, visible dialog, live pairing and QR controls in the legacy runtime')
 parser.add_argument('--updates',action='store_true',help='Exercise the real updater and live signed feed in the hidden legacy runtime')
 parser.add_argument('--subtitles',action='store_true',help='Check live anonymous subtitle download and actual video.js cue display')
 parser.add_argument('--loopback',action='store_true',help='Use the external local-torrent/video probe in a generated build folder')
@@ -19,7 +20,7 @@ env=dict(os.environ,LOCALAPPDATA=str(probe/'Local'),APPDATA=str(probe/'Roaming')
 if args.video:env['STREAMNEST_SMOKE_VIDEO']=str(args.video.resolve())
 @contextlib.contextmanager
 def diagnostic_script():
-    if not args.loopback and not args.subtitles and not args.updates:
+    if not args.loopback and not args.subtitles and not args.updates and not args.sync:
         yield
         return
     if args.loopback: assert args.video,'A local video fixture is required for the loopback check'
@@ -27,7 +28,7 @@ def diagnostic_script():
     target=app/'src/app/smoke.js'
     original=target.read_bytes()
     temporary=target.with_suffix('.diagnostic')
-    temporary.write_bytes((ROOT/('desktop/packaging/updates-smoke.js' if args.updates else 'desktop/packaging/subtitles-smoke.js' if args.subtitles else 'desktop/packaging/loopback-smoke.js')).read_bytes())
+    temporary.write_bytes((ROOT/('desktop/packaging/sync-smoke.js' if args.sync else 'desktop/packaging/updates-smoke.js' if args.updates else 'desktop/packaging/subtitles-smoke.js' if args.subtitles else 'desktop/packaging/loopback-smoke.js')).read_bytes())
     temporary.replace(target)
     try:yield
     finally:

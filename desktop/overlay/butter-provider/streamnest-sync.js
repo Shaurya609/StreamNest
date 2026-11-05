@@ -29,17 +29,20 @@ function connect(code){code=C.format(C.parse(code));fs.writeFileSync(configPath,
 function disconnect(){fs.writeFileSync(configPath,'{}',{mode:0o600});status='Not connected';}
 function show(win){
  const d=win.document;let old=d.getElementById('streamnest-sync-panel');if(old)old.remove();
- const panel=d.createElement('div');panel.id='streamnest-sync-panel';panel.style.cssText='position:fixed;inset:12%;overflow:auto;z-index:99999;background:#20232b;color:white;padding:28px;border:1px solid #697080;font:16px sans-serif';d.body.appendChild(panel);
+ const panel=d.createElement('div');panel.id='streamnest-sync-panel';panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label','Resume across devices');panel.style.cssText='position:fixed;top:8%;right:12%;bottom:8%;left:12%;box-sizing:border-box;overflow:auto;z-index:99999;background:#20232b;color:#f3f4f6;padding:24px;border:1px solid #697080;border-radius:10px;font:16px/1.5 sans-serif';d.body.appendChild(panel);
  const heading=d.createElement('h2');heading.textContent='Resume across devices';panel.appendChild(heading);
  const note=d.createElement('p');note.textContent='Pair devices using the same private code. Watching progress is encrypted before syncing. No StreamNest account is needed.';panel.appendChild(note);
- const input=d.createElement('input');input.spellcheck=false;input.autocomplete='off';input.placeholder='Pairing code from another device';input.value=config().code||'';input.style.cssText='width:95%;padding:12px;color:black';panel.appendChild(input);
+ const input=d.createElement('input');input.setAttribute('aria-label','Private pairing code');input.spellcheck=false;input.autocomplete='off';input.placeholder='Pairing code from another device';input.value=config().code||'';input.style.cssText='box-sizing:border-box;width:100%;min-height:44px;padding:12px;color:#101827;background:#ffffff;border:1px solid #8794a8;border-radius:6px;font:16px monospace';panel.appendChild(input);
  let error=null;const label=d.createElement('p');label.textContent=status;panel.appendChild(label);
- const button=(text,action)=>{const b=d.createElement('button');b.textContent=text;b.style.cssText='padding:10px;margin:8px';b.onclick=async()=>{try{error=null;await action();label.textContent=status;}catch(e){error=e.message;label.textContent=error;}};panel.appendChild(b);};
+ const button=(text,action)=>{const b=d.createElement('button');b.type='button';b.textContent=text;b.style.cssText='appearance:none;display:inline-block;position:static;float:none;width:auto;height:auto;min-height:42px;padding:10px 14px;margin:8px 8px 8px 0;color:#ffffff;background:#303b4c;border:1px solid #8794a8;border-radius:6px;font:600 14px/20px sans-serif;text-shadow:none;opacity:1;cursor:pointer';b.onfocus=()=>{b.style.outline='2px solid #99c5ff';b.style.outlineOffset='2px';};b.onblur=()=>{b.style.outline='';};b.onclick=async()=>{try{error=null;await action();label.textContent=status;}catch(e){error=e.message;label.textContent=error;}};panel.appendChild(b);};
  button('Create a sync group',async()=>{const code=C.create();input.value=code;await connect(code);});
  button('Connect with this code',()=>connect(input.value));
- button('Sync now',()=>request(true));button('Disconnect this device',()=>{disconnect();input.value='';});button('Close',()=>panel.remove());
- const qr=d.createElement('img');qr.style.cssText='display:block;width:220px;height:220px;background:white;padding:10px;margin:10px';panel.appendChild(qr);
+ const close=()=>{panel.remove();const opener=d.getElementById('streamnestSyncOpen');if(opener)opener.focus();};
+ button('Sync now',()=>request(true));button('Disconnect this device',()=>{disconnect();input.value='';});button('Close',close);
+ panel.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close();}});
+ const qr=d.createElement('img');qr.style.cssText='display:none;width:220px;height:220px;background:white;padding:10px;margin:10px';panel.appendChild(qr);
  let shown='';const timer=setInterval(()=>{if(!panel.isConnected){clearInterval(timer);return;}label.textContent=error||status;if(input.value!==shown){shown=input.value;try{C.parse(shown);const image=require('qrcode-generator')(0,'M');image.addData('streamnest-watch://pair/'+shown);image.make();qr.src=image.createDataURL(4);qr.style.display='block';}catch(e){qr.style.display='none';}}},700);
  const privacy=d.createElement('p');privacy.textContent='Keep the code private: it connects devices to your watch history. Keep a copy if you want to pair another device later. Local progress works offline; inactive cloud backups are cleared after 180 days.';panel.appendChild(privacy);
+ input.focus();
 }
 module.exports={request,connect,disconnect,show,config,get status(){return status;}};

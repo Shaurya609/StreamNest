@@ -15,7 +15,7 @@ import org.videolan.libvlc.Media;
 public class PlaybackRegression extends Instrumentation {
   PlayerActivity activity;
   String watchSyncCode;
-  boolean catalog, subtitles, storage, resilience, episodes, appUpdates;
+  boolean catalog, subtitles, storage, resilience, episodes, appUpdates, watchSyncUi;
 
   @Override
   public void onCreate(Bundle args) {
@@ -27,11 +27,22 @@ public class PlaybackRegression extends Instrumentation {
     resilience = args != null && "true".equals(args.getString("resilience"));
     episodes = args != null && "true".equals(args.getString("episodes"));
     appUpdates = args != null && "true".equals(args.getString("appUpdates"));
+    watchSyncUi = args != null && "true".equals(args.getString("watchSyncUi"));
     start();
   }
 
   @Override
   public void onStart() {
+    if (watchSyncUi) {
+      Bundle result = new Bundle();
+      try {
+        finish(Activity.RESULT_OK, WatchSyncUiRegression.run(this));
+      } catch (Throwable error) {
+        result.putString("result", "FAIL: " + error);
+        finish(Activity.RESULT_CANCELED, result);
+      }
+      return;
+    }
     if (watchSyncCode != null) {
       Bundle result = new Bundle();
       try {

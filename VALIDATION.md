@@ -113,3 +113,10 @@ Built locally from commit 30742955e184231918c8d2dd48342d3eed142680 while GitHub 
 - Final 0.13.2 packaged native handoff probe passed. Windows CI 42019463031 passed, including native handoff/restart and real per-user installer checks; Android CI 42019463026 passed.
 - Applied the local 0.12.0 → 0.13.2 repair through the real installer after gracefully closing only StreamNest. All five pre-existing saved profile files retained exactly the same SHA256 hashes. Confirmed installed package version 0.13.2, then relaunched it.
 - Confirmed the running local installation is 0.13.2 and its updater matches the repaired source byte-for-byte. A post-publication status probe initially returned false without recording the panel message; added panel-status diagnostics and the fresh rerun returned “StreamNest is up to date” with verified native download handling. No cause is claimed for the first probe.
+
+## Desktop 0.13.3 sync dialog and Android verification
+
+- Reproduced the actual desktop Settings-button route: panel existed at y=826 with an 826px viewport. CSS.supports(inset,12%) returned false in bundled Chromium. Explicit top/right/bottom/left produced a fully visible panel at y=66, height=694 in the same viewport.
+- Native Settings UI probe passed visible dialog bounds, invalid-code feedback, live group creation and QR rendering, all five readable controls, Sync now, disconnect/QR clearing, close/reopen and disposable cloud group deletion. Added this probe to Windows CI.
+- Tablet instrumentation clicked the real Settings row and opened WatchSyncActivity, checked visible input, invalid-code reporting and valid QR rendering/clearing. Saved pairing/account was untouched. No production Android change was needed.
+- Live encrypted cross-device rerun passed: desktop 125 seconds restored on Android; deliberate Android rewind to 45 seconds restored on desktop. Test pairing/history were isolated and cloud group deleted. All 57 desktop/catalog/updater/backend checks passed.
