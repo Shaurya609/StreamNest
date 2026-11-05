@@ -176,3 +176,5 @@ Final 0.16.0 live update-feed verification accepted Android code24/version0.16.0
 Actual tablet update follow-up: the 0.15.1 launch did not produce an update file on its first check. Opening Settings > Check for updates downloaded 0.16.0; its universal APK SHA-256 matched the published artifact. Android installation confirmation requested. No direct APK installation was used for the production app.
 
 Actual installed tablet subsequently reported 0.16.0/code24. Production-app targeted pairing screen passed QR decoding, camera-link short-code prefilling and invalid-input handling without changing saved pairing. A fresh disposable desktop-created ticket was redeemed/decrypted by the installed Android app; second redemption was rejected.
+
+Normal installed-app entry was also verified using the tablet UI: Settings > Resume & sync devices opened the 0.16.0 screen with eight-character input, Show pairing code and Show recovery key controls. The automated Settings instrumentation had stalled behind the Android install-completion screen and was stopped; this UI check replaced that blocked navigation check.
