@@ -42,6 +42,7 @@
         try{
           await App.Updater.check();
           const text=document.body.innerText;
+          result.updateStatus=Array.from(document.querySelectorAll('div')).filter(n=>n.style.zIndex==='99999'&&n.style.right==='20px').map(n=>n.innerText).join(' | ');
           result.updateCheckPassed=text.includes('StreamNest is up to date.');
           const net=require('https'),original=net.get,bytes=Buffer.from('native runtime updater fixture'),hash=require('crypto').createHash('sha256').update(bytes).digest('hex');
           const artifact={url:'https://github.com/Shaurya609/StreamNest/releases/download/test/update-fixture.exe',bytes:bytes.length,sha256:hash};

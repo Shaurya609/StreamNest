@@ -112,3 +112,4 @@ Built locally from commit 30742955e184231918c8d2dd48342d3eed142680 while GitHub 
 
 - Final 0.13.2 packaged native handoff probe passed. Windows CI 42019463031 passed, including native handoff/restart and real per-user installer checks; Android CI 42019463026 passed.
 - Applied the local 0.12.0 → 0.13.2 repair through the real installer after gracefully closing only StreamNest. All five pre-existing saved profile files retained exactly the same SHA256 hashes. Confirmed installed package version 0.13.2, then relaunched it.
+- Confirmed the running local installation is 0.13.2 and its updater matches the repaired source byte-for-byte. A post-publication status probe initially returned false without recording the panel message; added panel-status diagnostics and the fresh rerun returned “StreamNest is up to date” with verified native download handling. No cause is claimed for the first probe.
