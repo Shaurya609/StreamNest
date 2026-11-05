@@ -21,7 +21,7 @@ text=base64.b64decode(source['content']).decode();code=int(re.search(r'versionCo
 assert re.search(r"versionName\s+'"+re.escape(av)+"'",text),'Release source version mismatch'
 now=int(time.time()*1000)
 doc={'schema':1,'product':'StreamNest','generatedAt':now,'expiresAt':now+90*86400000,
- 'android':{'version':av,'versionCode':code,'minSdk':28,'artifacts':{'universal':asset(a,'StreamNest-'+av+'-universal.apk')}},
+ 'android':{'version':av,'versionCode':code,'minSdk':int(re.search(r'minSdk\s+(\d+)',text).group(1)),'artifacts':{'universal':asset(a,'StreamNest-'+av+'-universal.apk')}},
  'windows':{'version':wv,'artifact':asset(w,'StreamNest-Desktop-'+wv+'-win-x64-Setup.exe')}}
 payload=json.dumps(doc,separators=(',',':')).encode();key=serialization.load_pem_private_key(Path(args.key).read_bytes(),password=None)
 signature=key.sign(payload,padding.PKCS1v15(),hashes.SHA256())

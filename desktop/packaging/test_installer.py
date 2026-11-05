@@ -3,7 +3,7 @@ from pathlib import Path
 import argparse, json, os, subprocess, time, uuid, winreg
 
 ROOT=Path(__file__).resolve().parents[2]
-parser=argparse.ArgumentParser();parser.add_argument('--installer',type=Path,required=True);parser.add_argument('--upgrade-from',type=Path);args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument('--installer',type=Path,required=True);parser.add_argument('--upgrade-from',type=Path);parser.add_argument('--verify-no-shortcut',action='store_true');args=parser.parse_args()
 key=r'Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest'
 for view in (winreg.KEY_WOW64_32KEY,winreg.KEY_WOW64_64KEY):
     try:
@@ -30,6 +30,11 @@ assert account.read_bytes()==account_before and preferences.read_bytes()==prefer
 assert (target/'StreamNest.exe').is_file(),'Installer did not produce the executable'
 assert json.loads((target/'package.json').read_text(encoding='utf8'))['name']=='StreamNest'
 assert shortcut.is_file(),'Installer did not create the desktop shortcut'
+if args.verify_no_shortcut:
+    shortcut.replace(target.parent/'test-shortcut-disabled.lnk')
+    subprocess.run([str(args.installer.resolve()),'/S','/UPDATE','/D='+str(target)],check=True,env=test_env)
+    assert not shortcut.exists(),'Automatic update recreated a disabled desktop shortcut'
+    assert account.read_bytes()==account_before and preferences.read_bytes()==preferences_before,'Repeated upgrade changed profile'
 # An uninstaller must not recursively erase user-added files.
 sentinel=target/'user-added-keep.txt';sentinel.write_text('preserve',encoding='utf8')
 subprocess.run([str(target/'Uninstall.exe'),'/S','_?='+str(target)],check=True)
@@ -39,4 +44,4 @@ for i in range(80):
 assert not (target/'StreamNest.exe').exists(),'Uninstall did not remove the app'
 assert not shortcut.exists(),'Uninstaller left the desktop shortcut behind'
 assert sentinel.read_text(encoding='utf8')=='preserve','Uninstall removed a user-added file'
-print(json.dumps({'ok':True,'perUserInstall':True,'executableInstalled':True,'uninstallPreservedUserFiles':True,'upgradeProfilePreserved':True,'upgradeFromPrevious':bool(args.upgrade_from),'testFolder':str(target)}))
+print(json.dumps({'ok':True,'perUserInstall':True,'executableInstalled':True,'uninstallPreservedUserFiles':True,'upgradeProfilePreserved':True,'upgradeFromPrevious':bool(args.upgrade_from),'shortcutOptOutPreserved':bool(args.verify_no_shortcut),'testFolder':str(target)}))

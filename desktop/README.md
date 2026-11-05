@@ -1,4 +1,4 @@
-Current release: [desktop 0.11.0 standalone preview](https://github.com/Shaurya609/StreamNest/releases/tag/desktop-v0.11.1). The 0.11.0 overlay also includes subtitle session/download/display fixes and pinned anime paging. See [validation](../VALIDATION.md) for remaining TV and synchronization checks.
+Current release: [desktop 0.12.0 standalone preview](https://github.com/Shaurya609/StreamNest/releases/tag/desktop-v0.12.0). The 0.11.0 overlay also includes subtitle session/download/display fixes and pinned anime paging. See [validation](../VALIDATION.md) for remaining TV and synchronization checks.
 
 Standalone Windows x64 preview: see [STANDALONE.md](STANDALONE.md). The instructions below apply to the separate legacy overlay patch.
 

@@ -84,3 +84,5 @@ Built locally from commit 30742955e184231918c8d2dd48342d3eed142680 while GitHub 
 - Android TV/projector system installation prompts still need device-specific verification. Tablet checks do not establish confirmation behavior on every firmware. Windows helper UI click-through and interrupted-installer recovery remain broader validation areas.
 
 - Windows 0.11.1 to 0.12.0 silent `/UPDATE` installation passed in a generated folder. Test settings and account byte files were unchanged, the desktop shortcut was retained, and uninstall preserved user-added files. The original user shortcut was restored after the isolated check. Actual bundled NW.js verified the live signed feed and streamed/checksummed a controlled installer fixture successfully.
+
+- Final totals: 148 Android unit tests and 50 desktop/publisher tests. Windows automatic `/UPDATE` preserved a deliberately absent desktop shortcut on a repeated upgrade as well as the initial present shortcut. Both published platform releases and the combined main-page artifacts matched local SHA256 digests and sizes. The signed feed was regenerated for Android 0.12.0/versionCode 19 and Windows 0.12.0.
