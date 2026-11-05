@@ -17,7 +17,9 @@ assert struct.unpack_from('<HHH',icon)==(0,1,7),'Expected multiresolution ICO'
 settings=(app/'src/app/settings.js').read_text(encoding='utf8')
 assert not re.search(r"(?:client_id|client_secret|api_key):\s*'[^']+'",settings),'Vendor application key remained in payload'
 assert (app/'node_modules/butter-settings-popcorntime.app/index.js').read_text(encoding='utf8').strip()=='module.exports = {};'
-assert 'updateDHTOld: function() { return Promise.resolve(); }' in (app/'src/app/updater.js').read_text(encoding='utf8')
+assert 'updateDHTOld:()=>Promise.resolve()' in (app/'src/app/updater.js').read_text(encoding='utf8')
+assert (app/'src/app/update-public-key.pem').is_file()
+assert (app/'src/app/update-download.js').is_file()
 assert (app/'LICENSE.txt').is_file() and (app/'third-party/npm-inventory.json').is_file()
 assert (app/'node_modules/webtorrent/package.json').is_file()
 assert (app/'src/app/themes/Official_-_Dark_theme.css').is_file()

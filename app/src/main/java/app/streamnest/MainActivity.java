@@ -71,6 +71,7 @@ public class MainActivity extends Activity {
   public void onCreate(Bundle state) {
     super.onCreate(state);
     PlaybackCache.enter(this);
+    ui.postDelayed(() -> AppUpdateActivity.launchCheck(this), 4000);
     // Refresh the selected anonymous service without blocking catalog or UI work.
     new Thread(
             () -> {
@@ -975,7 +976,8 @@ public class MainActivity extends Activity {
               "Cache folder & Low Memory mode",
               "Open torrent",
               "Test film",
-              "Exit StreamNest"
+              "Exit StreamNest",
+              "Check for updates"
             },
             (d, n) -> {
               if (n == 0) catalogSettings();
@@ -983,6 +985,7 @@ public class MainActivity extends Activity {
               else if (n == 2) startActivity(new Intent(this, PlaybackSettingsActivity.class));
               else if (n == 3) openLink();
               else if (n == 5) exitApp();
+              else if (n == 6) startActivity(new Intent(this, AppUpdateActivity.class));
               else
                 play(
                     "Big Buck Bunny · public test film",

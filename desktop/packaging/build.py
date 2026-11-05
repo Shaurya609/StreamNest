@@ -97,7 +97,7 @@ def assemble(skip_install=False):
         source = UPSTREAM / 'node_modules' / name
         if source.is_dir(): shutil.copytree(source, production / name, dirs_exist_ok=True)
     for source in (DESKTOP / 'standalone').rglob('*'):
-        if source.suffix in ('.js', '.tpl'):
+        if source.suffix in ('.js', '.tpl', '.pem'):
             target = app / 'src/app' / source.relative_to(DESKTOP / 'standalone')
             if source.name == 'trakttv.js': target = app / 'src/app/lib/providers/trakttv.js'
             if source.name == 'disclaimer.tpl': target = app / 'src/app/templates/disclaimer.tpl'

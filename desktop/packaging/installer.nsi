@@ -2,6 +2,9 @@ Unicode true
 !include "MUI2.nsh"
 !include "x64.nsh"
 !include "nsDialogs.nsh"
+!include "FileFunc.nsh"
+Var UpdateParameters
+Var UpdateMode
 Var ShortcutChoice
 Var ShortcutCheckbox
 Name "StreamNest"
@@ -21,10 +24,10 @@ Page custom ShortcutOptions ShortcutOptionsLeave
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_LANGUAGE "English"
-VIProductVersion "0.11.1.0"
+VIProductVersion "0.12.0.0"
 VIAddVersionKey /LANG=1033 "ProductName" "StreamNest"
 VIAddVersionKey /LANG=1033 "FileDescription" "StreamNest per-user installer"
-VIAddVersionKey /LANG=1033 "FileVersion" "0.11.1"
+VIAddVersionKey /LANG=1033 "FileVersion" "0.12.0"
 VIAddVersionKey /LANG=1033 "LegalCopyright" "StreamNest contributors; Popcorn Time and Butter Project contributors"
 Function ShortcutOptions
   !insertmacro MUI_HEADER_TEXT "Installation options" "Choose your shortcuts."
@@ -39,7 +42,17 @@ Function ShortcutOptionsLeave
   ${NSD_GetState} $ShortcutCheckbox $ShortcutChoice
 FunctionEnd
 Function .onInit
+  SetShellVarContext current
   StrCpy $ShortcutChoice ${BST_CHECKED}
+  ${GetParameters} $UpdateParameters
+  ClearErrors
+  ${GetOptions} $UpdateParameters "/UPDATE" $UpdateMode
+  ${IfNot} ${Errors}
+    StrCpy $UpdateMode "yes"
+    StrCpy $ShortcutChoice ${BST_UNCHECKED}
+    IfFileExists "$DESKTOP\StreamNest.lnk" 0 +2
+      StrCpy $ShortcutChoice ${BST_CHECKED}
+  ${EndIf}
   ${IfNot} ${RunningX64}
     MessageBox MB_OK "StreamNest requires 64-bit Windows."
     Abort
@@ -73,7 +86,7 @@ Section "StreamNest"
       ClearErrors
   ${EndIf}
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "DisplayName" "StreamNest"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "DisplayVersion" "0.11.1"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "DisplayVersion" "0.12.0"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "UninstallString" '$\"$INSTDIR\Uninstall.exe$\"'
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "InstallLocation" "$INSTDIR"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "DisplayIcon" "$INSTDIR\StreamNest.exe"

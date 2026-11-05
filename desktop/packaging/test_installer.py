@@ -3,7 +3,7 @@ from pathlib import Path
 import argparse, json, os, subprocess, time, uuid, winreg
 
 ROOT=Path(__file__).resolve().parents[2]
-parser=argparse.ArgumentParser();parser.add_argument('--installer',type=Path,required=True);args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument('--installer',type=Path,required=True);parser.add_argument('--upgrade-from',type=Path);args=parser.parse_args()
 key=r'Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest'
 for view in (winreg.KEY_WOW64_32KEY,winreg.KEY_WOW64_64KEY):
     try:
@@ -16,7 +16,17 @@ desktop=Path(subprocess.check_output(['powershell','-NoProfile','-Command',"[Env
 shortcut=desktop/'StreamNest.lnk'
 assert not shortcut.exists(),'Existing desktop shortcut must be preserved; use a clean test profile'
 target.parent.mkdir(parents=True)
-subprocess.run([str(args.installer.resolve()),'/S','/D='+str(target)],check=True)
+test_env=dict(os.environ,LOCALAPPDATA=str(target.parent/'Local'),APPDATA=str(target.parent/'Roaming'))
+profile=Path(test_env['LOCALAPPDATA'])/'StreamNest/Profile'
+profile.mkdir(parents=True)
+preferences=profile/'upgrade-settings-sentinel.json'
+preferences.write_text('{"subtitleMode":"anonymous","cacheFolder":"custom","autoNext":false}',encoding='utf8')
+account=profile/'encrypted-account-sentinel.bin';account.write_bytes(os.urandom(128))
+account_before=account.read_bytes();preferences_before=preferences.read_bytes()
+if args.upgrade_from:
+    subprocess.run([str(args.upgrade_from.resolve()),'/S','/D='+str(target)],check=True,env=test_env)
+subprocess.run([str(args.installer.resolve()),'/S',*(['/UPDATE'] if args.upgrade_from else []),'/D='+str(target)],check=True,env=test_env)
+assert account.read_bytes()==account_before and preferences.read_bytes()==preferences_before,'Upgrade changed profile/account files' 
 assert (target/'StreamNest.exe').is_file(),'Installer did not produce the executable'
 assert json.loads((target/'package.json').read_text(encoding='utf8'))['name']=='StreamNest'
 assert shortcut.is_file(),'Installer did not create the desktop shortcut'
@@ -29,4 +39,4 @@ for i in range(80):
 assert not (target/'StreamNest.exe').exists(),'Uninstall did not remove the app'
 assert not shortcut.exists(),'Uninstaller left the desktop shortcut behind'
 assert sentinel.read_text(encoding='utf8')=='preserve','Uninstall removed a user-added file'
-print(json.dumps({'ok':True,'perUserInstall':True,'executableInstalled':True,'uninstallPreservedUserFiles':True,'testFolder':str(target)}))
+print(json.dumps({'ok':True,'perUserInstall':True,'executableInstalled':True,'uninstallPreservedUserFiles':True,'upgradeProfilePreserved':True,'upgradeFromPrevious':bool(args.upgrade_from),'testFolder':str(target)}))
