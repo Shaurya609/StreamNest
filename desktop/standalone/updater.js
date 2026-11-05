@@ -70,13 +70,13 @@
  async function check(manual){
   if(running)return;running=true;
   try{
-   if(manual)show('Checking for updatesâ€¦',false);
+   if(manual)show('Checking for updates...',false);
    const doc=accept(await downloads.manifest(fs.readFileSync(path.join(path.dirname(process.execPath),'src/app/update-public-key.pem'))));
    const item=doc.windows;policy.artifact(item.artifact);
    if(!policy.newer(item.version,nw.App.manifest.version)){try{for(const name of fs.readdirSync(root))if(/^[a-f0-9]{64}\.exe$/.test(name))fs.unlinkSync(path.join(root,name));}catch(ignore){}if(manual)show('StreamNest is up to date.',false);return;}
    version=item.version;
-   if(manual)show('Downloading StreamNest '+version+'â€¦',false);
-   const file=await downloads.download(item.artifact,root,(done,total)=>{if(panel)show('Downloading update Â· '+Math.floor(done*100/total)+'%',false);});
+   if(manual)show('Downloading StreamNest '+version+'...',false);
+   const file=await downloads.download(item.artifact,root,(done,total)=>{if(panel)show('Downloading update - '+Math.floor(done*100/total)+'%',false);});
    ready={file,item:item.artifact};
    if(!playing())show('StreamNest '+version+' is ready. Install and restart when convenient.',true);
   }catch(error){if(manual)show('Could not update: '+error.message,false);}
