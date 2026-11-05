@@ -15,7 +15,7 @@ import org.videolan.libvlc.Media;
 public class PlaybackRegression extends Instrumentation {
   PlayerActivity activity;
   String watchSyncCode, shortPairingCode, expectedPairingAuth;
-  boolean skipLive, catalog, subtitles, storage, resilience, episodes, appUpdates, watchSyncUi, resumeUi;
+  boolean pairingUiDirect, skipLive, catalog, subtitles, storage, resilience, episodes, appUpdates, watchSyncUi, resumeUi;
 
   @Override
   public void onCreate(Bundle args) {
@@ -32,6 +32,7 @@ public class PlaybackRegression extends Instrumentation {
     skipLive = args != null && "true".equals(args.getString("skipLive"));
     shortPairingCode = args == null ? null : args.getString("shortPairingCode");
     expectedPairingAuth = args == null ? null : args.getString("expectedPairingAuth");
+    pairingUiDirect = args != null && "true".equals(args.getString("pairingUiDirect"));
     start();
   }
 
@@ -77,10 +78,10 @@ public class PlaybackRegression extends Instrumentation {
       catch(Throwable error) {result.putString("result","FAIL: "+error);finish(Activity.RESULT_CANCELED,result);}
       return;
     }
-    if (watchSyncUi) {
+    if (watchSyncUi || pairingUiDirect) {
       Bundle result = new Bundle();
       try {
-        finish(Activity.RESULT_OK, WatchSyncUiRegression.run(this));
+        finish(Activity.RESULT_OK, WatchSyncUiRegression.run(this, pairingUiDirect));
       } catch (Throwable error) {
         result.putString("result", "FAIL: " + error);
         finish(Activity.RESULT_CANCELED, result);

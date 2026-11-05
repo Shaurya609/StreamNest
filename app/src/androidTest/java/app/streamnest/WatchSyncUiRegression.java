@@ -9,7 +9,7 @@ import android.view.accessibility.AccessibilityNodeInfo;
 
 /** Opens the real Settings row; never changes the user's saved pairing or accounts. */
 final class WatchSyncUiRegression {
-  static Bundle run(PlaybackRegression p) throws Exception {
+  static Bundle run(PlaybackRegression p, boolean direct) throws Exception {
     MainActivity main = null;
     WatchSyncActivity screen = null;
     String expectedPairingUri = WatchSync.endpoint(p.getTargetContext()) + "/pair#K7MP%204RXT";
@@ -18,6 +18,11 @@ final class WatchSyncUiRegression {
     Instrumentation.ActivityMonitor monitor =
         p.addMonitor(WatchSyncActivity.class.getName(), null, false);
     try {
+      if (direct) {
+        screen = (WatchSyncActivity) p.startActivitySync(
+            new Intent(p.getTargetContext(), WatchSyncActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+      } else {
       main = (MainActivity) p.startActivitySync(
           new Intent(p.getTargetContext(), MainActivity.class)
               .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
@@ -41,6 +46,7 @@ final class WatchSyncUiRegression {
       if (!clicked) throw new AssertionError("Settings sync row was not clickable");
       screen = (WatchSyncActivity) p.waitForMonitorWithTimeout(monitor, 5000);
       if (screen == null) throw new AssertionError("Sync row did not open its screen");
+      }
       WatchSyncActivity sync = screen;
       p.runOnMainSync(() -> {
         Rect rect = new Rect();
@@ -75,8 +81,19 @@ final class WatchSyncUiRegression {
         if (sync.qr.getVisibility() != View.GONE)
           throw new AssertionError("Empty pairing code retained its QR");
       });
+      WatchSyncActivity oldScreen = screen;
+      p.runOnMainSync(oldScreen::finish);
+      screen = (WatchSyncActivity) p.startActivitySync(
+          new Intent(p.getTargetContext(), WatchSyncActivity.class)
+              .setData(android.net.Uri.parse("streamnest-watch://pair/K7MP%204RXT"))
+              .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+      WatchSyncActivity linked = screen;
+      p.runOnMainSync(() -> {
+        if (!"K7MP 4RXT".contentEquals(linked.code.getText()))
+          throw new AssertionError("Camera link did not prefill the short code");
+      });
       Bundle result = new Bundle();
-      result.putString("result", "PASS: real Settings row opened visible sync input; invalid code reported; valid QR rendered and cleared; saved pairing untouched");
+      result.putString("result", "PASS: sync input visible; invalid code reported; QR decoded; camera link prefilled short code; saved pairing untouched");
       return result;
     } finally {
       if (screen != null) p.runOnMainSync(screen::finish);
