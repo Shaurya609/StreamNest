@@ -18,6 +18,7 @@
         },
 
         events: {
+            'click #streamnestSyncOpen': 'openWatchSync',
             'click .keyboard': 'showKeyboard',
             'click .help': 'showHelp',
             'click .about': 'showAbout',
@@ -820,6 +821,8 @@
             }
 
         },
+
+        openWatchSync: function(){require('./butter-provider/streamnest-sync').show(window);},
 
         anonymousOpensubtitles: function (e) {
             if(e) e.preventDefault();

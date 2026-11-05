@@ -96,6 +96,7 @@ def assemble(skip_install=False):
         name = item['name'].rsplit('@', 1)[0]
         source = UPSTREAM / 'node_modules' / name
         if source.is_dir(): shutil.copytree(source, production / name, dirs_exist_ok=True)
+    shutil.copytree(DESKTOP / 'packaging/node_modules/qrcode-generator', production / 'qrcode-generator', dirs_exist_ok=True)
     for source in (DESKTOP / 'standalone').rglob('*'):
         if source.suffix in ('.js', '.tpl', '.pem'):
             target = app / 'src/app' / source.relative_to(DESKTOP / 'standalone')

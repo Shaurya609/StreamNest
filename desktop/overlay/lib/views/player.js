@@ -215,6 +215,7 @@
                 App.vent.trigger(type + ':watched', this.model.attributes, 'database');
             }
 
+            this.persistProgress(false);
             // remember position
             if (this.video.currentTime() / this.video.duration() < 0.8) {
                 AdvSettings.set('lastWatchedTitle', this.model.get('title'));
@@ -242,6 +243,7 @@
         },
 
         onPlayerEnded: function () {
+            if(this.persistProgress)this.persistProgress(true);
             const tm=this.model.get('torrentModel'),P=require('./butter-provider/streamnest-playback');
             if(tm&&tm.get('type')==='episode'){
                 if(this._streamnestEnded||!P.completed(Math.max(this._streamnestPosition||0,this.video.currentTime()),Math.max(this._streamnestLength||0,this.video.duration()),this._streamnestPlayed,false))return;
@@ -340,8 +342,9 @@
 
             this.setupEpisodeControls();
             // resume position
-            if (!(tm&&tm.get('streamnestFromBeginning')) && Settings.lastWatchedTitle === this.model.get('title') && Settings.lastWatchedTime > 0) {
-                var position = Settings.lastWatchedTime;
+            const savedPosition=require('./butter-provider/streamnest-progress').read(tm?tm.attributes:this.model.attributes,Settings.lastWatchedTitle===this.model.get('title')?Settings.lastWatchedTime:0);
+            if (!(tm&&tm.get('streamnestFromBeginning')) && savedPosition > 0) {
+                var position = savedPosition;
                 win.info('Resuming position to', position.toFixed(), 'secs');
                 this.player.currentTime(position);
             } else if (!(tm&&tm.get('streamnestFromBeginning')) && Settings.traktPlayback) {
@@ -393,6 +396,7 @@
         },
 
         onPlayerPause: function () {
+            this.persistProgress(false);
             if (this.player.scrubbing) {
                 this.wasSeek = true;
             } else {
@@ -571,6 +575,13 @@
             this.player.on('loadeddata', this.onPlayerReady.bind(this));
             this.player.on('play', this.onPlayerPlay.bind(this));
             this.player.on('pause', this.onPlayerPause.bind(this));
+            this.player.on('timeupdate',()=>{
+                const position=this.video.currentTime(),duration=this.video.duration();
+                if(position>1&&!this.video.paused())this._progressPlayed=true;
+                if(this._progressPlayed&&Date.now()-(this._progressSavedAt||0)>=10000){
+                    if(!this.video.paused())this.persistProgress(false);this._progressSavedAt=Date.now();
+                }
+            });
             this.player.on('error', this.onPlayerError.bind(this));
 
             this.metadataCheck();
@@ -635,6 +646,14 @@
             this.prevSub = this.model.get('defaultSubtitle') === 'none' && Settings.subtitle_language !== 'none' ? $('.vjs-menu-item:contains("' + App.Localization.langcodes[Settings.subtitle_language].nativeName +'")')[0] || $('.vjs-selected')[0] : $('.vjs-selected')[0];
         },
 
+        persistProgress: function(completed){
+            if(!this.video||!(this._progressPlayed||this._streamnestPlayed))return;
+            const model=this.model.get('torrentModel'),attrs=model?model.attributes:this.model.attributes,P=require('./butter-provider/streamnest-progress');
+            const duration=this.video.duration(),position=completed?duration:this.video.currentTime(),key=P.identity(attrs);
+            if(!(duration>0)||!Number.isFinite(position)||position<0)return;
+            if(!completed&&key===this._progressLastKey&&Math.abs(position-this._progressLastPosition)<1)return;
+            this._progressLastKey=key;this._progressLastPosition=position;P.save(attrs,position,duration);
+        },
         sendToTrakt: function (method) {
             if (!this.video) {
                 return;

@@ -30,6 +30,9 @@ assert account.read_bytes()==account_before and preferences.read_bytes()==prefer
 assert (target/'StreamNest.exe').is_file(),'Installer did not produce the executable'
 assert json.loads((target/'package.json').read_text(encoding='utf8'))['name']=='StreamNest'
 assert shortcut.is_file(),'Installer did not create the desktop shortcut'
+with winreg.OpenKey(winreg.HKEY_CURRENT_USER,key) as registered:
+    display_icon=winreg.QueryValueEx(registered,'DisplayIcon')[0]
+assert display_icon=='"'+str(target/'src/app/images/streamnest.ico')+'",0','Registration must reference the dedicated multi-size icon'
 if args.verify_no_shortcut:
     shortcut.replace(target.parent/'test-shortcut-disabled.lnk')
     subprocess.run([str(args.installer.resolve()),'/S','/UPDATE','/D='+str(target)],check=True,env=test_env)

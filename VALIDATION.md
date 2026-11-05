@@ -86,3 +86,12 @@ Built locally from commit 30742955e184231918c8d2dd48342d3eed142680 while GitHub 
 - Windows 0.11.1 to 0.12.0 silent `/UPDATE` installation passed in a generated folder. Test settings and account byte files were unchanged, the desktop shortcut was retained, and uninstall preserved user-added files. The original user shortcut was restored after the isolated check. Actual bundled NW.js verified the live signed feed and streamed/checksummed a controlled installer fixture successfully.
 
 - Final totals: 148 Android unit tests and 50 desktop/publisher tests. Windows automatic `/UPDATE` preserved a deliberately absent desktop shortcut on a repeated upgrade as well as the initial present shortcut. Both published platform releases and the combined main-page artifacts matched local SHA256 digests and sizes. The signed feed was regenerated for Android 0.12.0/versionCode 19 and Windows 0.12.0.
+
+## 0.13.0 private resume sync
+
+- Android unit tests/build/lint passed. Desktop, catalog, updater and backend tests passed (57 checks).
+- Deployed the free Cloudflare Worker and D1 schema. Live encrypted roundtrip and separate-group isolation passed; disposable groups were deleted.
+- Real desktop client saved 125 seconds; tablet client restored 125000 ms, saved a rewind to 45000 ms, and desktop restored 45 seconds through the deployed backend. Test history and pairing were isolated from user settings/accounts.
+- Hidden Windows startup and native signed-update/download probes passed. Payload verification found ten icon sizes, no bundled user state and no shared upstream vendor credentials.
+- Actual desktop player control handlers passed intro seek and active-range visibility checks. Live IntroDB returned One Piece S1E1 intro/outro timestamps and Percy Jackson S1E1 outro only. AniSkip returned HTTP 403 from this network; fallback availability is not claimed. Timestamp coverage and matching release runtimes remain required.
+- Fresh tablet decoded-video skip verification initially failed while the lock screen covered the player; an unlocked rerun is pending. Earlier decoded-fixture checks do not establish coverage for every streaming release or TV firmware.

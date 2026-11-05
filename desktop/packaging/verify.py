@@ -13,7 +13,7 @@ binary=(app/'StreamNest.exe').read_bytes();offset=struct.unpack_from('<I',binary
 assert binary[:2]==b'MZ' and binary[offset:offset+4]==b'PE\0\0'
 assert struct.unpack_from('<H',binary,offset+4)[0]==0x8664,'Expected x64 executable'
 icon=(app/'src/app/images/streamnest.ico').read_bytes()
-assert struct.unpack_from('<HHH',icon)==(0,1,7),'Expected multiresolution ICO'
+assert struct.unpack_from('<HHH',icon)==(0,1,10),'Expected multiresolution ICO'
 settings=(app/'src/app/settings.js').read_text(encoding='utf8')
 assert not re.search(r"(?:client_id|client_secret|api_key):\s*'[^']+'",settings),'Vendor application key remained in payload'
 assert (app/'node_modules/butter-settings-popcorntime.app/index.js').read_text(encoding='utf8').strip()=='module.exports = {};'
@@ -23,4 +23,4 @@ assert (app/'src/app/update-download.js').is_file()
 assert (app/'LICENSE.txt').is_file() and (app/'third-party/npm-inventory.json').is_file()
 assert (app/'node_modules/webtorrent/package.json').is_file()
 assert (app/'src/app/themes/Official_-_Dark_theme.css').is_file()
-print(json.dumps({'ok':True,'version':manifest['version'],'executable':'x64','iconSizes':7,'userStateBundled':False,'sharedVendorKeysBundled':False}))
+print(json.dumps({'ok':True,'version':manifest['version'],'executable':'x64','iconSizes':10,'userStateBundled':False,'sharedVendorKeysBundled':False}))

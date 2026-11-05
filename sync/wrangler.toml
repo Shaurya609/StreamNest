@@ -1,0 +1,21 @@
+name = "streamnest-watch-sync"
+main = "worker.mjs"
+compatibility_date = "2025-10-01"
+workers_dev = true
+preview_urls = false
+
+[observability]
+enabled = false
+
+[[d1_databases]]
+binding = "DB"
+database_name = "streamnest-watch-sync"
+database_id = "77711bde-ef0b-4f3b-ae1e-b782c927dcc3"
+
+[[ratelimits]]
+name = "RATE"
+namespace_id = "6091301"
+simple = { limit = 60, period = 60 }
+
+[triggers]
+crons = ["23 4 * * *"]

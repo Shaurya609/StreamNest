@@ -10,7 +10,7 @@ test('credits skip retains post-credit content and interval controls disappear',
 test('AniSkip rejects mismatched release duration and unsupported segment types',()=>{const doc={found:true,results:[{skipType:'op',episodeLength:1440,interval:{startTime:30,endTime:120}}]};assert.equal(P.aniskip(doc,1440).length,1);assert.equal(P.aniskip(doc,1600).length,0);});
 test('timestamp service failure leaves playback usable',async()=>{assert.deepEqual(await P.segments(attrs,1440,async()=>{throw Error('offline');}),[]);});
 test('actual player ended handler advances only once and rejects early EOF',()=>{
- const vm=require('vm'),fs=require('fs'),path=require('path'),App={View:{}},context={window:{App},Marionette:{View:{extend:x=>x}},require:s=>require(path.resolve(__dirname,'../overlay',s))};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../overlay/lib/views/player.js'),'utf8'),context);
+ const vm=require('vm'),fs=require('fs'),path=require('path'),App={View:{}},context={window:{App},Marionette:{View:{extend:x=>x}},require:s=>s.includes('streamnest-progress')?{save:()=>{}}:require(path.resolve(__dirname,'../overlay',s))};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../overlay/lib/views/player.js'),'utf8'),context);
  let advanced=0,closed=0;const tm={get:k=>({type:'episode',auto_play:true}[k]),attributes:attrs};const player={model:{get:k=>k==='torrentModel'?tm:null},video:{currentTime:()=>1200,duration:()=>1200},_streamnestPlayed:true,navigateEpisode:()=>advanced++,closePlayer:()=>closed++};App.View.Player.onPlayerEnded.call(player);App.View.Player.onPlayerEnded.call(player);assert.equal(advanced,1);assert.equal(closed,0);
  player._streamnestEnded=false;player.video.currentTime=()=>300;App.View.Player.onPlayerEnded.call(player);assert.equal(advanced,1);
 });
@@ -19,7 +19,7 @@ test('actual player renders navigation with autoplay off and skips only the acti
  const vm=require('vm'),fs=require('fs'),path=require('path'),App={View:{}};let timer,seekTo;const created=[];
  function node(){return {attrs:{},props:{},handlers:{},find(){return node();},append(){return this;},attr(k,v){if(typeof k==='object')Object.assign(this.attrs,k);else if(v!==undefined)this.attrs[k]=v;else return this.attrs[k];return this;},prop(k,v){this.props[k]=v;return this;},on(k,v){this.handlers[k]=v;return this;},addClass(){return this;},add(){return this;},toggle(v){this.visible=v;return this;}};}
  const $=value=>{if(value&&value.attrs)return value;const n=node();if(typeof value==='string'&&value.startsWith('<button'))created.push(n);return n;};
- const context={window:{App},Marionette:{View:{extend:x=>x}},require:s=>require(path.resolve(__dirname,'../overlay',s)),$,Settings:{streamnestSkipButtons:false},setInterval:cb=>{timer=cb;return 1;}};
+ const context={window:{App},Marionette:{View:{extend:x=>x}},require:s=>s.includes('streamnest-progress')?{save:()=>{}}:require(path.resolve(__dirname,'../overlay',s)),$,Settings:{streamnestSkipButtons:false},setInterval:cb=>{timer=cb;return 1;}};
  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../overlay/lib/views/player.js'),'utf8'),context);
  const data={...attrs,episode:1,auto_play:false},tm={get:k=>k==='type'?'episode':data[k],attributes:data};const view={model:{get:k=>k==='torrentModel'?tm:null},player:{el:()=>({}),currentTime:p=>seekTo=p},video:{currentTime:()=>45,duration:()=>1440,paused:()=>false},isDestroyed:()=>false,navigateEpisode:()=>{}};
  App.View.Player.setupEpisodeControls.call(view);assert.equal(created.length,3);assert.equal(created[0].props.disabled,true);assert.equal(created[1].props.disabled,false);
@@ -28,3 +28,13 @@ test('actual player renders navigation with autoplay off and skips only the acti
 });
 
 test('MAL skip identity is attached only to explicit matching first-season episode mappings',()=>{const E=require('../overlay/butter-provider/streamnest-episodes');const rows=E.mapped({mappings:{imdb_id:'tt123',mal_id:21},episodes:{'1':{seasonNumber:1,episodeNumber:1},'2':{seasonNumber:2,episodeNumber:1}}},'tt123');assert.equal(rows[0].skipMalId,21);assert.equal(rows[1].skipMalId,0);});
+
+test('paused player does not rewrite stale progress; a rewind and completion are saved',()=>{
+ const vm=require('vm'),fs=require('fs'),path=require('path'),App={View:{}},saved=[];
+ const progress={identity:()=> 'episode:tt123:1:1',save:(a,p,d)=>saved.push({p,d})};
+ vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../overlay/lib/views/player.js'),'utf8'),{window:{App},Marionette:{View:{extend:x=>x}},require:()=>progress});
+ let position=125;const view={_progressPlayed:true,model:{get:()=>({attributes:attrs})},video:{duration:()=>1500,currentTime:()=>position}};
+ const persist=App.View.Player.persistProgress;persist.call(view,false);persist.call(view,false);
+ assert.equal(saved.length,1);position=45;persist.call(view,false);assert.equal(saved[1].p,45);
+ persist.call(view,true);assert.equal(saved[2].p,1500);
+});

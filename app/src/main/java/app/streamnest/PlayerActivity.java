@@ -23,7 +23,9 @@ public class PlayerActivity extends Activity {
   SkipSegments.Segment activeSegment;
   boolean changingEpisode, endedHandled, pendingAuto, skipRequested;
   int playbackVersion;
-  long lastPosition, lastLength;
+  long lastPosition, lastLength, lastProgressSave;
+  long savedPlaybackPosition = -1;
+  String savedPlaybackIdentity = "";
   final java.util.concurrent.ExecutorService episodeWorker =
       java.util.concurrent.Executors.newSingleThreadExecutor();
   SeekBar seek;
@@ -70,6 +72,7 @@ public class PlayerActivity extends Activity {
       return;
     }
     key = positionKey();
+    WatchSync.request(this, true);
     alternatives = AlternateEpisodes.decode(getIntent().getStringExtra("alternatives"));
     attemptStarted = SystemClock.elapsedRealtime();
     lastProgressAt = attemptStarted;
@@ -203,8 +206,12 @@ public class PlayerActivity extends Activity {
             setControlsVisible(true);
             status.setText("Playback failed. Stop and retry, or choose another source.");
           }
-          if (e.type == MediaPlayer.Event.EndReached) episodeEnded();
+          if (e.type == MediaPlayer.Event.EndReached) {
+            persistProgress(true);
+            episodeEnded();
+          }
           if (e.type == MediaPlayer.Event.Playing) scheduleHide();
+          if (e.type == MediaPlayer.Event.Paused) persistProgress(false);
           if (e.type == MediaPlayer.Event.Paused || e.type == MediaPlayer.Event.EndReached)
             setControlsVisible(true);
           if (e.type == MediaPlayer.Event.Playing && !opened) {
@@ -216,7 +223,10 @@ public class PlayerActivity extends Activity {
                     ? resumeAfterSwitch
                     : getIntent().getBooleanExtra("startFromBeginning", false)
                         ? 0
-                        : getPreferences(0).getLong(key, 0);
+                        : WatchProgress.read(
+                            this,
+                            WatchProgress.identity(getIntent(), key),
+                            getPreferences(0).getLong(key, 0));
             startupPosition = p;
             if (p > 0) player.setTime(p);
             getIntent().putExtra("startFromBeginning", false);
@@ -249,6 +259,20 @@ public class PlayerActivity extends Activity {
     loadEpisodeQueue();
     startStream();
     ui.post(tick);
+  }
+
+  void persistProgress(boolean completed) {
+    if (player == null || !playedVideo) return;
+    long duration = Math.max(lastLength, player.getLength()),
+        position = completed ? duration : player.getTime();
+    if (duration <= 0 || position < 0) return;
+    String identity = WatchProgress.identity(getIntent(), key);
+    if (!completed
+        && identity.equals(savedPlaybackIdentity)
+        && Math.abs(position - savedPlaybackPosition) < 1000) return;
+    savedPlaybackIdentity = identity;
+    savedPlaybackPosition = position;
+    WatchProgress.save(this, identity, position, duration);
   }
 
   String positionKey() {
@@ -826,6 +850,12 @@ public class PlayerActivity extends Activity {
           long len = player.getLength(), p = player.getTime();
           if (len > 0) lastLength = len;
           if (p >= 0) lastPosition = p;
+          if (playedVideo
+              && player.isPlaying()
+              && SystemClock.elapsedRealtime() - lastProgressSave >= 10000) {
+            persistProgress(false);
+            lastProgressSave = SystemClock.elapsedRealtime();
+          }
           if (mediaSet && playedVideo) requestSegments(len);
           updateSegment(p);
           if (pendingAuto
@@ -916,6 +946,7 @@ public class PlayerActivity extends Activity {
 
   @Override
   protected void onStop() {
+    persistProgress(false);
     if (player != null) {
       resumeOnReturn = !isFinishing() && player.isPlaying() && !userPaused;
       if (player.isPlaying()) player.pause();
@@ -936,6 +967,7 @@ public class PlayerActivity extends Activity {
     subtitleWorker.shutdownNow();
     ui.removeCallbacksAndMessages(null);
     if (player != null) {
+      persistProgress(false);
       getPreferences(0).edit().putLong(key, Math.max(0, player.getTime())).apply();
       player.stop();
       if (viewsAttached) player.detachViews();

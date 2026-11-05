@@ -16,19 +16,21 @@ final class SecretStore implements OrgSubtitles.Store {
   }
 
   private javax.crypto.SecretKey key() throws Exception {
-    KeyStore store = KeyStore.getInstance("AndroidKeyStore");
-    store.load(null);
-    if (!store.containsAlias(ALIAS)) {
-      KeyGenerator generator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
-      generator.init(
-          new KeyGenParameterSpec.Builder(
-                  ALIAS, KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
-              .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-              .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-              .build());
-      generator.generateKey();
+    synchronized (SecretStore.class) {
+      KeyStore store = KeyStore.getInstance("AndroidKeyStore");
+      store.load(null);
+      if (!store.containsAlias(ALIAS)) {
+        KeyGenerator generator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
+        generator.init(
+            new KeyGenParameterSpec.Builder(
+                    ALIAS, KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .build());
+        generator.generateKey();
+      }
+      return (javax.crypto.SecretKey) store.getKey(ALIAS, null);
     }
-    return (javax.crypto.SecretKey) store.getKey(ALIAS, null);
   }
 
   public synchronized void put(String name, String value) throws Exception {

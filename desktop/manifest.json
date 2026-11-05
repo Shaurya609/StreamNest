@@ -1,10 +1,10 @@
 {
-  "version": "0.11.0",
+  "version": "0.13.0",
   "target": "Popcorn Time 0.5.1",
   "files": [
     {
       "path": "bootstrap.js",
-      "sha256": "ad7527b26e478f39164d18b31da1b330a2104baadc862e3b0c501170045c655e"
+      "sha256": "5209367699bc3803162582acdf9d25f90e12d30aff3d7587fa6410345623f5b2"
     },
     {
       "path": "butter-provider/anime-series-v6.json",
@@ -103,6 +103,10 @@
       "sha256": "d6f0d089136697ed803cb985a01208f81fdf4d95708f99ebc7beb54046beed88"
     },
     {
+      "path": "butter-provider/streamnest-progress.js",
+      "sha256": "fea7224d5d2f863d3726da522b55dbbcb585b69db7ad69308b28e46a189f41af"
+    },
+    {
       "path": "butter-provider/streamnest-releases.js",
       "sha256": "6a3eccddba4b8173d82202cafbda48c6b81dedf7fe460c9cc1939ba9ac2963fe"
     },
@@ -119,8 +123,20 @@
       "sha256": "d98e87e53b79c8fd2f8d56e42bc8948471827a6f0fa2ef52804403c1e71af345"
     },
     {
+      "path": "butter-provider/streamnest-sync-crypto.js",
+      "sha256": "bb6f067a319ae65c87c95a60f08937782e2313caeeb3ede539996ec04da73298"
+    },
+    {
+      "path": "butter-provider/streamnest-sync.js",
+      "sha256": "ab727ecab3e41688242180c114b29164bf368d94a78deee26da91c0ed336b8d7"
+    },
+    {
       "path": "butter-provider/tv.js",
       "sha256": "f6abd3c689b6cf505a7acd3241e443af23532f8e58eb1f1e3afb46ae6f52ef87"
+    },
+    {
+      "path": "butter-provider/watch-sync.json",
+      "sha256": "34c85870306d158294d51ca4c763b04723d335b428361e6c2ff9f5a9b5b28cff"
     },
     {
       "path": "butter-provider/yts.js",
@@ -152,7 +168,7 @@
     },
     {
       "path": "lib/views/player.js",
-      "sha256": "05869663b7d38b840c72908e24d062687502617cdbae3c7ab958fdd5c7cbf230"
+      "sha256": "c718eb483b20a8b84bec682c08a1cab9513627a7ecf628271ded60b7d4771609"
     },
     {
       "path": "lib/views/quality_selector.js",
@@ -160,7 +176,7 @@
     },
     {
       "path": "lib/views/settings_container.js",
-      "sha256": "d4e9bc380654c67aa150358c9d65eac46578776b971f577b876225ff574a05e6"
+      "sha256": "d0e5da3379e60f33cecec1296749cd4b5d5c599ddb3ea7a64646a5368cd33c97"
     },
     {
       "path": "lib/views/show_detail.js",
@@ -176,7 +192,7 @@
     },
     {
       "path": "templates/settings-container.tpl",
-      "sha256": "f2772ddd59695e395ac8c488cdac3d4462d479a7c08cd554e59b8439cb697075"
+      "sha256": "3eb3c38cf89e4050ef5f9d08955a322b4d2bc4beb4abe366f17507a28d8c5d97"
     },
     {
       "path": "templates/show-detail.tpl",

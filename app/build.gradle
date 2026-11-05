@@ -2,12 +2,13 @@ plugins { id 'com.android.application' }
 android {
  namespace 'app.streamnest'
  compileSdk 36
- defaultConfig { applicationId 'app.streamnest'; minSdk 28; testInstrumentationRunner 'app.streamnest.PlaybackRegression'; targetSdk 35; versionCode 19; versionName '0.12.0'; ndk { abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64' } }
+ defaultConfig { applicationId 'app.streamnest'; minSdk 28; testInstrumentationRunner 'app.streamnest.PlaybackRegression'; targetSdk 35; versionCode 20; versionName '0.13.0'; ndk { abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64' } }
  splits { abi { enable true; reset(); include "armeabi-v7a", "arm64-v8a", "x86_64"; universalApk true } }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
  packaging { jniLibs { useLegacyPackaging = true } }
 }
 dependencies {
+ implementation 'com.google.zxing:core:3.5.3'
  implementation 'androidx.core:core:1.13.1'
  implementation 'org.libtorrent4j:libtorrent4j:2.1.0-39'
  implementation 'org.libtorrent4j:libtorrent4j-android-arm:2.1.0-39'

@@ -14,11 +14,13 @@ import org.videolan.libvlc.Media;
 /** Device-only regression; fixture is supplied locally, never bundled in the app. */
 public class PlaybackRegression extends Instrumentation {
   PlayerActivity activity;
+  String watchSyncCode;
   boolean catalog, subtitles, storage, resilience, episodes, appUpdates;
 
   @Override
   public void onCreate(Bundle args) {
     super.onCreate(args);
+    watchSyncCode = args == null ? null : args.getString("watchSyncCode");
     catalog = args != null && "true".equals(args.getString("catalog"));
     subtitles = args != null && "true".equals(args.getString("subtitles"));
     storage = args != null && "true".equals(args.getString("storage"));
@@ -30,6 +32,18 @@ public class PlaybackRegression extends Instrumentation {
 
   @Override
   public void onStart() {
+    if (watchSyncCode != null) {
+      Bundle result = new Bundle();
+      try {
+        result = WatchSyncRegression.run(this, watchSyncCode);
+        finish(Activity.RESULT_OK, result);
+      } catch (Throwable error) {
+        result.putString("result", "FAIL: " + error);
+        finish(Activity.RESULT_CANCELED, result);
+      }
+      return;
+    }
+
     if (appUpdates) {
       Bundle result = new Bundle();
       AppUpdateActivity screen = null;

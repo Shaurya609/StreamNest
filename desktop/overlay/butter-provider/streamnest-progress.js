@@ -1,0 +1,11 @@
+'use strict';
+const fs=require('fs'),path=require('path');
+function identity(a){const id=a.imdb_id||a.imdb||'';return /^tt\d+$/.test(id)?Number(a.episode)>0?'episode:'+id+':'+Number(a.season||0)+':'+Number(a.episode):'movie:'+id:'source:'+String(a.torrent||a.src||a.title||'');}
+function resumable(position,duration){return Number.isFinite(position)&&position>=10&&(!(duration>0)||(position<duration-10&&position<duration*0.98))?position:0;}
+function file(){return path.join(typeof nw!=='undefined'?nw.App.dataPath:require('os').tmpdir(),'streamnest-watch-progress-v1.json');}
+let cached;function load(){if(!cached){try{cached=JSON.parse(fs.readFileSync(file(),'utf8'));if(!cached||typeof cached!=='object'||Array.isArray(cached))cached={};}catch(e){cached={};}}return cached;}
+function read(a,legacy=0){const key=identity(a),rows=load();const row=rows[key];return row&&typeof row==='object'?resumable(Number(row.position),Number(row.duration)):Math.max(0,Number(legacy)||0);}
+function save(a,position,duration){if(!Number.isFinite(position)||!(duration>0))return;const rows=load();rows[identity(a)]={position:resumable(position,duration),duration,updatedAt:Math.max(Date.now(),Number(rows[identity(a)]&&rows[identity(a)].updatedAt||0)+1)};const keys=Object.keys(rows).sort((a,b)=>rows[b].updatedAt-rows[a].updatedAt);for(const key of keys.slice(2000))delete rows[key];try{require('./streamnest-sync').request();}catch(e){}const target=file();try{fs.writeFileSync(target+'.tmp',JSON.stringify(rows));fs.renameSync(target+'.tmp',target);}catch(e){}}
+function records(){const out={};for(const [key,row] of Object.entries(load()))out[key]={positionMs:Math.round(row.position*1000),durationMs:Math.round(row.duration*1000),updatedAt:row.updatedAt};return require('./streamnest-sync-crypto').clean(out);}
+function merge(incoming){const merged=require('./streamnest-sync-crypto').merge(records(),incoming),rows=load();for(const [key,row]of Object.entries(merged))rows[key]={position:row.positionMs/1000,duration:row.durationMs/1000,updatedAt:row.updatedAt};const target=file();try{fs.writeFileSync(target+'.tmp',JSON.stringify(rows));fs.renameSync(target+'.tmp',target);}catch(e){}}
+module.exports={identity,resumable,read,save,records,merge};

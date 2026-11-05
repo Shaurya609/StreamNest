@@ -13,6 +13,7 @@
         </div>
     </section>
 
+    <section id="watch-sync"><div class="title">Resume watching</div><div class="content"><p>Connect devices using a private pairing code. Your watch progress is encrypted.</p><button type="button" id="streamnestSyncOpen" style="padding:10px">Resume &amp; sync devices</button></div></section>
     <section id="user-interface">
         <div class="title"><%= i18n.__("User Interface") %></div>
         <div class="content">

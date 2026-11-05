@@ -24,10 +24,10 @@ Page custom ShortcutOptions ShortcutOptionsLeave
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_LANGUAGE "English"
-VIProductVersion "0.12.0.0"
+VIProductVersion "0.13.0.0"
 VIAddVersionKey /LANG=1033 "ProductName" "StreamNest"
 VIAddVersionKey /LANG=1033 "FileDescription" "StreamNest per-user installer"
-VIAddVersionKey /LANG=1033 "FileVersion" "0.12.0"
+VIAddVersionKey /LANG=1033 "FileVersion" "0.13.0"
 VIAddVersionKey /LANG=1033 "LegalCopyright" "StreamNest contributors; Popcorn Time and Butter Project contributors"
 Function ShortcutOptions
   !insertmacro MUI_HEADER_TEXT "Installation options" "Choose your shortcuts."
@@ -86,10 +86,10 @@ Section "StreamNest"
       ClearErrors
   ${EndIf}
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "DisplayName" "StreamNest"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "DisplayVersion" "0.12.0"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "DisplayVersion" "0.13.0"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "UninstallString" '$\"$INSTDIR\Uninstall.exe$\"'
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "InstallLocation" "$INSTDIR"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "DisplayIcon" "$INSTDIR\StreamNest.exe"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "DisplayIcon" '$\"$INSTDIR\src\app\images\streamnest.ico$\",0' 
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "Publisher" "StreamNest contributors"
   WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "NoModify" 1
   WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "NoRepair" 1

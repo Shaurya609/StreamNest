@@ -17,7 +17,7 @@ jobs:
       - name: Subtitle test dependencies
         run: npm ci --prefix desktop/packaging --ignore-scripts
       - name: Desktop adapter, cache and catalog integrity tests
-        run: node --test desktop/tests/*.test.js tools/catalog/*.test.mjs
+        run: node --test desktop/tests/*.test.js tools/catalog/*.test.mjs sync/*.test.mjs
   build:
     runs-on: ubuntu-latest
     steps:
