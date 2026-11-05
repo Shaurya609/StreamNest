@@ -170,6 +170,14 @@ final class AnimeCatalog {
     }
     if (source == null || page == 1) {
       source = new ArrayList<>(pool());
+      if (!q.isBlank()) try {
+        Set<String> ids = new HashSet<>();
+        for (JSONObject row : source) ids.add(row.optString("imdb"));
+        for (JSONObject row : SeriesDiscovery.search(q))
+          if (row.optBoolean("animeSeries") && ids.add(row.optString("imdb")))
+            source.add(row);
+      } catch (Exception ignored) {}
+
       synchronized (AnimeCatalog.class) {
         sessions.put(key, source);
         while (sessions.size() > 4) sessions.remove(sessions.keySet().iterator().next());

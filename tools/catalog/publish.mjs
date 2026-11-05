@@ -37,6 +37,10 @@ for(let scanned=0;scanned<24;scanned++)try{
  for(const raw of rows){const m=tvmaze(raw);if(m&&m.language==='ko'&&!shows.has(m.imdb))shows.set(m.imdb,m);if(!m||!m.animeSeries)continue;const old=anime.get(m.imdb);anime.set(m.imdb,old?{...m,...old}:m);metrics.tvmaze++;}
  animeCursor++;
 }catch(error){console.log('Anime discovery retained at page',animeCursor);break;}
+for(const query of ['Black Clover','Dragon Ball Super'])try{
+ const found=await maze('https://api.tvmaze.com/search/shows?q='+encodeURIComponent(query));
+ for(const item of found){const m=tvmaze(item.show);if(m?.animeSeries&&!anime.has(m.imdb)){anime.set(m.imdb,m);metrics.tvmaze++;}}
+}catch(error){console.log('Requested anime discovery retained:',query);}
 const oldLatest=previous.latest||(fs.existsSync('app/src/main/assets/catalog-latest-v1.json')?JSON.parse(fs.readFileSync('app/src/main/assets/catalog-latest-v1.json','utf8')):{});
 const latestMap=new Map((oldLatest.releases||[]).map(m=>[m.imdb,m]));
 try{const rss=await text('https://nyaa.si/?page=rss&c=1_2&f=2&q=1080p');if(/<!DOCTYPE|<!ENTITY/i.test(rss))throw Error('Unsafe RSS');const doc=await parseStringPromise(rss,{explicitArray:false});const items=doc.rss?.channel?.item||[];const R=await import('../../desktop/overlay/butter-provider/streamnest-releases.js');const rows=R.default.records(Array.isArray(items)?items:[items]);for(const m of rows){latestMap.set(m.imdb,m);metrics.rss++;}}catch(e){console.log('Latest anime feed retained from prior snapshot');}

@@ -34,6 +34,7 @@ final class SeriesDiscovery {
                   image == null ? "" : image.optString("original", image.optString("medium")))
               .put("description", show.optString("summary").replaceAll("<[^>]*>", " "))
               .put("genres", show.optJSONArray("genres"))
+              .put("animeSeries", "Animation".equals(show.optString("type")) && lang.equals("ja"))
               .put("metadataOnly", true)
               .put("metadataSource", "TVmaze")
               .put("trendRank", Integer.MAX_VALUE)
