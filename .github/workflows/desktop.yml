@@ -37,12 +37,16 @@ jobs:
         run: node --test desktop/tests/*.test.js tools/catalog/*.test.mjs
       - name: Build from pinned sources and frozen dependencies
         run: python desktop/packaging/build.py
+      - name: Read desktop package version
+        run: |
+          $desktopVersion = (Get-Content desktop/packaging/package.json -Raw | ConvertFrom-Json).version
+          "SN_DESKTOP_VERSION=$desktopVersion" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Verify package identity and clean payload
-        run: python desktop/packaging/verify.py --app reference/standalone-build/0.13.0/StreamNest
+        run: python desktop/packaging/verify.py --app "reference/standalone-build/$env:SN_DESKTOP_VERSION/StreamNest"
       - name: Hidden clean-profile renderer check
-        run: python desktop/packaging/smoke.py --app reference/standalone-build/0.13.0/StreamNest
+        run: python desktop/packaging/smoke.py --app "reference/standalone-build/$env:SN_DESKTOP_VERSION/StreamNest"
       - name: Per-user install and safe uninstall
-        run: python desktop/packaging/test_installer.py --installer dist/standalone/StreamNest-Desktop-0.13.0-win-x64-Setup.exe
+        run: python desktop/packaging/test_installer.py --installer "dist/standalone/StreamNest-Desktop-$env:SN_DESKTOP_VERSION-win-x64-Setup.exe"
       - uses: actions/upload-artifact@v4
         with:
           name: streamnest-desktop-win-x64
