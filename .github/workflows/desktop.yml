@@ -45,6 +45,8 @@ jobs:
         run: python desktop/packaging/verify.py --app "reference/standalone-build/$env:SN_DESKTOP_VERSION/StreamNest"
       - name: Hidden clean-profile renderer check
         run: python desktop/packaging/smoke.py --app "reference/standalone-build/$env:SN_DESKTOP_VERSION/StreamNest"
+      - name: Native update helper and restart
+        run: python desktop/packaging/handoff_smoke.py --app "reference/standalone-build/$env:SN_DESKTOP_VERSION/StreamNest"
       - name: Per-user install and safe uninstall
         run: python desktop/packaging/test_installer.py --installer "dist/standalone/StreamNest-Desktop-$env:SN_DESKTOP_VERSION-win-x64-Setup.exe"
       - uses: actions/upload-artifact@v4

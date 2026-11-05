@@ -102,3 +102,10 @@ Built locally from commit 30742955e184231918c8d2dd48342d3eed142680 while GitHub 
 
 - Actual hidden NW.js renderer computed Install and restart as RGB(16,24,39) on RGB(153,197,255), and Later as white on RGB(48,59,76); both had 42-pixel click targets. Hidden-window screenshot capture did not return, so no screenshot-based visual claim is made.
 - Installer handoff regression passed; no update was applied to the user's running app during verification.
+
+## Desktop 0.13.2 updater handoff repair
+
+- Reproduced Node 13.10.1 detached Windows PowerShell launch exiting with code 0 without running its command. Direct hidden launch ran the command; a short launcher using Start-Process kept the actual helper independent of NW.js shutdown.
+- Replaced unsupported child-process spawn-event waiting with a unique readiness marker. Replaced Wait-Process with bounded polling after the native test observed its suppressed failure returning before the renderer exited.
+- Real bundled NW.js called the actual update action, confirmed helper readiness, exited, ran a local installer fixture with exact /S /UPDATE /D arguments, and restarted using the original isolated user-data directory. No real installation registration or saved user account was involved in this controlled test.
+- All 57 desktop/catalog/updater/backend checks passed, including helper-start failure without quitting and successful readiness without a spawn event. Real installation upgrade preservation was previously verified separately; the native handoff probe uses a controlled executable, not a published installer.
