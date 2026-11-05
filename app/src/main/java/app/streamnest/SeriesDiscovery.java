@@ -18,7 +18,7 @@ final class SeriesDiscovery {
           lang =
               language.equals("Hindi")
                   ? "hi"
-                  : language.equals("English") ? "en" : language.equals("Japanese") ? "ja" : "";
+                  : language.equals("English") ? "en" : language.equals("Japanese") ? "ja" : language.equals("Korean") ? "ko" : "";
       if (lang.isEmpty()) continue;
       JSONObject image = show.optJSONObject("image"), rating = show.optJSONObject("rating");
       String premiered = show.optString("premiered");

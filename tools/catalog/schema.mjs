@@ -1,9 +1,9 @@
 import crypto from 'node:crypto';
 export const camera=/(?:\bhdcam\b|\bcamrip\b|\btelesync\b|\bhdts\b|\btsrip\b|\bhdtc\b|\bhdcamrip\b)/i;
-export const language=value=>({eng:'en',hin:'hi',jpn:'ja'}[value]||value);
+export const language=value=>({eng:'en',hin:'hi',jpn:'ja',kor:'ko'}[value]||value);
 export function movie(raw,verified=0){
  if(!/^tt\d+$/.test(raw.imdb_code||'')||!raw.title)return null;
- const lang=language(raw.language);if(!['en','hi','ja'].includes(lang))return null;
+ const lang=language(raw.language);if(!['en','hi','ja','ko'].includes(lang))return null;
  const torrents=(raw.torrents||[]).filter(t=>['1080p','2160p'].includes(t.quality)&&['web','bluray'].includes(String(t.type).toLowerCase())&&!camera.test(t.file||t.filename||t.name||'')&&(/^[0-9a-f]{40}$/i.test(t.hash||'')||/^https:\/\//.test(t.url||''))).map(t=>{
   const out={};for(const key of ['quality','type','hash','url','seeds','peers','size_bytes','video_codec','file','filename','name'])if(t[key]!=null)out[key]=t[key];return out;
  });
@@ -25,7 +25,7 @@ export function series(raw){
 }
 export function tvmaze(raw){
  const id=raw.externals?.imdb;if(!/^tt\d+$/.test(id||''))return null;
- const lang={English:'en',Hindi:'hi',Japanese:'ja'}[raw.language];if(!lang)return null;
+ const lang={English:'en',Hindi:'hi',Japanese:'ja',Korean:'ko'}[raw.language];if(!lang)return null;
  const anime=lang==='ja'&&raw.type==='Animation';if(lang==='ja'&&!anime)return null;
  return {imdb:id,title:raw.name,language:lang,year:String(raw.premiered||'').slice(0,4),rating:raw.rating?.average||0,genres:raw.genres||[],poster_big:raw.image?.original||raw.image?.medium||'',description:String(raw.summary||'').replace(/<[^>]*>/g,' ').slice(0,1200),metadataOnly:true,metadataSource:'TVmaze',trendRank:2147483647,latestRank:2147483647,...(anime?{animeSeries:true,verifiedEpisodes:0,verifiedHdEpisodes:0,verifiedQualities:[]}: {})};
 }

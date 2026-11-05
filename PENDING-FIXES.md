@@ -35,3 +35,9 @@ The remaining checks below describe broader verification, not a claim that every
 ## Subtitle account scope — 5 November 2026
 
 The owner selected anonymous access only. Personal subtitle-account upgrade-retention testing is out of scope. Continue checking anonymous launch access, expiry/rejection renewal, search, download and visible playback subtitles on Android and Windows. The tablet retained anonymous mode through the 0.14.0 upgrade; live anonymous search/download passed. Windows in-app upgrade from 0.13.2 to 0.14.0 also completed and restarted successfully.
+
+## Regional catalogs and anime metadata — implementation in progress
+
+- Korean language is accepted by Android/desktop series metadata adapters, movie adapters and the signed snapshot schema. Both language filters expose Korean. Independent publisher scans now retain Korean series as well as anime. These labels identify original title language, not verified English audio/subtitles.
+- Android and desktop attach Jikan filler/recap flags only to explicitly mapped MAL episodes, currently from the first API page. Unknown, unmapped and later-page episodes receive no inferred labels. Android shows flags in selected episode heading; desktop shows them in episode rows.
+- Remaining before release: extend mapped filler pagination with provider rate limits, verify UI/network behavior, add confirmed source-audio/subtitle availability, configure and validate Anime Skip client integration, and publish updated signed catalog snapshots and app packages.

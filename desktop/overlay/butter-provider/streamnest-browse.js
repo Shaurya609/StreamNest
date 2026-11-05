@@ -7,7 +7,7 @@ async function build() {
  const all=new Map();let failure,responding=0;
  for(const sort of ['date_added','seeds','download_count'])try{
   const rows=await Fresh.page(sort,'');responding++;
-  rows.forEach((row,i)=>{if(!['en','hi'].includes(row.language))return;const m=all.get(row.imdb)||row;if(sort==='download_count')m.popularityRank=i+1;all.set(m.imdb,m);});
+  rows.forEach((row,i)=>{if(!['en','hi','ko'].includes(row.language))return;const m=all.get(row.imdb)||row;if(sort==='download_count')m.popularityRank=i+1;all.set(m.imdb,m);});
  }catch(e){failure=e;}
  if(!responding)throw failure||Error('Movie catalog unavailable');
  for(const row of snapshot||[])if(row.language==='hi'&&row.items.length&&!all.has(row.imdb))all.set(row.imdb,row);

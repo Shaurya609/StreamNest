@@ -539,7 +539,9 @@ final class TitleScreen extends Dialog {
   void selectEpisode(JSONObject ep) {
     if (selected != ep) selectedQuality = "Auto";
     selected = ep;
-    heading.setText(ep.optString("title", "Episode"));
+    heading.setText(ep.optString("title", "Episode")
+        + (ep.optBoolean("filler") ? " · Filler" : "")
+        + (ep.optBoolean("recap") ? " · Recap" : ""));
     String numbering =
         (ep.optInt("season") == 0 ? "Special" : "Season " + ep.optInt("season"))
             + " · "

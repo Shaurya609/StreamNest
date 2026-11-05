@@ -34,7 +34,7 @@ let animeCursor=Number(oldAnime.discoveryPage)||0;
 for(let scanned=0;scanned<24;scanned++)try{
  const rows=await maze('https://api.tvmaze.com/shows?page='+animeCursor);
  if(!Array.isArray(rows)||!rows.length){animeCursor=0;break;}
- for(const raw of rows){const m=tvmaze(raw);if(!m||!m.animeSeries)continue;const old=anime.get(m.imdb);anime.set(m.imdb,old?{...m,...old}:m);metrics.tvmaze++;}
+ for(const raw of rows){const m=tvmaze(raw);if(m&&m.language==='ko'&&!shows.has(m.imdb))shows.set(m.imdb,m);if(!m||!m.animeSeries)continue;const old=anime.get(m.imdb);anime.set(m.imdb,old?{...m,...old}:m);metrics.tvmaze++;}
  animeCursor++;
 }catch(error){console.log('Anime discovery retained at page',animeCursor);break;}
 const oldLatest=previous.latest||(fs.existsSync('app/src/main/assets/catalog-latest-v1.json')?JSON.parse(fs.readFileSync('app/src/main/assets/catalog-latest-v1.json','utf8')):{});

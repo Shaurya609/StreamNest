@@ -113,6 +113,27 @@ final class EpisodeLibrary {
         CanonicalEpisodes.attachLive(rows, releases, title.title);
       } catch (Exception ignored) {
       }
+    // Only rows with an explicit MAL episode mapping may receive Jikan flags.
+    Set<Integer> mappedAnime = new LinkedHashSet<>();
+    for (JSONObject row : rows) if (row.optInt("skipMalId") > 0)
+      mappedAnime.add(row.optInt("skipMalId"));
+    for (int mal : mappedAnime) try {
+      JSONObject response = CatalogHttp.object(
+          "https://api.jikan.moe/v4/anime/" + mal + "/episodes?page=1", null);
+      JSONArray data = response.optJSONArray("data");
+      if (data == null) continue;
+      for (int i = 0; i < data.length(); i++) {
+        JSONObject episode = data.getJSONObject(i);
+        for (JSONObject row : rows)
+          if (row.optInt("skipMalId") == mal
+              && row.optInt("episode") == episode.optInt("mal_id")) {
+            if (episode.opt("filler") instanceof Boolean)
+              row.put("filler", episode.getBoolean("filler"));
+            if (episode.opt("recap") instanceof Boolean)
+              row.put("recap", episode.getBoolean("recap"));
+          }
+      }
+    } catch (Exception ignored) {}
     if (rows.isEmpty() && sourceError != null) throw sourceError;
     synchronized (EpisodeLibrary.class) {
       cache.put(id, new JSONObject().put("rows", new JSONArray(rows)));

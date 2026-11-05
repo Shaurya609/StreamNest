@@ -23,6 +23,8 @@ final class FreshMovies {
         return "en";
       case "hin":
         return "hi";
+      case "kor":
+        return "ko";
       case "jpn":
         return "ja";
       default:

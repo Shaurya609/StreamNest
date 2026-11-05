@@ -64,11 +64,11 @@
     },
     {
       "path": "butter-provider/streamnest-api.js",
-      "sha256": "aa8c1f390c8d2260df18298e86034dfbbd0c0f8be764ad5d68181ce05191e58e"
+      "sha256": "5c3356d45e18162ed3c599593b4e2fd38ae2b5c80dfb991f2921bb065c5408d3"
     },
     {
       "path": "butter-provider/streamnest-browse.js",
-      "sha256": "f01b1af4ba50254e186ced405da41e17dced43757c1fb35cd5ccc8d5613048c1"
+      "sha256": "66f119469ac84e5bf04c8c9592e63667541c9dc5b5d9f24e0c28fdb1574ee472"
     },
     {
       "path": "butter-provider/streamnest-cache.js",
@@ -76,11 +76,11 @@
     },
     {
       "path": "butter-provider/streamnest-episodes.js",
-      "sha256": "d2dbd78d5b6e2d515d1c9a18022e7fb3ef1d356684b4270158aa2f35148e28e9"
+      "sha256": "40df7eb577c9e1eff97fd36eba6ed23cd8b6880f5056d03fc39fcf8e66e74c22"
     },
     {
       "path": "butter-provider/streamnest-fresh.js",
-      "sha256": "40c97bd00feaaa8d63d9ce3095c4972379b43e62310afcc296237eec619d3cfc"
+      "sha256": "0e51728ae92454f91ee8adc77ba8d7de3191d1548c7577af58390983ffc28b38"
     },
     {
       "path": "butter-provider/streamnest-hindi.js",
@@ -112,7 +112,7 @@
     },
     {
       "path": "butter-provider/streamnest-resilience.js",
-      "sha256": "f7d7693e2432cfba799922e8e13f9d24d704773f46ba97eb23e6ce4fd9cc0b12"
+      "sha256": "11d56c009c516a1c0dac1a6eb36660e978abf4c15ea7f578ab0214c069646b86"
     },
     {
       "path": "butter-provider/streamnest-series.js",
@@ -196,7 +196,7 @@
     },
     {
       "path": "templates/show-detail.tpl",
-      "sha256": "ba33386678d260eb3d15939e88fbae0a6928a2e3aa6ee725fa11292d479bc714"
+      "sha256": "0774bbdecfa77d3549f9c627f9eada7072cfa773111d3a1af06cc0ac499d8b75"
     },
     {
       "path": "vendor/videojshooks.js",

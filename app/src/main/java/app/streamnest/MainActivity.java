@@ -241,9 +241,9 @@ public class MainActivity extends Activity {
     new AlertDialog.Builder(this)
         .setTitle("Language")
         .setItems(
-            new String[] {"All · English & Hindi", "English", "Hindi"},
+            new String[] {"All languages", "English", "Hindi", "Korean"},
             (d, n) -> {
-              language = new String[] {"all", "en", "hi"}[n];
+              language = new String[] {"all", "en", "hi", "ko"}[n];
               hindiMode = language.equals("hi");
               prefs
                   .edit()
@@ -302,7 +302,7 @@ public class MainActivity extends Activity {
             : "Language  "
                 + (language.equals("all")
                     ? "All"
-                    : language.equals("hi") ? "Hindi titles" : "English titles")
+                    : language.equals("hi") ? "Hindi titles" : language.equals("ko") ? "Korean titles" : "English titles")
                 + " ▾");
     genreControl.setEnabled(!(kind.equals("animes") && animeFormat.equals("latest")));
     genreControl.setText("Genre  " + genre + " ▾");

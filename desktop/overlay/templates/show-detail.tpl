@@ -85,9 +85,9 @@
                             <a href="#" class="episodeData">
                                 <span><%=episodeData.episode %></span>
                                 <% if (Settings.activateSeedbox) { %>
-                                <div style="max-width:calc(60vw - 395px)"><%=localizeEpisode(episodeData).listTitle %></div>
+                                <div style="max-width:calc(60vw - 395px)"><%=localizeEpisode(episodeData).listTitle %><% if(episodeData.filler){ %> · Filler<% } %><% if(episodeData.recap){ %> · Recap<% } %></div>
                                 <% } else { %>
-                                <div><%=localizeEpisode(episodeData).listTitle %></div>
+                                <div><%=localizeEpisode(episodeData).listTitle %><% if(episodeData.filler){ %> · Filler<% } %><% if(episodeData.recap){ %> · Recap<% } %></div>
                                 <% } %>
                             </a>
 

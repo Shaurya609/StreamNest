@@ -24,7 +24,7 @@ class Catalogs {
  persist(){if(!this.root)return;try{atomic(path.join(this.root,'movies-known.json'),{saved:this.clock(),movies:[...this.known.values()]});const feeds=Object.keys(this.pages);while(feeds.length>12)delete this.pages[feeds.shift()];atomic(path.join(this.root,'state.json'),{preferred:this.preferred,pages:this.pages});}catch(e){}}
  remember(raw){
   const row=JSON.parse(JSON.stringify(raw));if(!/^tt\d+$/.test(row.imdb_code||'')||!row.title)return;
-  row.language=({eng:'en',hin:'hi',jpn:'ja'}[row.language]||row.language);row.description_full=String(row.description_full||row.summary||'').slice(0,1200);row.catalogVerifiedAt=this.clock();
+  row.language=({eng:'en',hin:'hi',jpn:'ja',kor:'ko'}[row.language]||row.language);row.description_full=String(row.description_full||row.summary||'').slice(0,1200);row.catalogVerifiedAt=this.clock();
   this.known.set(row.imdb_code,row);
  }
  parameters(request){const url=new URL(request,'https://catalog.invalid/');if(url.pathname!=='/list_movies.json')throw Error('Unsupported saved movie request');const p={};for(const [k,v]of url.searchParams)p[k]=v;if(!p.limit)p.limit='50';if(!p.page)p.page='1';return p;}
@@ -56,7 +56,7 @@ class Catalogs {
   const saved=this.savedMovies(request,options.token);if(saved)return saved;throw error||Error('Movie catalog temporarily unavailable');
  }
  async searchSeries(query){const data=await this.metadata('https://api.tvmaze.com/search/shows?q='+encodeURIComponent(query),Array.isArray);const seen=new Set(),out=[];
-  for(const item of data){const m=item.show,id=m&&m.externals&&m.externals.imdb;if(!/^tt\d+$/.test(id||'')||seen.has(id))continue;const language={English:'en',Hindi:'hi'}[m.language];if(!language)continue;seen.add(id);out.push({imdb:id,title:m.name,language,year:String(m.premiered||'').slice(0,4),rating:m.rating&&m.rating.average||0,genres:m.genres||[],poster_big:m.image&&(m.image.original||m.image.medium)||'',description:String(m.summary||'').replace(/<[^>]*>/g,' ').slice(0,1200),metadataOnly:true,metadataSource:'TVmaze',trendRank:2147483647,latestRank:2147483647});}return out;
+  for(const item of data){const m=item.show,id=m&&m.externals&&m.externals.imdb;if(!/^tt\d+$/.test(id||'')||seen.has(id))continue;const language={English:'en',Hindi:'hi',Japanese:'ja',Korean:'ko'}[m.language];if(!language)continue;seen.add(id);out.push({imdb:id,title:m.name,language,year:String(m.premiered||'').slice(0,4),rating:m.rating&&m.rating.average||0,genres:m.genres||[],poster_big:m.image&&(m.image.original||m.image.medium)||'',description:String(m.summary||'').replace(/<[^>]*>/g,' ').slice(0,1200),metadataOnly:true,metadataSource:'TVmaze',trendRank:2147483647,latestRank:2147483647});}return out;
  }
  async metadata(url,validate){
   const host=new URL(url).hostname,file=this.root&&path.join(this.root,'http',hash(url)+'.json');let error;

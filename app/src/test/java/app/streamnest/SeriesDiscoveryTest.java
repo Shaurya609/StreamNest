@@ -25,4 +25,15 @@ public class SeriesDiscoveryTest {
     assertTrue(rows.get(0).getBoolean("metadataOnly"));
     assertFalse(rows.get(0).has("torrents"));
   }
+
+  @Test
+  public void koreanDiscoveryPreservesOriginalLanguage() throws Exception {
+    JSONObject show = new JSONObject().put("name", "Korean series")
+        .put("language", "Korean")
+        .put("externals", new JSONObject().put("imdb", "tt456"));
+    JSONObject row = SeriesDiscovery.parse(new JSONArray()
+        .put(new JSONObject().put("show", show))).get(0);
+    assertEquals("ko", row.getString("language"));
+    assertFalse(row.has("audioLanguages"));
+  }
 }

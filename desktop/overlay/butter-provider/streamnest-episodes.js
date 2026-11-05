@@ -108,6 +108,17 @@ async function detail(id,old,source,collect) {
   } catch(e) {}
   const rows=merge(metadata,source,collect);
   if(old && (old.animeSeries || mal))try{await require('./streamnest-releases').attach(rows,old.title);}catch(e){}
+  for (const mappedMal of new Set(rows.map(row=>row.skipMalId).filter(id=>id>0))) {
+    try {
+      const doc=await get('https://api.jikan.moe/v4/anime/'+mappedMal+'/episodes?page=1');
+      for (const episode of doc.data||[]) {
+        const row=rows.find(row=>row.skipMalId===mappedMal&&row.episode===episode.mal_id);
+        if (!row) continue;
+        if (typeof episode.filler==='boolean') row.filler=episode.filler;
+        if (typeof episode.recap==='boolean') row.recap=episode.recap;
+      }
+    } catch (error) {}
+  }
   return rows;
 }
 function video(name) { return /\.(mp4|mkv|avi|webm|mov|m4v|ts)$/i.test(name) && !/(?:^|[\/\\._ -])sample(?:[\/\\._ -]|$)/i.test(name); }

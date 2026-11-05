@@ -144,7 +144,7 @@ final class PagedMovies {
         String lang = FreshMovies.language(m.optString("language"));
         if (anime
             ? !lang.equals("ja")
-            : !(lang.equals("en") || lang.equals("hi"))
+            : !(lang.equals("en") || lang.equals("hi") || lang.equals("ko"))
                 || (!language.equals("all") && !language.equals(lang))) continue;
         if (anime && !genre.equals("All") && !genre.equals("Animation")) {
           JSONArray genres = m.optJSONArray("genres");
