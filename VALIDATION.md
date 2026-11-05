@@ -172,3 +172,5 @@ Post-confirmation tablet: package verified 0.15.1/code23 following the normal up
 - Native generated Windows 0.16.0 sync dialog passed live group creation, temporary-code generation, QR visibility, disconnect/reopen and disposable-group cleanup. Windows CI 42077260244 passed. Android build/lint/unit and 63 desktop/catalog/backend checks passed. All Android/Windows release asset sizes/digests matched local files.
 
 Final 0.16.0 live update-feed verification accepted Android code24/version0.16.0 and Windows0.16.0 after the public cache refreshed. Signed feed workflow 42079430169 succeeded.
+
+Actual tablet update follow-up: the 0.15.1 launch did not produce an update file on its first check. Opening Settings > Check for updates downloaded 0.16.0; its universal APK SHA-256 matched the published artifact. Android installation confirmation requested. No direct APK installation was used for the production app.
