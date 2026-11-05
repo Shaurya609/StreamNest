@@ -364,6 +364,14 @@ public class PlaybackRegression extends Instrumentation {
               "tt12324366", 1, 1, "Percy Jackson · S1 E1", "en", "0123456789abcdef", 500000000);
       List<SubtitleQuery.Result> scorpion =
           api.search("tt33473834", 0, 0, "Scorpion", "en", "0123456789abcdef", 500000000);
+      List<SubtitleQuery.Result> squid =
+          api.search("tt10919420", 1, 1, "Squid Game", "en", "", 0);
+      List<SubtitleQuery.Result> parasite =
+          api.search("tt6751668", 0, 0, "Parasite", "en", "", 0);
+      if (squid.isEmpty() || parasite.isEmpty())
+        throw new AssertionError("Expected English Korean-title subtitle matches");
+      result.putInt("squidEnglish", squid.size());
+      result.putInt("parasiteEnglish", parasite.size());
       if (percy.isEmpty() || scorpion.isEmpty())
         throw new AssertionError("Expected English subtitle matches");
       File directory = new File(getTargetContext().getCacheDir(), "org-subtitle-regression");
