@@ -97,3 +97,8 @@ Built locally from commit 30742955e184231918c8d2dd48342d3eed142680 while GitHub 
 - Fresh tablet decoded-video skip verification passed after unlock: rendered video continued after intro and credits seeks; previous/next kept the exact season-pack member; natural EOF advanced once; unavailable-next and autoplay-off protection passed. The initial locked-screen attempt could not observe video. Controlled timestamps were used; this does not establish live timestamp coverage for every streaming release or TV firmware.
 - Windows 0.12.0 → 0.13.0 installer upgrade passed with settings/account sentinels unchanged, shortcut opt-out retained, and the exact quoted dedicated ICO registry path verified. Original user shortcut was restored.
 - Packaged NW.js Node 13.10.1 performed live encrypted sync, restored 125 seconds and rendered the pairing QR in an isolated hidden renderer. Disposable cloud group was deleted. GitHub Android checks 42014154213 passed.
+
+## Desktop 0.13.1 update-prompt contrast
+
+- Actual hidden NW.js renderer computed Install and restart as RGB(16,24,39) on RGB(153,197,255), and Later as white on RGB(48,59,76); both had 42-pixel click targets. Hidden-window screenshot capture did not return, so no screenshot-based visual claim is made.
+- Installer handoff regression passed; no update was applied to the user's running app during verification.

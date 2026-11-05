@@ -7,9 +7,15 @@
  function playing(){return !!document.querySelector('#video_player, .player video, .loading')||Array.from(document.querySelectorAll('video')).some(v=>!v.paused);}
  function show(text,install){
   if(!panel){panel=document.createElement('div');panel.style.cssText='position:fixed;z-index:99999;right:20px;top:50px;max-width:400px;padding:20px;background:#20232b;color:white;font:15px sans-serif;border:1px solid #526078;border-radius:10px';document.body.appendChild(panel);}
-  panel.textContent='';const label=document.createElement('p');label.textContent=text;panel.appendChild(label);
-  if(install){const button=document.createElement('button');button.textContent='Install and restart';button.onclick=apply;panel.appendChild(button);}
-  const close=document.createElement('button');close.textContent=install?'Later':'Close';close.onclick=()=>{panel.remove();panel=null;};panel.appendChild(close);
+  panel.textContent='';const label=document.createElement('p');label.textContent=text;label.style.cssText='margin:0 0 16px;line-height:1.45;color:#f3f4f6';panel.appendChild(label);
+  function action(text,primary,callback){
+   const button=document.createElement('button');button.type='button';button.textContent=text;
+   button.style.cssText='appearance:none;display:inline-block;position:static;float:none;width:auto;height:auto;min-height:40px;margin:0 10px 0 0;padding:10px 16px;border:1px solid '+(primary?'#99c5ff':'#8794a8')+';border-radius:6px;background:'+(primary?'#99c5ff':'#303b4c')+';color:'+(primary?'#101827':'#ffffff')+';font:600 14px/20px sans-serif;text-align:center;text-shadow:none;opacity:1;cursor:pointer;box-shadow:none';
+   button.onfocus=()=>{button.style.outline='2px solid #ffffff';button.style.outlineOffset='3px';};
+   button.onblur=()=>{button.style.outline='';};button.onclick=callback;panel.appendChild(button);
+  }
+  if(install)action('Install and restart',true,apply);
+  action(install?'Later':'Close',false,()=>{panel.remove();panel=null;});
  }
  function accept(doc){
   fs.mkdirSync(root,{recursive:true});const file=path.join(root,'trusted-feed-time');let last=0;
