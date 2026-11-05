@@ -144,3 +144,9 @@ Built locally from commit 30742955e184231918c8d2dd48342d3eed142680 while GitHub 
 ## Series/anime anonymous redundancy and filler pagination
 
 Implemented anonymous SkipDB fallback for missing IntroDB intro/outro segments in Android and desktop; exact episode identity, exact duration match, confidence and playback bounds required. Existing HTTP caches cover successful responses. Added attribution in playback settings and README. Filler/recap metadata now requests all pages containing explicitly mapped MAL episodes, with 400ms spacing. Android unit/build/lint and 57 desktop/catalog tests passed. Live SkipDB and TheIntroDB requests returned HTTP 403 from this connection; live fallback availability remains unverified. Anime Skip requires a client ID and is not integrated as an account-free service. Korean English-audio/subtitle confirmation and release packaging remain pending.
+
+## Published 0.15.0 — Korean catalog and episode metadata
+
+- Anonymous live .org searches returned 8 English matches for Squid Game S1E1 and 28 for Parasite. Live movie lookup returned Parasite (Gisaengchung), Korean original language, and two listed HD sources. English dubbing was not established by those source records; subtitles are title/episode matches, not verified timing for every release.
+- Android unit/build/lint and all 61 desktop/catalog/sync checks passed. Final native Windows startup and package inspection passed. Clean Windows CI run 42064117891 passed including installer checks; local installer harness correctly declined to replace the registered installation. Signed catalog refresh 42064343073 succeeded.
+- Published v0.15.0 with eight assets and desktop-v0.15.0 with four assets. All uploaded sizes/digests matched local artifacts. Final live signature verifier accepted Android 0.15.0/code22 and Windows 0.15.0. Signed-feed workflows 42065477123 and 42065473503 succeeded. Actual local-device upgrade to 0.15.0 is not claimed.
