@@ -117,9 +117,15 @@ final class EpisodeLibrary {
     Set<Integer> mappedAnime = new LinkedHashSet<>();
     for (JSONObject row : rows) if (row.optInt("skipMalId") > 0)
       mappedAnime.add(row.optInt("skipMalId"));
-    for (int mal : mappedAnime) try {
+    for (int mal : mappedAnime) {
+      Set<Integer> pages = new TreeSet<>();
+      for (JSONObject row : rows)
+        if (row.optInt("skipMalId") == mal && row.optInt("episode") > 0)
+          pages.add((row.optInt("episode") - 1) / 100 + 1);
+      for (int page : pages) try {
+      Thread.sleep(400);
       JSONObject response = CatalogHttp.object(
-          "https://api.jikan.moe/v4/anime/" + mal + "/episodes?page=1", null);
+          "https://api.jikan.moe/v4/anime/" + mal + "/episodes?page=" + page, null);
       JSONArray data = response.optJSONArray("data");
       if (data == null) continue;
       for (int i = 0; i < data.length(); i++) {
@@ -133,7 +139,11 @@ final class EpisodeLibrary {
               row.put("recap", episode.getBoolean("recap"));
           }
       }
-    } catch (Exception ignored) {}
+      } catch (InterruptedException interrupted) {
+        Thread.currentThread().interrupt();
+        throw interrupted;
+      } catch (Exception ignored) {}
+    }
     if (rows.isEmpty() && sourceError != null) throw sourceError;
     synchronized (EpisodeLibrary.class) {
       cache.put(id, new JSONObject().put("rows", new JSONArray(rows)));

@@ -40,7 +40,7 @@ public class PlaybackSettingsActivity extends Activity {
     box.addView(skip);
     label(
         box,
-        "Skip buttons use community timestamps from IntroDB and AniSkip when available. Coverage"
+        "Skip buttons use community timestamps from IntroDB, SkipDB (ODbL 1.0 + reciprocity) and AniSkip when available. Coverage"
             + " and release timings vary. Credits are skipped only when you choose; scenes after"
             + " credits are preserved when the timestamps identify them.",
         14);

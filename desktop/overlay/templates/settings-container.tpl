@@ -468,7 +468,7 @@
     <section id="streamnest-skipping"><div class="title">Episode skipping</div><div class="content"><span>
       <input class="settings-checkbox" name="streamnestSkipButtons" id="streamnestSkipButtons" type="checkbox" <%=Settings.streamnestSkipButtons!==false?"checked='checked'":""%>>
       <label class="settings-label" for="streamnestSkipButtons">Show intro and credits skip buttons</label>
-      <p>Community timestamps from IntroDB and AniSkip, when available. Credits skip to the segment end; later scenes remain playable. Previous/next episode controls work independently of autoplay. Preloading is disabled to preserve episode cache cleanup.</p>
+      <p>Community timestamps from IntroDB, SkipDB and AniSkip, when available. SkipDB data is licensed under ODbL 1.0 + reciprocity (skipdb.tv/license). Credits skip to the segment end; later scenes remain playable. Previous/next episode controls work independently of autoplay. Preloading is disabled to preserve episode cache cleanup.</p>
     </span></div></section>
 
     <section id="features">

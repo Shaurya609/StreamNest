@@ -43,3 +43,5 @@ The owner selected anonymous access only. Personal subtitle-account upgrade-rete
 - Remaining before release: extend mapped filler pagination with provider rate limits, verify UI/network behavior, add confirmed source-audio/subtitle availability, verify IntroDB and cached timestamp fallback, and publish updated signed catalog snapshots and app packages.
 
 Timestamp provider scope — owner selected IntroDB and cached timestamps for now. Anime Skip client registration/integration is deferred. Continue validating episode identity and segment boundaries before showing skip controls.
+
+Owner confirmation: Percy Jackson TV playback, projector operation and USB cache storage are fixed. Removed from active device backlog based on that confirmation.

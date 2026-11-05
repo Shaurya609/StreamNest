@@ -76,6 +76,23 @@ final class SkipSegments {
     return out;
   }
 
+  static List<Segment> skipdb(JSONObject doc, String imdb, int season, int episode, long length) {
+    List<Segment> out = new ArrayList<>();
+    if (!imdb.equals(doc.optString("imdb_id")) || doc.optInt("season", -1) != season
+        || doc.optInt("episode", -1) != episode) return out;
+    JSONObject rows = doc.optJSONObject("segments");
+    if (rows == null) return out;
+    for (String type : new String[] {"intro", "outro"}) {
+      JSONObject row = rows.optJSONObject(type);
+      if (row == null || !"exact".equals(row.optString("match"))
+          || row.optDouble("confidence", 0) < 0.75) continue;
+      Segment segment = range(type, row.optDouble("start_ms", Double.NaN),
+          row.optDouble("end_ms", Double.NaN), length);
+      if (segment != null) out.add(segment);
+    }
+    return out;
+  }
+
   static List<Segment> load(String imdb, int season, int episode, int mal, long length) {
     List<Segment> out = new ArrayList<>();
     if (!imdb.matches("tt[0-9]+") || episode <= 0 || length <= 0) return out;
@@ -96,6 +113,13 @@ final class SkipSegments {
               length));
     } catch (Exception ignored) {
     }
+    if (out.size() < 2) try {
+      JSONObject doc = CatalogHttp.object("https://api.skipdb.tv/api/segments?imdb_id="
+          + imdb + "&season=" + season + "&episode=" + episode
+          + "&duration=" + (length / 1000.0) + "&adjust=none", null);
+      for (Segment segment : skipdb(doc, imdb, season, episode, length))
+        if (out.stream().noneMatch(s -> s.type.equals(segment.type))) out.add(segment);
+    } catch (Exception ignored) {}
     // A root MAL ID is valid only for the explicitly mapped first season; never guess later-season
     // offsets.
     if (mal > 0 && season == 1 && out.size() < 2)

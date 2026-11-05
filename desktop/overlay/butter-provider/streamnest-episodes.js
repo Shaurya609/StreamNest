@@ -109,8 +109,11 @@ async function detail(id,old,source,collect) {
   const rows=merge(metadata,source,collect);
   if(old && (old.animeSeries || mal))try{await require('./streamnest-releases').attach(rows,old.title);}catch(e){}
   for (const mappedMal of new Set(rows.map(row=>row.skipMalId).filter(id=>id>0))) {
-    try {
-      const doc=await get('https://api.jikan.moe/v4/anime/'+mappedMal+'/episodes?page=1');
+    const pages=[...new Set(rows.filter(row=>row.skipMalId===mappedMal&&row.episode>0)
+      .map(row=>Math.floor((row.episode-1)/100)+1))].sort((a,b)=>a-b);
+    for (const page of pages) try {
+      await new Promise(resolve=>setTimeout(resolve,400));
+      const doc=await get('https://api.jikan.moe/v4/anime/'+mappedMal+'/episodes?page='+page);
       for (const episode of doc.data||[]) {
         const row=rows.find(row=>row.skipMalId===mappedMal&&row.episode===episode.mal_id);
         if (!row) continue;

@@ -38,3 +38,11 @@ test('paused player does not rewrite stale progress; a rewind and completion are
  assert.equal(saved.length,1);position=45;persist.call(view,false);assert.equal(saved[1].p,45);
  persist.call(view,true);assert.equal(saved[2].p,1500);
 });
+
+test('anonymous fallback requires exact episode, duration match and confidence',()=>{
+ const doc={imdb_id:attrs.imdb_id,season:attrs.season,episode:attrs.episode,segments:{intro:{start_ms:30000,end_ms:90000,match:'exact',confidence:0.9}}};
+ assert.equal(P.skipdb(doc,attrs,1440).length,1);
+ assert.equal(P.skipdb({...doc,episode:99},attrs,1440).length,0);
+ doc.segments.intro.match='out-of-range';
+ assert.equal(P.skipdb(doc,attrs,1440).length,0);
+});
