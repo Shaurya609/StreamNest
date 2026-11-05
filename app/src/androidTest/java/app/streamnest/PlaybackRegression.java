@@ -15,7 +15,7 @@ import org.videolan.libvlc.Media;
 public class PlaybackRegression extends Instrumentation {
   PlayerActivity activity;
   String watchSyncCode;
-  boolean catalog, subtitles, storage, resilience, episodes, appUpdates, watchSyncUi;
+  boolean catalog, subtitles, storage, resilience, episodes, appUpdates, watchSyncUi, resumeUi;
 
   @Override
   public void onCreate(Bundle args) {
@@ -28,11 +28,18 @@ public class PlaybackRegression extends Instrumentation {
     episodes = args != null && "true".equals(args.getString("episodes"));
     appUpdates = args != null && "true".equals(args.getString("appUpdates"));
     watchSyncUi = args != null && "true".equals(args.getString("watchSyncUi"));
+    resumeUi = args != null && "true".equals(args.getString("resumeUi"));
     start();
   }
 
   @Override
   public void onStart() {
+    if (resumeUi) {
+      Bundle result=new Bundle();
+      try { finish(Activity.RESULT_OK, ResumeSelectionRegression.run(this)); }
+      catch(Throwable error) {result.putString("result","FAIL: "+error);finish(Activity.RESULT_CANCELED,result);}
+      return;
+    }
     if (watchSyncUi) {
       Bundle result = new Bundle();
       try {
@@ -81,7 +88,7 @@ public class PlaybackRegression extends Instrumentation {
         }
         File own = new File(getTargetContext().getApplicationInfo().sourceDir);
         try {
-          AppUpdateActivity.verifyApk(getTargetContext(), own, 19);
+          AppUpdateActivity.verifyApk(getTargetContext(), own, getTargetContext().getPackageManager().getPackageInfo(getTargetContext().getPackageName(), 0).getLongVersionCode());
           throw new AssertionError("Same-version APK accepted");
         } catch (java.io.IOException expected) {
         }
@@ -89,9 +96,10 @@ public class PlaybackRegression extends Instrumentation {
         File wrong = new File(getTargetContext().getFilesDir(), "app-updates/wrong.apk");
         if (!candidate.exists() || !wrong.exists())
           throw new AssertionError("Supply signed future-version fixtures first");
-        AppUpdateActivity.verifyApk(getTargetContext(), candidate, 20);
+        long futureCode=getTargetContext().getPackageManager().getPackageArchiveInfo(candidate.getAbsolutePath(), 0).getLongVersionCode();
+        AppUpdateActivity.verifyApk(getTargetContext(), candidate, futureCode);
         try {
-          AppUpdateActivity.verifyApk(getTargetContext(), wrong, 20);
+          AppUpdateActivity.verifyApk(getTargetContext(), wrong, futureCode);
           throw new AssertionError("Wrong signing certificate accepted");
         } catch (java.io.IOException expected) {
         }
@@ -105,6 +113,7 @@ public class PlaybackRegression extends Instrumentation {
         }
         candidate.delete();
         wrong.delete();
+        result.putBoolean("installPermissionGranted", getTargetContext().getPackageManager().canRequestPackageInstalls());
         result.putString(
             "result",
             "PASS: signed feed read; valid future APK accepted; wrong certificate/invalid/non-newer"

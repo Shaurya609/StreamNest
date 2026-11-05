@@ -19,8 +19,23 @@ final class WatchSyncRegression {
       long received = WatchProgress.read(context, "episode:tt123:1:1", 0);
       if (received != 125000)
         throw new AssertionError("Desktop progress did not resume on Android: " + received);
+      org.json.JSONObject imported=WatchProgress.records(context);
+      boolean episodeSelection=imported.has("episode:tt123:1:2");
+      java.util.List<org.json.JSONObject> episodes=java.util.Arrays.asList(
+          new org.json.JSONObject().put("season",1).put("episode",1),
+          new org.json.JSONObject().put("season",1).put("episode",2),
+          new org.json.JSONObject().put("season",2).put("episode",1));
+      if(episodeSelection) {
+        if(!imported.getJSONObject("episode:tt123:1:2").optBoolean("completed"))throw new AssertionError("Completion flag lost across devices");
+        org.json.JSONObject chosen=ResumeEpisodeSelection.choose("tt123",episodes,imported,System.currentTimeMillis());
+        if(chosen==null||chosen.optInt("season")!=2||chosen.optInt("episode")!=1)throw new AssertionError("Synced completion did not select next season");
+      }
       WatchProgress.save(context, "episode:tt123:1:1", 45000, 1500000);
       WatchSync.sync(context, code);
+      if(episodeSelection) {
+        org.json.JSONObject chosen=ResumeEpisodeSelection.choose("tt123",episodes,WatchProgress.records(context),System.currentTimeMillis());
+        if(chosen==null||chosen.optInt("season")!=1||chosen.optInt("episode")!=1)throw new AssertionError("Newer rewind did not select replayed episode");
+      }
       Bundle result = new Bundle();
       result.putString(
           "result",
@@ -28,6 +43,7 @@ final class WatchSyncRegression {
               + " synced");
       result.putLong("receivedMs", received);
       result.putLong("sentMs", 45000);
+      result.putBoolean("syncedEpisodeSelection",episodeSelection);
       return result;
     } finally {
       context.getSharedPreferences(temporary, 0).edit().clear().commit();

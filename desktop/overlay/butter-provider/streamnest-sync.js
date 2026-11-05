@@ -1,7 +1,7 @@
 'use strict';
 const fs=require('fs'),path=require('path'),https=require('https'),C=require('./streamnest-sync-crypto');
 const root=typeof nw!=='undefined'?nw.App.dataPath:require('os').tmpdir(),configPath=path.join(root,'streamnest-watch-sync.json');
-let pending=false,last=0,status='Not connected';
+let inFlight=null,last=0,status='Not connected';
 function config(){try{const value=JSON.parse(fs.readFileSync(configPath,'utf8'));return value&&typeof value==='object'?value:{};}catch(e){return {};}}
 function endpoint(){const url=JSON.parse(fs.readFileSync(path.join(__dirname,'watch-sync.json'),'utf8')).endpoint;if(!/^https:\/\/[A-Za-z0-9.-]+$/.test(url))throw Error('Sync service is not configured yet');return url;}
 function call(method,code,payload,revision){return new Promise((resolve,reject)=>{
@@ -22,9 +22,12 @@ async function sync(code){
  }throw Error('Another device is syncing; retry shortly');
 }
 async function request(force=false){
- const code=config().code;if(!code||pending||!force&&Date.now()-last<30000)return;
- pending=true;last=Date.now();try{await sync(code);if(config().code===code)status='Synced';}catch(e){status='Offline — progress stays on this device';}finally{pending=false;}
+ if(inFlight)return inFlight;
+ const code=config().code;if(!code||!force&&Date.now()-last<30000)return;
+ last=Date.now();inFlight=sync(code).then(()=>{if(config().code===code)status='Synced';},()=>{status='Offline — progress stays on this device';}).finally(()=>{inFlight=null;});return inFlight;
 }
+async function beforeSelection(){let timer;try{await Promise.race([request(true),new Promise(resolve=>{timer=setTimeout(resolve,2000);})]);}finally{clearTimeout(timer);}}
+
 function connect(code){code=C.format(C.parse(code));fs.writeFileSync(configPath,JSON.stringify({code}),{mode:0o600});status='Connecting…';return request(true);}
 function disconnect(){fs.writeFileSync(configPath,'{}',{mode:0o600});status='Not connected';}
 function show(win){
@@ -45,4 +48,4 @@ function show(win){
  const privacy=d.createElement('p');privacy.textContent='Keep the code private: it connects devices to your watch history. Keep a copy if you want to pair another device later. Local progress works offline; inactive cloud backups are cleared after 180 days.';panel.appendChild(privacy);
  input.focus();
 }
-module.exports={request,connect,disconnect,show,config,get status(){return status;}};
+module.exports={request,beforeSelection,connect,disconnect,show,config,get status(){return status;}};

@@ -1,0 +1,141 @@
+{
+  "imdb": "tt123",
+  "now": 1793880000000,
+  "episodes": [
+    {
+      "season": 0,
+      "episode": 1
+    },
+    {
+      "season": 1,
+      "episode": 1
+    },
+    {
+      "season": 1,
+      "episode": 2
+    },
+    {
+      "season": 2,
+      "episode": 1
+    },
+    {
+      "season": 2,
+      "episode": 2,
+      "airdate": "2999-01-01"
+    }
+  ],
+  "cases": [
+    {
+      "name": "most recent episode",
+      "history": {
+        "episode:tt123:1:1": {
+          "positionMs": 45000,
+          "durationMs": 1500000,
+          "updatedAt": 100
+        },
+        "episode:tt123:1:2": {
+          "positionMs": 45000,
+          "durationMs": 1500000,
+          "updatedAt": 200
+        }
+      },
+      "expected": "1:2"
+    },
+    {
+      "name": "intentional older episode replay",
+      "history": {
+        "episode:tt123:1:1": {
+          "positionMs": 45000,
+          "durationMs": 1500000,
+          "updatedAt": 300
+        },
+        "episode:tt123:1:2": {
+          "positionMs": 45000,
+          "durationMs": 1500000,
+          "updatedAt": 200
+        }
+      },
+      "expected": "1:1"
+    },
+    {
+      "name": "completion crosses seasons",
+      "history": {
+        "episode:tt123:1:2": {
+          "positionMs": 0,
+          "durationMs": 1500000,
+          "updatedAt": 200,
+          "completed": true
+        }
+      },
+      "expected": "2:1"
+    },
+    {
+      "name": "specials stay separate",
+      "history": {
+        "episode:tt123:0:1": {
+          "positionMs": 0,
+          "durationMs": 1500000,
+          "updatedAt": 200,
+          "completed": true
+        }
+      },
+      "expected": "0:1"
+    },
+    {
+      "name": "future next episode",
+      "history": {
+        "episode:tt123:2:1": {
+          "positionMs": 0,
+          "durationMs": 1500000,
+          "updatedAt": 200,
+          "completed": true
+        }
+      },
+      "expected": "2:1"
+    },
+    {
+      "name": "movie ignored",
+      "history": {
+        "movie:tt123": {
+          "positionMs": 45000,
+          "durationMs": 1500000,
+          "updatedAt": 200
+        }
+      },
+      "expected": null
+    },
+    {
+      "name": "early start is not completion",
+      "history": {
+        "episode:tt123:1:1": {
+          "positionMs": 0,
+          "durationMs": 1500000,
+          "updatedAt": 200
+        }
+      },
+      "expected": "1:1"
+    },
+    {
+      "name": "other title ignored",
+      "history": {
+        "episode:tt999:1:1": {
+          "positionMs": 45000,
+          "durationMs": 1500000,
+          "updatedAt": 200
+        }
+      },
+      "expected": null
+    },
+    {
+      "name": "missing episode is not guessed",
+      "history": {
+        "episode:tt123:9:9": {
+          "positionMs": 45000,
+          "durationMs": 1500000,
+          "updatedAt": 200
+        }
+      },
+      "expected": null
+    }
+  ]
+}

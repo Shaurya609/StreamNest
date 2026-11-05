@@ -11,3 +11,9 @@ The free Cloudflare Worker stores encrypted progress snapshots in D1. Encryption
 Deployment source is in `sync/`. Run `npm ci`, create a D1 database, update `wrangler.toml`, apply `schema.sql`, then deploy with Wrangler. Both embedded `watch-sync.json` files must use the same HTTPS endpoint. The deployed endpoint is https://streamnest-watch-sync.streamnest-shaurya609.workers.dev.
 
 Intro/credits skip remains independent of resume sync. Anime and series show controls only when validated timestamps are available for the episode and fit its runtime; missing data does not produce guessed skips.
+
+## Automatic episode selection (0.14.0)
+
+Opening a series or anime selects the season and episode from its newest saved playback record. Press Play to resume its timestamp. A newly recorded completion selects the next aired canonical episode, including season boundaries; Specials stay in their own sequence. Metadata-only episodes are retained rather than silently skipped.
+
+Watch history refreshes before selection. Offline/slow service keeps local history usable; a later sync result can update the selection only while you have not manually chosen an episode or started playback. New records retain an encrypted completion flag. Update paired devices to 0.14.0 for completion-driven selection; older unfinished-position records remain usable, and ambiguous older zero-position records are not guessed to be completed.

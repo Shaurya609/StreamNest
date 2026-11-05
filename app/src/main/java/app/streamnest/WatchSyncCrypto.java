@@ -128,6 +128,7 @@ final class WatchSyncCrypto {
               .put("positionMs", position)
               .put("durationMs", duration)
               .put("updatedAt", updated));
+      if (Boolean.TRUE.equals(row.opt("completed"))) out.getJSONObject(key).put("completed", true);
       keys.add(key);
     }
     keys.sort(
@@ -150,6 +151,10 @@ final class WatchSyncCrypto {
               && (row.getLong("positionMs") > old.getLong("positionMs")
                   || row.getLong("positionMs") == old.getLong("positionMs")
                       && row.getLong("durationMs") > old.getLong("durationMs"))) out.put(key, row);
+      else if (row.getLong("updatedAt") == old.getLong("updatedAt")
+          && row.getLong("positionMs") == old.getLong("positionMs")
+          && row.getLong("durationMs") == old.getLong("durationMs")
+          && row.optBoolean("completed")) out.put(key,row);
     }
     return clean(out);
   }

@@ -5,13 +5,13 @@ Native Android app for browsing movies, series and anime, with torrent-based pla
 | Download | Package |
 | --- | --- |
 | [Android / Google TV / projector](https://github.com/Shaurya609/StreamNest/releases/latest) | Universal APK — includes ARM32 and ARM64 |
-| [Windows desktop — standalone preview](https://github.com/Shaurya609/StreamNest/releases/tag/desktop-v0.13.3) | Installer or portable ZIP; Popcorn Time is not required |
+| [Windows desktop — standalone preview](https://github.com/Shaurya609/StreamNest/releases/tag/desktop-v0.14.0) | Installer or portable ZIP; Popcorn Time is not required |
 
 [All releases](https://github.com/Shaurya609/StreamNest/releases) · [Desktop setup](desktop/STANDALONE.md) · [Pending verification](PENDING-FIXES.md)
 
 Windows 0.12.0–0.13.1 users: install 0.13.2 once to repair the update handoff. Android 0.12.0 and newer supports application updates. Future versions check and download automatically; Windows offers Install and restart, while Android uses its system installation confirmation. [Update behavior and publishing](UPDATES.md).
 
-Private cross-device resume is available in 0.13.0. [Pair your devices](WATCH-SYNC.md).
+Automatic series/anime episode selection and cross-device resume are available in 0.14.0. [Pair your devices](WATCH-SYNC.md).
 
 ## Features
 

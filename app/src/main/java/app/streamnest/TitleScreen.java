@@ -28,6 +28,7 @@ final class TitleScreen extends Dialog {
   int activeSeason = -1;
   BaseAdapter episodeAdapter;
   boolean loaded, lookingForAlternatives;
+  boolean manualEpisodeSelection;
   Spinner episodeQualityPicker;
   java.util.concurrent.Future<?> alternateJob;
 
@@ -220,6 +221,7 @@ final class TitleScreen extends Dialog {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
               String value = String.valueOf(parent.getItemAtPosition(position));
               if (!value.equals(selectedQuality)) {
+                manualEpisodeSelection = true;
                 selectedQuality = value;
                 updateControls();
               }
@@ -404,16 +406,23 @@ final class TitleScreen extends Dialog {
           }
         };
     episodesView.setAdapter(episodeAdapter);
-    episodesView.setOnItemClickListener((p, v, n, id) -> selectEpisode(visible.get(n)));
+    episodesView.setOnItemClickListener((p, v, n, id) -> {
+      manualEpisodeSelection = true;
+      selectEpisode(visible.get(n));
+    });
   }
 
   void loadEpisodes() {
+    WatchSync.request(a, true);
     a.work.execute(
         () -> {
           try {
             List<JSONObject> result =
                 EpisodeLibrary.load(
                     a.prefs.getString("server_shows", "https://api.apiabcd.com/"), title);
+            long syncDeadline = android.os.SystemClock.elapsedRealtime() + 2000;
+            while (WatchSync.pending && android.os.SystemClock.elapsedRealtime() < syncDeadline)
+              Thread.sleep(50);
             a.ui.post(
                 () -> {
                   if (!isShowing() || a.isDestroyed()) return;
@@ -421,6 +430,11 @@ final class TitleScreen extends Dialog {
                   loaded = true;
                   populateSeasons();
                 });
+            if (WatchSync.pending)
+              WatchSync.worker.execute(() -> a.ui.post(() -> {
+                if (isShowing() && !a.isDestroyed() && !manualEpisodeSelection && !WatchSync.pending)
+                  populateSeasons();
+              }));
           } catch (Exception e) {
             a.ui.post(
                 () -> {
@@ -443,7 +457,7 @@ final class TitleScreen extends Dialog {
       return;
     }
     String saved = a.prefs.getString("episode_" + title.id, "");
-    JSONObject initial =
+    JSONObject fallback =
         episodes.stream()
             .filter(e -> EpisodeLibrary.key(e).equals(saved))
             .findFirst()
@@ -460,6 +474,11 @@ final class TitleScreen extends Dialog {
                         })
                     .findFirst()
                     .orElse(episodes.get(0)));
+    JSONObject resumed = null;
+    try {
+      resumed = ResumeEpisodeSelection.choose(title.id, episodes, WatchProgress.records(a), System.currentTimeMillis());
+    } catch (Exception ignored) {}
+    final JSONObject initial = resumed == null ? fallback : resumed;
     int initialSeason = seasons.indexOf(initial.optInt("season"));
     if (seasonsView != null) {
       seasonsView.setAdapter(
@@ -475,10 +494,21 @@ final class TitleScreen extends Dialog {
               return row;
             }
           });
-      seasonsView.setOnItemClickListener((p, v, n, id) -> selectSeason(seasons.get(n), null));
+      seasonsView.setOnItemClickListener((p, v, n, id) -> {
+        manualEpisodeSelection = true;
+        selectSeason(seasons.get(n), null);
+      });
       selectSeason(initial.optInt("season"), initial);
       seasonsView.setSelection(Math.max(0, initialSeason));
     } else {
+      seasonSpinner.setOnTouchListener((view, event) -> {
+        if (event.getAction() == android.view.MotionEvent.ACTION_DOWN) manualEpisodeSelection = true;
+        return false;
+      });
+      seasonSpinner.setOnKeyListener((view, key, event) -> {
+        if (event.getAction() == android.view.KeyEvent.ACTION_DOWN) manualEpisodeSelection = true;
+        return false;
+      });
       seasonSpinner.setAdapter(
           new ArrayAdapter<>(a, android.R.layout.simple_spinner_dropdown_item, names));
       seasonSpinner.setOnItemSelectedListener(
@@ -567,6 +597,7 @@ final class TitleScreen extends Dialog {
   }
 
   void watch() {
+    manualEpisodeSelection = true;
     Catalog.Source best = chosenSource();
     if (best == null) return;
     String playTitle =

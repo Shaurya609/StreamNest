@@ -190,6 +190,7 @@
         },
 
         onAttach: function () {
+            this._manualResumeChoice=false;this._resumeGeneration=(this._resumeGeneration||0)+1;
             win.info('Show series details (' + this.model.get('imdb_id') + ')');
 
             bookmarked = App.userBookmarks.indexOf(this.model.get('imdb_id')) !== -1;
@@ -309,18 +310,21 @@
                 overview,
             };
         },
-        selectNextEpisode: function () {
-            Database.getEpisodesWatched(this.model.get('tvdb_id')).then(function(data){
-                if(_this.isDestroyed())return;
-                const watched=[];
-                _.each(data,function(value){if(value){_this.markWatched(value,true);watched.push(value);}});
-                const chosen=require('./butter-provider/streamnest-episodes').nextUnwatched(_this.model.get('episodes'),watched,AdvSettings.get('tv_detail_jump_to'));
+        selectNextEpisode: async function () {
+            const view=this,generation=this._resumeGeneration,sync=require('./butter-provider/streamnest-sync');
+            await sync.beforeSelection();
+            const data=await Database.getEpisodesWatched(view.model.get('tvdb_id')).catch(()=>[]);
+            const watched=[];_.each(data,function(value){if(value){view.markWatched(value,true);watched.push(value);}});
+            const apply=()=>{
+                if(view.isDestroyed()||view._manualResumeChoice||view._resumeGeneration!==generation)return;
+                const episodes=view.model.get('episodes'),chosen=require('./butter-provider/streamnest-progress').chooseEpisode(view.model.get('imdb_id'),episodes)||require('./butter-provider/streamnest-episodes').nextUnwatched(episodes,watched,AdvSettings.get('tv_detail_jump_to'));
                 if(!chosen)return;
-                _this.selectSeason($('li[data-tab="season-'+chosen.season+'"]'));
-                const row=$('#watched-'+chosen.season+'-'+chosen.episode).parent();
-                _this.selectEpisode(row);
-                if(row.length&&!_this.isElementVisible(row[0]))row[0].scrollIntoView(false);
-            });
+                const current=view.model.get('selectedEpisode');if(current&&current.season===chosen.season&&current.episode===chosen.episode)return;
+                view.selectSeason($('li[data-tab="season-'+chosen.season+'"]'));
+                const row=$('#watched-'+chosen.season+'-'+chosen.episode).parent();view.selectEpisode(row);
+                if(row.length&&!view.isElementVisible(row[0]))row[0].scrollIntoView(false);
+            };
+            apply();await sync.request();apply();
         },
 
         openRelInfo: function (e) {
@@ -638,6 +642,7 @@
         },
 
         clickSeason: function (e) {
+            _this._manualResumeChoice=true;
             if (e.type) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -646,6 +651,7 @@
         },
 
         clickEpisode: function (e) {
+            _this._manualResumeChoice=true;
             if (e.type) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -654,6 +660,7 @@
         },
 
         dblclickEpisode: function (e) {
+            _this._manualResumeChoice=true;
             if (e.type) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -760,6 +767,7 @@
         },
 
         nextEpisode: function (e) {
+            _this._manualResumeChoice=true;
             var tabEpisode = $('.tab-episode:visible');
             var index = $('.tab-episode.active').index();
             if (index === tabEpisode.length - 1) {
@@ -779,6 +787,7 @@
         },
 
         previousEpisode: function (e) {
+            _this._manualResumeChoice=true;
             var index = $('.tab-episode.active').index();
             if (index === 0) {
                 return;
@@ -797,6 +806,7 @@
         },
 
         nextSeason: function (e) {
+            _this._manualResumeChoice=true;
             var tabSeason = $('.tab-season');
             var index = $('.tab-season.active').index();
             if (index === tabSeason.length - 1) {
@@ -815,6 +825,7 @@
         },
 
         previousSeason: function (e) {
+            _this._manualResumeChoice=true;
             var index = $('.tab-season.active').index();
             if (index === 0) {
                 return;
@@ -833,6 +844,7 @@
         },
 
         playEpisode: function (e) {
+            _this._manualResumeChoice=true;
             $('.startStreaming').trigger('click');
 
             if (e.type) {
