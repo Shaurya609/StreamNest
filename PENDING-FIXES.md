@@ -40,4 +40,6 @@ The owner selected anonymous access only. Personal subtitle-account upgrade-rete
 
 - Korean language is accepted by Android/desktop series metadata adapters, movie adapters and the signed snapshot schema. Both language filters expose Korean. Independent publisher scans now retain Korean series as well as anime. These labels identify original title language, not verified English audio/subtitles.
 - Android and desktop attach Jikan filler/recap flags only to explicitly mapped MAL episodes, currently from the first API page. Unknown, unmapped and later-page episodes receive no inferred labels. Android shows flags in selected episode heading; desktop shows them in episode rows.
-- Remaining before release: extend mapped filler pagination with provider rate limits, verify UI/network behavior, add confirmed source-audio/subtitle availability, configure and validate Anime Skip client integration, and publish updated signed catalog snapshots and app packages.
+- Remaining before release: extend mapped filler pagination with provider rate limits, verify UI/network behavior, add confirmed source-audio/subtitle availability, verify IntroDB and cached timestamp fallback, and publish updated signed catalog snapshots and app packages.
+
+Timestamp provider scope — owner selected IntroDB and cached timestamps for now. Anime Skip client registration/integration is deferred. Continue validating episode identity and segment boundaries before showing skip controls.
