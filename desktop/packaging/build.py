@@ -163,7 +163,7 @@ def assemble(skip_install=False):
         except (ValueError, UnicodeError): pass
     (notices / 'npm-inventory.json').write_text(json.dumps(packages, indent=2)+'\n', encoding='utf8')
     (app / 'BUILD-INFO.json').write_text(json.dumps({'version':VERSION,'upstream':LOCK['upstream'],'overlayVersion':inventory['version'],'runtimeArchiveSha256':LOCK['assets']['runtime']['sha256']},indent=2)+'\n',encoding='utf8')
-    (app / 'README.txt').write_text('StreamNest Desktop '+VERSION+' preview\n\nRun StreamNest.exe. No Popcorn Time installation is required.\nSettings and video cache are separate under %LOCALAPPDATA%\\StreamNest.\nNo accounts or saved settings are imported. Updates are manual from the StreamNest GitHub releases page.\nThis build retains the legacy NW.js 0.44.5 runtime for codec compatibility. Runtime modernization and broader device testing remain pending.\nThe preview is unsigned.\nApplication sources and build provenance are provided separately. See desktop/STANDALONE.md.\n',encoding='utf8')
+    (app / 'README.txt').write_text('StreamNest Desktop '+VERSION+' preview\n\nRun StreamNest.exe. No Popcorn Time installation is required.\nSettings and video cache are separate under %LOCALAPPDATA%\\StreamNest.\nNo accounts or saved settings are imported. Updates are checked automatically at launch. Use Check for updates to download a verified update, then Install and restart to apply it.\nThis build retains the legacy NW.js 0.44.5 runtime for codec compatibility. Runtime modernization and broader device testing remain pending.\nThe preview is unsigned.\nApplication sources and build provenance are provided separately. See desktop/STANDALONE.md.\n',encoding='utf8')
     return app
 
 def source_archive(app):

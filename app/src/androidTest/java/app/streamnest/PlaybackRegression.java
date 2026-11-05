@@ -188,6 +188,28 @@ public class PlaybackRegression extends Instrumentation {
       main(() -> activity.player.setTime(10000));
       SystemClock.sleep(1200);
       assertFrame("initial");
+      for (String segmentType : new String[] {"intro", "outro"}) {
+        long start = segmentType.equals("intro") ? 5000 : 15000;
+        long end = start + 5000;
+        main(() -> {
+          activity.segments = new ArrayList<>();
+          activity.segments.add(new SkipSegments.Segment(segmentType, start, end));
+          activity.player.setTime(start + 1000);
+          activity.updateSegment(start + 1000);
+          if (activity.skipSegment.getVisibility() != View.VISIBLE)
+            throw new AssertionError("Missing " + segmentType + " control");
+          activity.skipSegment.performClick();
+        });
+        SystemClock.sleep(700);
+        if (activity.player.getTime() < end - 1000)
+          throw new AssertionError(segmentType + " did not seek");
+        assertFrame(segmentType + " seek");
+      }
+      main(() -> {
+        activity.segments.clear();
+        activity.updateSegment(activity.player.getTime());
+      });
+
       main(() -> activity.subtitleMenu());
       SystemClock.sleep(500);
       // Close the actual subtitle overlay via Back, just as a remote/tablet does.
