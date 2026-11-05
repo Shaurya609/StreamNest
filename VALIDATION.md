@@ -109,3 +109,6 @@ Built locally from commit 30742955e184231918c8d2dd48342d3eed142680 while GitHub 
 - Replaced unsupported child-process spawn-event waiting with a unique readiness marker. Replaced Wait-Process with bounded polling after the native test observed its suppressed failure returning before the renderer exited.
 - Real bundled NW.js called the actual update action, confirmed helper readiness, exited, ran a local installer fixture with exact /S /UPDATE /D arguments, and restarted using the original isolated user-data directory. No real installation registration or saved user account was involved in this controlled test.
 - All 57 desktop/catalog/updater/backend checks passed, including helper-start failure without quitting and successful readiness without a spawn event. Real installation upgrade preservation was previously verified separately; the native handoff probe uses a controlled executable, not a published installer.
+
+- Final 0.13.2 packaged native handoff probe passed. Windows CI 42019463031 passed, including native handoff/restart and real per-user installer checks; Android CI 42019463026 passed.
+- Applied the local 0.12.0 → 0.13.2 repair through the real installer after gracefully closing only StreamNest. All five pre-existing saved profile files retained exactly the same SHA256 hashes. Confirmed installed package version 0.13.2, then relaunched it.

@@ -9,7 +9,7 @@ Native Android app for browsing movies, series and anime, with torrent-based pla
 
 [All releases](https://github.com/Shaurya609/StreamNest/releases) · [Desktop setup](desktop/STANDALONE.md) · [Pending verification](PENDING-FIXES.md)
 
-Install 0.12.0 manually once to enable application updates. Future versions check and download automatically; Windows offers Install and restart, while Android uses its system installation confirmation. [Update behavior and publishing](UPDATES.md).
+Windows 0.12.0–0.13.1 users: install 0.13.2 once to repair the update handoff. Android 0.12.0 and newer supports application updates. Future versions check and download automatically; Windows offers Install and restart, while Android uses its system installation confirmation. [Update behavior and publishing](UPDATES.md).
 
 Private cross-device resume is available in 0.13.0. [Pair your devices](WATCH-SYNC.md).
 
