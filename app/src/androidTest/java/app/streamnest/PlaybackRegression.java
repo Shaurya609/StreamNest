@@ -14,7 +14,7 @@ import org.videolan.libvlc.Media;
 /** Device-only regression; fixture is supplied locally, never bundled in the app. */
 public class PlaybackRegression extends Instrumentation {
   PlayerActivity activity;
-  String watchSyncCode;
+  String watchSyncCode, shortPairingCode, expectedPairingAuth;
   boolean skipLive, catalog, subtitles, storage, resilience, episodes, appUpdates, watchSyncUi, resumeUi;
 
   @Override
@@ -30,11 +30,28 @@ public class PlaybackRegression extends Instrumentation {
     watchSyncUi = args != null && "true".equals(args.getString("watchSyncUi"));
     resumeUi = args != null && "true".equals(args.getString("resumeUi"));
     skipLive = args != null && "true".equals(args.getString("skipLive"));
+    shortPairingCode = args == null ? null : args.getString("shortPairingCode");
+    expectedPairingAuth = args == null ? null : args.getString("expectedPairingAuth");
     start();
   }
 
   @Override
   public void onStart() {
+    if (shortPairingCode != null) {
+      Bundle result = new Bundle();
+      try {
+        String recovery = PairingTicket.open(shortPairingCode,
+            PairingTicket.call(getTargetContext(),shortPairingCode,"POST",null,null).getString("payload"));
+        if (!WatchSyncCrypto.auth(recovery).equals(expectedPairingAuth))
+          throw new AssertionError("Cross-device pairing decrypted a different group");
+        result.putString("result","PASS: live one-time desktop ticket decrypted by Android");
+        finish(Activity.RESULT_OK,result);
+      } catch(Throwable exception) {
+        result.putString("result","FAIL: "+exception);
+        finish(Activity.RESULT_CANCELED,result);
+      }
+      return;
+    }
     if (skipLive) {
       Bundle result = new Bundle();
       try {

@@ -12,6 +12,7 @@ final class WatchSyncUiRegression {
   static Bundle run(PlaybackRegression p) throws Exception {
     MainActivity main = null;
     WatchSyncActivity screen = null;
+    String expectedPairingUri = WatchSync.endpoint(p.getTargetContext()) + "/pair#K7MP%204RXT";
     boolean pending = WatchSync.pending;
     WatchSync.pending = true;
     Instrumentation.ActivityMonitor monitor =
@@ -54,6 +55,21 @@ final class WatchSyncUiRegression {
         sync.drawQr();
         if (sync.qr.getVisibility() != View.VISIBLE || sync.qr.getDrawable() == null)
           throw new AssertionError("Pairing QR did not render");
+        sync.code.setText("K7MP 4RXT");
+        sync.drawQr();
+        android.graphics.Bitmap bitmap =
+            ((android.graphics.drawable.BitmapDrawable) sync.qr.getDrawable()).getBitmap();
+        int[] pixels = new int[bitmap.getWidth()*bitmap.getHeight()];
+        bitmap.getPixels(pixels,0,bitmap.getWidth(),0,0,bitmap.getWidth(),bitmap.getHeight());
+        try {
+          com.google.zxing.Result decoded = new com.google.zxing.MultiFormatReader().decode(
+              new com.google.zxing.BinaryBitmap(new com.google.zxing.common.HybridBinarizer(
+                new com.google.zxing.RGBLuminanceSource(bitmap.getWidth(),bitmap.getHeight(),pixels))));
+          if (!decoded.getText().equals(expectedPairingUri))
+            throw new AssertionError("QR did not contain the temporary pairing link");
+        } catch(com.google.zxing.NotFoundException exception) {
+          throw new AssertionError("QR cannot be decoded",exception);
+        }
         sync.code.setText("");
         sync.drawQr();
         if (sync.qr.getVisibility() != View.GONE)

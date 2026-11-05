@@ -49,11 +49,11 @@ public class WatchSyncActivity extends Activity {
     root.addView(title);
     TextView explanation = new TextView(this);
     explanation.setText(
-        "Pair devices with the same private code. Watching progress is encrypted before syncing. No"
+        "Enter the eight-character code shown on your other device. Watching progress is encrypted before syncing. No"
             + " StreamNest account is needed.");
     root.addView(explanation);
     code = new EditText(this);
-    code.setHint("Pairing code from another device");
+    code.setHint("Eight-character pairing code");
     code.setSingleLine(true);
     code.setInputType(
         android.text.InputType.TYPE_CLASS_TEXT
@@ -61,7 +61,7 @@ public class WatchSyncActivity extends Activity {
             | android.text.InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
     root.addView(code);
     try {
-      code.setText(WatchSync.code(this));
+      code.setText("");
     } catch (Exception ignored) {
     }
     if (getIntent().getData() != null
@@ -107,6 +107,37 @@ public class WatchSyncActivity extends Activity {
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Connect", (d, w) -> connect())
                 .show());
+    button(root, "Show pairing code", () -> {
+      status.setText("Creating pairing code…");
+      WatchSync.worker.execute(() -> {
+        try {
+          String recovery = WatchSync.code(this);
+          WatchSyncCrypto.parse(recovery);
+          String shortCode = PairingTicket.create();
+          PairingTicket.call(this,shortCode,"PUT",PairingTicket.seal(shortCode,recovery),
+              WatchSyncCrypto.auth(recovery));
+          ui.post(() -> {
+            code.setText(shortCode.substring(0,4)+" "+shortCode.substring(4));
+            error = "Expires in 5 minutes · usable once";
+            String displayed = code.getText().toString();
+            ui.postDelayed(() -> {
+              if (displayed.contentEquals(code.getText())) {
+                code.setText("");
+                error = "Pairing code expired. Select Show pairing code again.";
+                drawQr();
+              }
+            }, 300000);
+            drawQr();
+          });
+        } catch(Exception exception) {
+          ui.post(() -> { error = exception.getMessage(); status.setText(error); });
+        }
+      });
+    });
+    button(root, "Show recovery key", () -> {
+      try { code.setText(WatchSync.code(this)); drawQr(); }
+      catch(Exception exception) { error = exception.getMessage(); }
+    });
     button(root, "Sync now", () -> WatchSync.request(this, true));
     button(
         root,
@@ -123,7 +154,7 @@ public class WatchSyncActivity extends Activity {
         });
     TextView note = new TextView(this);
     note.setText(
-        "Keep the code private and save a copy for pairing future devices. A phone camera can scan"
+        "Pairing codes expire after five minutes and work once. Keep the recovery key private. A phone camera can scan"
             + " the QR code when StreamNest is installed. Local progress works offline; inactive"
             + " cloud backups are cleared after 180 days.");
     root.addView(note);
@@ -132,24 +163,42 @@ public class WatchSyncActivity extends Activity {
   }
 
   void connect() {
+    error = null;
+    String entered = code.getText().toString();
     try {
-      error = null;
-      WatchSync.connect(this, code.getText().toString());
-      code.setText(WatchSync.code(this));
-      drawQr();
-    } catch (Exception e) {
-      error = e.getMessage();
+      if (entered.replaceAll("[\\s-]","").length() == 8) PairingTicket.normalize(entered);
+      else WatchSyncCrypto.parse(entered);
+    } catch(Exception exception) {
+      error = exception.getMessage();
       status.setText(error);
+      return;
     }
+
+    status.setText("Connecting…");
+    WatchSync.worker.execute(() -> {
+      try {
+        String recovery = entered;
+        if (entered.replaceAll("[\\s-]","").length() == 8)
+          recovery = PairingTicket.open(entered,
+              PairingTicket.call(this,entered,"POST",null,null).getString("payload"));
+        WatchSync.connect(this,recovery);
+        ui.post(() -> { error = null; code.setText(""); drawQr(); });
+      } catch(Exception exception) {
+        ui.post(() -> { error = exception.getMessage(); status.setText(error); });
+      }
+    });
   }
 
   void drawQr() {
     try {
       String value = code.getText().toString();
-      WatchSyncCrypto.parse(value);
+      if (value.replaceAll("[\\s-]","").length() == 8) PairingTicket.normalize(value);
+      else WatchSyncCrypto.parse(value);
       BitMatrix bits =
           new MultiFormatWriter()
-              .encode("streamnest-watch://pair/" + value, BarcodeFormat.QR_CODE, 360, 360);
+              .encode((value.replaceAll("[\\s-]","").length() == 8
+                      ? WatchSync.endpoint(this) + "/pair#" + android.net.Uri.encode(value)
+                      : "streamnest-watch://pair/" + android.net.Uri.encode(value)), BarcodeFormat.QR_CODE, 360, 360);
       Bitmap bitmap = Bitmap.createBitmap(360, 360, Bitmap.Config.ARGB_8888);
       for (int y = 0; y < 360; y++)
         for (int x = 0; x < 360; x++)

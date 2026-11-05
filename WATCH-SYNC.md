@@ -17,3 +17,11 @@ Intro/credits skip remains independent of resume sync. Anime and series show con
 Opening a series or anime selects the season and episode from its newest saved playback record. Press Play to resume its timestamp. A newly recorded completion selects the next aired canonical episode, including season boundaries; Specials stay in their own sequence. Metadata-only episodes are retained rather than silently skipped.
 
 Watch history refreshes before selection. Offline/slow service keeps local history usable; a later sync result can update the selection only while you have not manually chosen an episode or started playback. New records retain an encrypted completion flag. Update paired devices to 0.14.0 for completion-driven selection; older unfinished-position records remain usable, and ambiguous older zero-position records are not guessed to be completed.
+
+## Temporary pairing codes
+
+Choose Show pairing code on a connected device, then enter its eight characters on the other device. Codes expire after five minutes and can be redeemed once. Existing recovery keys remain supported through Show recovery key.
+
+Use the normal phone camera for QR pairing. The HTTPS page offers Open StreamNest, followed by in-app confirmation. A built-in camera scanner is not provided. The fragment carries the temporary code and is not sent in the landing-page request.
+
+The pairing broker stores an AES-GCM encrypted ticket and a separately derived lookup digest. The ticket contains the existing group recovery key, encrypted using a key derived from the temporary code. Short codes have 40 bits of randomness and rely on short expiry and server rate limits. Progress continues using the existing 128-bit recovery key and encrypted sync protocol.

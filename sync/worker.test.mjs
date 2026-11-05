@@ -35,3 +35,21 @@ test('pairing rejects typos; encrypted progress rejects a wrong key and tamperin
  const code=C.create(),other=C.create(),value=C.seal(code,{});assert.equal(C.auth(code).length,43);assert.throws(()=>C.parse(code.slice(0,-1)+(code.endsWith('0')?'1':'0')));assert.throws(()=>C.open(other,value));
  const modified={...value,body:Buffer.alloc(Buffer.from(value.body,'base64').length).toString('base64')};assert.throws(()=>C.open(code,modified));
 });
+
+test('short pairing is encrypted, expires and can be consumed only once',async()=>{
+ const env=environment(),P=require('../desktop/overlay/butter-provider/streamnest-pairing');
+ const recovery=C.create(),short=P.create(),id=P.lookup(short),payload=P.seal(short,recovery);
+ const req=method=>new Request('https://sync.example/v1/pair/'+id,{method,headers:{Authorization:'Bearer '+C.auth(recovery)},body:method==='PUT'?payload:undefined});
+ try{
+  assert.equal((await worker.fetch(req('PUT'),env)).status,200);
+  assert.equal((await worker.fetch(req('PUT'),env)).status,409);
+  const results=await Promise.all([worker.fetch(req('POST'),env),worker.fetch(req('POST'),env)]);
+  assert.deepEqual(results.map(r=>r.status).sort(),[200,404]);
+  const doc=await results.find(r=>r.status===200).json();
+  assert.equal(P.open(short,doc.payload),recovery);
+  assert.throws(()=>P.open(P.create(),doc.payload));
+  assert.equal((await worker.fetch(req('PUT'),env)).status,200);
+  env.database.prepare('UPDATE pairing_tickets SET expires_at=0').run();
+  assert.equal((await worker.fetch(req('POST'),env)).status,404);
+ }finally{env.database.close();}
+});
