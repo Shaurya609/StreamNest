@@ -43,7 +43,7 @@ try:
 finally:
  # Terminate only processes from this generated test application / unique helper.
  literal=lambda value: "'"+str(value).replace("'","''")+"'"
- cleanup="Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq "+literal(app/'StreamNest.exe')+" -or ($_.Name -eq 'powershell.exe' -and $_.CommandLine -and $_.CommandLine.Contains("+literal(probe/'Profile/Updates/install-update.ps1')+")) } | ForEach-Object { Stop-Process -Id $_.ProcessId -ErrorAction SilentlyContinue }"
+ cleanup="Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -ne $PID -and ($_.ExecutablePath -eq "+literal(app/'StreamNest.exe')+" -or ($_.Name -eq 'powershell.exe' -and $_.CommandLine -and $_.CommandLine.Contains("+literal(probe/'Profile/Updates/install-update.ps1')+"))) } | ForEach-Object { Stop-Process -Id $_.ProcessId -ErrorAction SilentlyContinue }"
  subprocess.run(['powershell.exe','-NoProfile','-NonInteractive','-Command',cleanup],creationflags=subprocess.CREATE_NO_WINDOW,check=False)
  manifest.write_bytes(original)
  html.unlink(missing_ok=True)
