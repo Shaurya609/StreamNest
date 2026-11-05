@@ -46,3 +46,15 @@ test('anonymous fallback requires exact episode, duration match and confidence',
  doc.segments.intro.match='out-of-range';
  assert.equal(P.skipdb(doc,attrs,1440).length,0);
 });
+
+test('series fallback survives IntroDB outage and keeps later scenes',async()=>{
+ const attrs={imdb_id:'tt10919420',season:1,episode:1};
+ const rows=await P.segments(attrs,3700,async url=>{
+  if(url.includes('api.introdb.app'))throw Error('Injected provider outage');
+  if(url.includes('api.skipdb.tv'))return {imdb_id:attrs.imdb_id,season:1,episode:1,segments:{outro:{start_ms:3313000,end_ms:3655000,match:'exact',confidence:0.9}}};
+  throw Error('Unexpected provider');
+ });
+ assert.equal(rows.length,1);
+ assert.equal(rows[0].end,3655);
+ assert.equal(P.active(rows,3660),null);
+});

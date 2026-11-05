@@ -154,3 +154,9 @@ Implemented anonymous SkipDB fallback for missing IntroDB intro/outro segments i
 ## 0.15.1 anime discovery release
 
 Published Android v0.15.1 (code23) and Windows desktop-v0.15.1. Android unit/build/lint and 61 Node checks passed; native Windows fresh-profile startup/package inspection passed. Windows CI 42068117194 succeeded. Main release has eight verified assets; desktop release has four, with local size/SHA matching GitHub digests. Live signature verification accepted 0.15.1 on both platforms after feed workflow 42069835579 succeeded. Local device installation was not performed for this release.
+
+## Follow-up source and anime verification
+
+- Live SkipDB is now reachable from this connection. Squid Game S1E1 at duration 3655 seconds returned exact-match credits 3313–3655 with confidence 0.9, accepted by the production desktop parser. Requesting 3600 seconds returned out-of-range/confidence 0.6 and is rejected. This establishes service/parser access, not rendered skip control playback on both devices.
+- Black Clover MAL 34572 mapping returned IMDb tt7441658 and 196 episode entries. Jikan second-page requests timed out twice; live filler flags beyond 100 remain unverified. Added Android boundary regression for episodes 100/101, missing flags and unmapped split-season isolation. Extracted the production page-selection/attachment logic for those checks.
+- No Android device is connected for current playback/audio-track verification. Korean English audio and release-specific subtitle timing remain open; earlier subtitle matches do not establish sync for every source.

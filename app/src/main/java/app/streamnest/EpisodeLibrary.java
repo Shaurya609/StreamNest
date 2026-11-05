@@ -51,6 +51,27 @@ final class EpisodeLibrary {
     return result;
   }
 
+  static Set<Integer> fillerPages(List<JSONObject> rows, int mal) {
+    Set<Integer> pages = new TreeSet<>();
+    if (mal <= 0) return pages;
+    for (JSONObject row : rows)
+      if (row.optInt("skipMalId") == mal && row.optInt("episode") > 0)
+        pages.add((row.optInt("episode") - 1) / 100 + 1);
+    return pages;
+  }
+
+  static void attachFiller(List<JSONObject> rows, int mal, JSONArray data) throws Exception {
+    for (int i = 0; i < data.length(); i++) {
+      JSONObject episode = data.getJSONObject(i);
+      for (JSONObject row : rows)
+        if (mal > 0 && row.optInt("skipMalId") == mal
+            && row.optInt("episode") == episode.optInt("mal_id")) {
+          for (String flag : new String[] {"filler", "recap"})
+            if (episode.opt(flag) instanceof Boolean) row.put(flag, episode.getBoolean(flag));
+        }
+    }
+  }
+
   static List<JSONObject> load(String base, Catalog.Title title) throws Exception {
     String id = title.id;
     JSONObject saved;
@@ -118,27 +139,14 @@ final class EpisodeLibrary {
     for (JSONObject row : rows) if (row.optInt("skipMalId") > 0)
       mappedAnime.add(row.optInt("skipMalId"));
     for (int mal : mappedAnime) {
-      Set<Integer> pages = new TreeSet<>();
-      for (JSONObject row : rows)
-        if (row.optInt("skipMalId") == mal && row.optInt("episode") > 0)
-          pages.add((row.optInt("episode") - 1) / 100 + 1);
+      Set<Integer> pages = fillerPages(rows, mal);
       for (int page : pages) try {
       Thread.sleep(400);
       JSONObject response = CatalogHttp.object(
           "https://api.jikan.moe/v4/anime/" + mal + "/episodes?page=" + page, null);
       JSONArray data = response.optJSONArray("data");
       if (data == null) continue;
-      for (int i = 0; i < data.length(); i++) {
-        JSONObject episode = data.getJSONObject(i);
-        for (JSONObject row : rows)
-          if (row.optInt("skipMalId") == mal
-              && row.optInt("episode") == episode.optInt("mal_id")) {
-            if (episode.opt("filler") instanceof Boolean)
-              row.put("filler", episode.getBoolean("filler"));
-            if (episode.opt("recap") instanceof Boolean)
-              row.put("recap", episode.getBoolean("recap"));
-          }
-      }
+      attachFiller(rows, mal, data);
       } catch (InterruptedException interrupted) {
         Thread.currentThread().interrupt();
         throw interrupted;
