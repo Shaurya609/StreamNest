@@ -26,7 +26,7 @@ account_before=account.read_bytes();preferences_before=preferences.read_bytes()
 if args.upgrade_from:
     subprocess.run([str(args.upgrade_from.resolve()),'/S','/D='+str(target)],check=True,env=test_env)
 subprocess.run([str(args.installer.resolve()),'/S',*(['/UPDATE'] if args.upgrade_from else []),'/D='+str(target)],check=True,env=test_env)
-assert account.read_bytes()==account_before and preferences.read_bytes()==preferences_before,'Upgrade changed profile/account files' 
+assert account.read_bytes()==account_before and preferences.read_bytes()==preferences_before,'Upgrade changed profile/account files'
 assert (target/'StreamNest.exe').is_file(),'Installer did not produce the executable'
 assert json.loads((target/'package.json').read_text(encoding='utf8'))['name']=='StreamNest'
 assert shortcut.is_file(),'Installer did not create the desktop shortcut'

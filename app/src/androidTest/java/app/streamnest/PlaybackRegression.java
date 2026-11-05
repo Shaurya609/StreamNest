@@ -14,7 +14,7 @@ import org.videolan.libvlc.Media;
 /** Device-only regression; fixture is supplied locally, never bundled in the app. */
 public class PlaybackRegression extends Instrumentation {
   PlayerActivity activity;
-  boolean catalog, subtitles, storage, resilience, episodes;
+  boolean catalog, subtitles, storage, resilience, episodes, appUpdates;
 
   @Override
   public void onCreate(Bundle args) {
@@ -24,11 +24,78 @@ public class PlaybackRegression extends Instrumentation {
     storage = args != null && "true".equals(args.getString("storage"));
     resilience = args != null && "true".equals(args.getString("resilience"));
     episodes = args != null && "true".equals(args.getString("episodes"));
+    appUpdates = args != null && "true".equals(args.getString("appUpdates"));
     start();
   }
 
   @Override
   public void onStart() {
+    if (appUpdates) {
+      Bundle result = new Bundle();
+      AppUpdateActivity screen = null;
+      try {
+        screen =
+            (AppUpdateActivity)
+                startActivitySync(
+                    new Intent(getTargetContext(), AppUpdateActivity.class)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        long deadline = SystemClock.elapsedRealtime() + 30000;
+        while (SystemClock.elapsedRealtime() < deadline
+            && (!AppUpdateActivity.message.contains("up to date") || AppUpdateActivity.busy))
+          SystemClock.sleep(100);
+        if (!AppUpdateActivity.message.contains("up to date"))
+          throw new AssertionError(AppUpdateActivity.message);
+        File invalid = new File(getTargetContext().getFilesDir(), "invalid-update-test.apk");
+        java.nio.file.Files.write(invalid.toPath(), new byte[] {1, 2, 3});
+        try {
+          AppUpdateActivity.verifyApk(getTargetContext(), invalid, 999);
+          throw new AssertionError("Invalid APK accepted");
+        } catch (java.io.IOException expected) {
+        } finally {
+          invalid.delete();
+        }
+        File own = new File(getTargetContext().getApplicationInfo().sourceDir);
+        try {
+          AppUpdateActivity.verifyApk(getTargetContext(), own, 19);
+          throw new AssertionError("Same-version APK accepted");
+        } catch (java.io.IOException expected) {
+        }
+        File candidate = new File(getTargetContext().getFilesDir(), "app-updates/fixture.apk");
+        File wrong = new File(getTargetContext().getFilesDir(), "app-updates/wrong.apk");
+        if (!candidate.exists() || !wrong.exists())
+          throw new AssertionError("Supply signed future-version fixtures first");
+        AppUpdateActivity.verifyApk(getTargetContext(), candidate, 20);
+        try {
+          AppUpdateActivity.verifyApk(getTargetContext(), wrong, 20);
+          throw new AssertionError("Wrong signing certificate accepted");
+        } catch (java.io.IOException expected) {
+        }
+        Intent handoff = AppUpdateActivity.installerIntent(getTargetContext(), candidate);
+        if (!"content".equals(handoff.getData().getScheme())
+            || (handoff.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION) == 0)
+          throw new AssertionError("Invalid installer grant");
+        try (java.io.InputStream stream =
+            getTargetContext().getContentResolver().openInputStream(handoff.getData())) {
+          if (stream.read() < 0) throw new AssertionError("APK content URI empty");
+        }
+        candidate.delete();
+        wrong.delete();
+        result.putString(
+            "result",
+            "PASS: signed feed read; valid future APK accepted; wrong certificate/invalid/non-newer"
+                + " APKs rejected; installer content URI readable");
+        finish(Activity.RESULT_OK, result);
+      } catch (Throwable e) {
+        result.putString("result", "FAIL: " + e);
+        finish(Activity.RESULT_CANCELED, result);
+      } finally {
+        if (screen != null) {
+          AppUpdateActivity close = screen;
+          runOnMainSync(close::finish);
+        }
+      }
+      return;
+    }
     if (episodes) {
       Bundle result = new Bundle();
       try {

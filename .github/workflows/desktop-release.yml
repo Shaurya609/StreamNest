@@ -9,7 +9,7 @@ on:
         description: Desktop preview tag (desktop-vX.Y.Z)
         required: true
 permissions:
-  actions: read
+  actions: write
   contents: write
 jobs:
   publish:
@@ -79,5 +79,6 @@ jobs:
             latest=json.loads(subprocess.check_output(['gh','api','repos/'+os.environ['GH_REPO']+'/releases/tags/v0.11.0']))
             copied={a['name']:a for a in latest['assets']}
             for name,sha in expected.items():assert copied[name]['digest']=='sha256:'+sha
+          subprocess.run(['gh','workflow','run','app-update-feed.yml'],check=True)
           print(json.dumps({'published':True,'prerelease':True,'releaseId':release['id'],'source':os.environ['SOURCE_SHA'],'assetsVerified':len(expected)}))
           PY

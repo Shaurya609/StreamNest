@@ -12,9 +12,10 @@ function response(url,redirects=0){return new Promise((resolve,reject)=>{
  });req.setTimeout(20000,()=>req.destroy(Error('Update download timed out')));req.on('error',reject);
 });}
 async function manifest(key){const res=await response(FEED),chunks=[];let count=0;for await(const b of res){count+=b.length;if(count>100000){res.destroy();throw Error('Manifest too large');}chunks.push(b);}return policy.verify(Buffer.concat(chunks),key);}
+async function digest(file){const hash=crypto.createHash('sha256');for await(const bytes of fs.createReadStream(file))hash.update(bytes);return hash.digest('hex');}
 async function download(item,folder,progress){
  policy.artifact(item);fs.mkdirSync(folder,{recursive:true});const target=path.join(folder,item.sha256+'.exe');
- if(fs.existsSync(target)){const bytes=fs.readFileSync(target);if(bytes.length===item.bytes&&crypto.createHash('sha256').update(bytes).digest('hex')===item.sha256)return target;fs.unlinkSync(target);}
+ if(fs.existsSync(target)){if(fs.statSync(target).size===item.bytes&&await digest(target)===item.sha256)return target;fs.unlinkSync(target);}
  const temp=target+'.part';const hash=crypto.createHash('sha256');let count=0;const res=await response(item.url);const out=await fs.promises.open(temp,'w');const deadline=Date.now()+900000;
  try{for await(const b of res){if(Date.now()>deadline)throw Error('Update download timed out');count+=b.length;if(count>item.bytes)throw Error('Installer size mismatch');hash.update(b);let written=0;while(written<b.length){const result=await out.write(b,written,b.length-written);if(!result.bytesWritten)throw Error('Cannot write update');written+=result.bytesWritten;}if(progress)progress(count,item.bytes);}
  await out.close();

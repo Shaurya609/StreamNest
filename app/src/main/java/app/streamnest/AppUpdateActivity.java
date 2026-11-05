@@ -213,14 +213,17 @@ public class AppUpdateActivity extends Activity {
           || !UpdatePolicy.digest(file).equals(artifact.getString("sha256")))
         throw new IOException("Update checksum rejected");
       verifyApk(this, file, data.getLong("versionCode"));
-      Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".updates", file);
-      startActivity(
-          new Intent(Intent.ACTION_INSTALL_PACKAGE)
-              .setData(uri)
-              .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));
+      startActivity(installerIntent(this, file));
     } catch (Exception error) {
       message = "Cannot install: " + error.getMessage();
     }
+  }
+
+  static Intent installerIntent(Context context, File file) {
+    Uri uri = FileProvider.getUriForFile(context, context.getPackageName() + ".updates", file);
+    return new Intent(Intent.ACTION_INSTALL_PACKAGE)
+        .setData(uri)
+        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
   }
 
   protected void onDestroy() {

@@ -31,7 +31,8 @@
    const script=path.join(root,'install-update.ps1');
    const source="$ErrorActionPreference='Stop'\n"+
     'Wait-Process -Id '+process.pid+' -Timeout 90 -ErrorAction SilentlyContinue\n'+
-    'if(Get-Process -Id '+process.pid+' -ErrorAction SilentlyContinue){exit 1}\nStart-Sleep -Seconds 2\n'+
+    'if(Get-Process -Id '+process.pid+' -ErrorAction SilentlyContinue){exit 1}\n'+
+    '$until=(Get-Date).AddSeconds(90)\nwhile(Get-CimInstance Win32_Process -Filter '+quote("name='StreamNest.exe'")+' | Where-Object {$_.ExecutablePath -eq '+quote(exe)+'}){if((Get-Date) -gt $until){exit 1};Start-Sleep -Milliseconds 500}\n'+
     '$installer='+quote(file)+'\n$destination='+quote(installDir)+'\n'+
     '$result=Start-Process -FilePath $installer -ArgumentList (\'/S /UPDATE /D=\'+$destination) -Wait -PassThru -WindowStyle Hidden\n'+
     'if($result.ExitCode -eq 0){Start-Process -FilePath '+quote(exe)+' -WorkingDirectory $destination}\n';

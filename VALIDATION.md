@@ -73,3 +73,12 @@ An anonymous live IntroDB lookup for Breaking Bad S1E1 returned a matching outro
 ## Desktop 0.11.1 local installer verification
 
 Built locally from commit 30742955e184231918c8d2dd48342d3eed142680 while GitHub Actions was queued. All 45 desktop/publisher checks passed; payload identity and isolated hidden startup passed. Silent installation created the desktop shortcut by default; uninstall removed it and preserved a user-added sentinel file. The visible checkbox page compiles; clearing its state bypasses shortcut creation. An interactive unchecked-option walkthrough remains unverified. All four release asset sizes and SHA256 digests matched the local files before publication.
+
+
+## 0.12.0 application updater
+
+- Android RSA manifest checks reject altered and expired metadata; release build, unit tests and lint pass.
+- Tablet in-place upgrade preserved hashes of all nine preference files, including the encrypted subtitle account store. No credential contents were read.
+- Device update screen read the signed live feed and kept the installed newer version. A future version-code-20 fixture with the same certificate was accepted for handoff; the same APK re-signed with a different test key was rejected. Invalid/non-newer APKs were rejected. FileProvider installer URI was readable with the required grant flag. The future fixture was never installed.
+- Desktop tests cover altered/expired manifests, version comparison, foreign artifacts, downloaded/cache corruption and partial cleanup. The actual updater handler deferred during playback and quit only after helper spawn in a controlled test; the generated PowerShell parsed successfully with spaces/apostrophes in paths.
+- Android TV/projector system installation prompts still need device-specific verification. Tablet checks do not establish confirmation behavior on every firmware. Windows helper UI click-through and interrupted-installer recovery remain broader validation areas.
