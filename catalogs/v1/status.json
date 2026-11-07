@@ -1,0 +1,17 @@
+{
+  "generatedAt": 1794056569730,
+  "metrics": {
+    "moviePages": 28,
+    "movieFailures": 0,
+    "seriesPages": 218,
+    "seriesFailures": 0,
+    "tvmaze": 170,
+    "rss": 71
+  },
+  "counts": {
+    "movies": 825,
+    "shows": 9468,
+    "animes": 1942,
+    "latest": 146
+  }
+}
