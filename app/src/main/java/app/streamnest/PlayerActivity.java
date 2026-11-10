@@ -284,6 +284,15 @@ public class PlayerActivity extends Activity {
     ui.post(tick);
   }
 
+  boolean hasRenderedVideo() {
+    org.videolan.libvlc.interfaces.IMedia media=player==null?null:player.getMedia();
+    try {
+      org.videolan.libvlc.interfaces.IMedia.Stats stats=media==null?null:media.getStats();
+      return stats!=null&&stats.displayedPictures>0;
+    }catch(Exception stopped){return false;}
+    finally {if(media!=null)media.release();}
+  }
+
   void seekTo(long position) {
     if (player == null) return;
     if (position < Math.max(lastLength, player.getLength()) - 10000) {
@@ -845,7 +854,7 @@ public class PlayerActivity extends Activity {
           if (mediaSet && videoOutputs > 0 && player.isPlaying() && player.getTime() > 1000)
             playedVideo = true;
           if(playedVideo&&e!=null&&!e.closed){
-            if(cacheCommitted!=e&&StreamService.retiring==null){cacheCommitted=e;StreamService.playing(getApplicationContext(),e,getIntent().getStringExtra("episodeIdentity"));}
+            if(cacheCommitted!=e&&StreamService.retiring==null&&hasRenderedVideo()){cacheCommitted=e;StreamService.playing(getApplicationContext(),e,getIntent().getStringExtra("episodeIdentity"));}
             EpisodePreload.consider(PlayerActivity.this,e,episodeQueue,neighbour(1));
           }
           long now = SystemClock.elapsedRealtime();

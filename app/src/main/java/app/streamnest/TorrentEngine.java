@@ -9,7 +9,8 @@ import org.libtorrent4j.alerts.*;
 final class TorrentEngine implements AutoCloseable {
   volatile String message = "Starting torrent engine…", url;
   volatile boolean closed;
-  boolean lite, publicMetadataLookup, episodeRequest, preloadOnly;
+  boolean lite, publicMetadataLookup, episodeRequest;
+  volatile boolean preloadOnly;
   boolean verifiedComplete;
   int fileIndex = -1, requestedSeason, requestedEpisode, absoluteEpisode;
   String expectedFilename = "", sourceUrl;

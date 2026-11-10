@@ -9,6 +9,7 @@ import org.json.*;
 final class PreloadRegression {
   interface Check{boolean ready() throws Exception;}
   static File fixture;
+  static final java.util.Set<TorrentEngine> partialFilled=java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
   static final java.util.Set<TorrentEngine> filled=java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
   static final java.util.Set<TorrentEngine> configured=java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
   static void peers(){
@@ -22,12 +23,13 @@ final class PreloadRegression {
         e.session.applySettings(settings);
         android.util.Log.i("PreloadFixture","Session paused="+e.session.isPaused()+" state="+e.handle.status().state()+" error="+e.handle.status().errorCode().getMessage());
       }
-      if(e.requestedEpisode!=3&&e.info!=null&&e.pieceLength>0&&fixture!=null&&filled.add(e)){
+      if(e.requestedEpisode!=3&&e.info!=null&&e.pieceLength>0&&fixture!=null&&(e.requestedEpisode==2&&e.preloadOnly?partialFilled:filled).add(e)){
         try(RandomAccessFile input=new RandomAccessFile(fixture,"r")){
           if(input.length()!=e.size)throw new AssertionError("Fixture size does not match torrent");
           for(int piece=0;piece<e.info.numPieces();piece++){
             byte[] bytes=new byte[(int)Math.min(e.pieceLength,input.length()-input.getFilePointer())];input.readFully(bytes);
-            e.handle.addPiece(piece,bytes,org.libtorrent4j.TorrentHandle.OVERWRITE_EXISTING);
+            if(!(e.requestedEpisode==2&&e.preloadOnly)||piece*(long)e.pieceLength<2*1024*1024||(piece+1L)*e.pieceLength>e.size-2*1024*1024)
+              e.handle.addPiece(piece,bytes,org.libtorrent4j.TorrentHandle.OVERWRITE_EXISTING);
           }
         }
       }
@@ -54,9 +56,10 @@ final class PreloadRegression {
       try{waitFor(()->StreamService.engine!=null&&StreamService.engine.complete()&&p.activity.playedVideo,"Current episode did not download/render");}
       catch(AssertionError error){TorrentEngine e=StreamService.engine;throw new AssertionError(error.getMessage()+" / "+(e==null?"no engine":e.message+" / "+e.status()+" size="+e.size+" complete="+e.complete()+" url="+e.url)+" frames="+p.activity.videoOutputs+" position="+p.activity.player.getTime());}
       if(EpisodePreload.slot!=null)throw new AssertionError("Preloading enabled by default");
+      p.assertFrame("first fixture video");
       File first=StreamService.engine.root;
       c.getSharedPreferences("playback",0).edit().putBoolean("preloadNext",true).commit();
-      waitFor(()->EpisodePreload.slot!=null&&EpisodePreload.slot.engine.complete(),"Next episode preload did not complete");
+      waitFor(()->EpisodePreload.slot!=null&&EpisodePreload.slot.engine.url!=null&&!EpisodePreload.slot.engine.complete(),"Partial next-episode preload did not become playable");
       TorrentEngine warm=EpisodePreload.slot.engine;
       if(!first.exists())throw new AssertionError("Active episode deleted while preloading");
       p.main(()->{p.activity.player.detachViews();p.activity.viewsAttached=false;p.activity.changeEpisode(1,false);});
@@ -65,12 +68,15 @@ final class PreloadRegression {
       if(!first.exists())throw new AssertionError("Previous episode purged before next video played");
       p.main(()->{p.activity.player.attachViews(p.activity.video,null,true,true);p.activity.viewsAttached=true;});
       waitFor(()->p.activity.playedVideo&&!first.exists(),"Previous episode not purged after decoded playback");
+      p.assertFrame("preloaded next video");
       waitFor(()->EpisodePreload.slot!=null&&EpisodePreload.slot.engine.root!=null&&EpisodePreload.slot.engine.handle!=null,"Third episode did not begin preloading");
       TorrentEngine third=EpisodePreload.slot.engine;File speculative=third.root;
       c.getSharedPreferences("playback",0).edit().putBoolean("preloadNext",false).commit();EpisodePreload.cancel();
       waitFor(()->!speculative.exists(),"Cancelled preload cache was not purged");
       if(StreamService.engine!=warm||warm.closed||!warm.root.exists())throw new AssertionError("Disabling preload damaged active playback");
-      Bundle result=new Bundle();result.putString("result","PASS: native hash-verified fixture pieces; opt-in preload; engine reuse; previous cache retained until decoded video; cancellation preserves active episode");return result;
+      PlaybackCache.exit(c);
+      waitFor(()->StreamService.engine==null&&!warm.root.exists(),"Exit did not close and purge active cache");
+      Bundle result=new Bundle();result.putString("result","PASS: native hash-verified fixture pieces; opt-in preload; partial engine reuse; previous cache retained until decoded video; cancellation preserves active episode; exit purges after engine closure");return result;
     }finally{
       EpisodePreload.cancel();EpisodeQueue.finder=previous;
       if(p.activity!=null)p.main(p.activity::finish);

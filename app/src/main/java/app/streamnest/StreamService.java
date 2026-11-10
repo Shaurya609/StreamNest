@@ -65,6 +65,7 @@ public class StreamService extends Service {
           if(warm!=null)return;
           try {
             File dir = directory(this,i);
+            next.root=dir; // Reserve the destination before cancellation cleanup can inspect it.
             next.lite = DeviceProfile.lite(this);
             CacheLocation.writable(CacheLocation.current(this));
             if (next.closed) return;
@@ -118,11 +119,13 @@ public class StreamService extends Service {
   public void onDestroy() {
     EpisodePreload.cancel();
     TorrentEngine e = engine;
+    retiring=e;
     engine = null;
     if (e != null) e.closed = true;
     worker.execute(
         () -> {
           if (e != null) {e.close();EpisodePreload.released(e);}
+          if(retiring==e)retiring=null;
           if (PlaybackCache.exiting && engine == null) PlaybackCache.purge(getApplicationContext());
         });
     super.onDestroy();
