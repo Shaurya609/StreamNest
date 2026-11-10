@@ -13,13 +13,16 @@ public class WatchSyncActivity extends Activity {
   TextView status;
   ImageView qr;
   String error;
+  Button createGroup;
+  TextView groupHeading, devices;
+  EditText groupName, deviceName;
   final Handler ui = new Handler(Looper.getMainLooper());
 
   int dp(int n) {
     return (int) (n * getResources().getDisplayMetrics().density);
   }
 
-  void button(LinearLayout root, String label, Runnable action) {
+  Button button(LinearLayout root, String label, Runnable action) {
     Button b = new Button(this);
     b.setText(label);
     root.addView(b);
@@ -33,6 +36,7 @@ public class WatchSyncActivity extends Activity {
             status.setText(error);
           }
         });
+    return b;
   }
 
   public void onCreate(Bundle state) {
@@ -44,6 +48,7 @@ public class WatchSyncActivity extends Activity {
     scroll.addView(root);
     setContentView(scroll);
     TextView title = new TextView(this);
+    groupHeading = title;
     title.setText("Resume across devices");
     title.setTextSize(24);
     root.addView(title);
@@ -74,7 +79,18 @@ public class WatchSyncActivity extends Activity {
     root.addView(status);
     qr = new ImageView(this);
     root.addView(qr, new LinearLayout.LayoutParams(dp(240), dp(240)));
-    button(
+    groupName = new EditText(this);
+    groupName.setHint("Sync group name");groupName.setSingleLine(true);
+    groupName.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(64)});
+    root.addView(groupName);
+    deviceName = new EditText(this);deviceName.setHint("This device name");deviceName.setSingleLine(true);
+    deviceName.setText(SyncGroup.deviceName(this));
+    deviceName.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(64)});
+    root.addView(deviceName);
+    devices = new TextView(this);root.addView(devices);
+    button(root,"Save group name",()->saveGroup(false));
+    button(root,"Save device name",()->saveGroup(true));
+    createGroup = button(
         root,
         "Create a sync group",
         () ->
@@ -87,8 +103,11 @@ public class WatchSyncActivity extends Activity {
                     "Create",
                     (d, w) -> {
                       try {
-                        code.setText(WatchSyncCrypto.create());
-                        connect();
+                        if(!WatchSync.code(this).isEmpty())throw new Exception("Disconnect before creating another group");
+                        String name=groupName.getText().toString().trim();
+                        if(name.isEmpty())throw new Exception("Enter a group name");
+                        WatchSync.connect(this,WatchSyncCrypto.create());
+                        saveGroup(false);
                       } catch (Exception e) {
                         error = e.getMessage();
                         status.setText(error);
@@ -154,12 +173,20 @@ public class WatchSyncActivity extends Activity {
         });
     TextView note = new TextView(this);
     note.setText(
-        "Pairing codes expire after five minutes and work once. Keep the recovery key private. A phone camera can scan"
+        "Group and device names are visible to the service owner; watch history stays encrypted. Pairing codes expire after five minutes and work once. Keep the recovery key private. A phone camera can scan"
             + " the QR code when StreamNest is installed. Local progress works offline; inactive"
             + " cloud backups are cleared after 180 days.");
     root.addView(note);
     drawQr();
+    WatchSync.request(this,true);
     ui.post(refresh);
+  }
+
+  void saveGroup(boolean deviceOnly) {
+    String name=(deviceOnly?deviceName:groupName).getText().toString().trim();
+    if(name.isEmpty()){error="Enter a name";return;}
+    if(deviceOnly)SyncGroup.prefs(this).edit().putString("deviceName",name).apply();
+    WatchSync.worker.execute(()->{try{SyncGroup.update(this,deviceOnly?null:name);ui.post(()->error=null);}catch(Exception e){ui.post(()->error=e.getMessage());}});
   }
 
   void connect() {
@@ -214,6 +241,19 @@ public class WatchSyncActivity extends Activity {
       new Runnable() {
         public void run() {
           status.setText(error == null ? WatchSync.status : error);
+          try {
+            boolean connected=!WatchSync.code(WatchSyncActivity.this).isEmpty();
+            createGroup.setVisibility(connected?android.view.View.GONE:android.view.View.VISIBLE);
+            org.json.JSONObject group=SyncGroup.current;
+            groupHeading.setText(connected?"Sync group: "+(group==null?"Sync group":group.optString("name")):"Resume across devices");
+            if(group!=null&&connected){
+              if(!groupName.hasFocus())groupName.setText(group.optString("name"));
+              org.json.JSONArray rows=group.optJSONArray("devices");
+              StringBuilder names=new StringBuilder();
+              if(rows!=null)for(int i=0;i<rows.length();i++){if(i>0)names.append(", ");names.append(rows.getJSONObject(i).optString("name"));}
+              devices.setText((rows==null?0:rows.length())+" devices · "+names);
+            }else devices.setText(connected?SyncGroup.error:"");
+          }catch(Exception ignored){}
           ui.postDelayed(this, 1000);
         }
       };

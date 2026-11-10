@@ -13,8 +13,14 @@ final class WatchSyncRegression {
     WatchProgress.preferenceName = temporary;
     WatchSync.testPairingCode = code;
     WatchSync.pending = true;
+    org.json.JSONObject previousGroup=SyncGroup.current;
     try {
       WatchSyncCrypto.parse(code);
+      SyncGroup.update(context,null);
+      if(!"Sprint 2 migration".equals(SyncGroup.current.optString("name")))throw new AssertionError("Existing group name was not retained");
+      if(SyncGroup.current.getJSONArray("devices").length()!=2)throw new AssertionError("Desktop and Android device roster missing");
+      SyncGroup.update(context,"Household");
+      if(!code.equals(WatchSync.code(context)))throw new AssertionError("Naming changed pairing identity");
       WatchSync.sync(context, code);
       long received = WatchProgress.read(context, "episode:tt123:1:1", 0);
       if (received != 125000)
@@ -40,7 +46,7 @@ final class WatchSyncRegression {
       result.putString(
           "result",
           "PASS: desktop progress decrypted and restored; deliberate Android rewind encrypted and"
-              + " synced");
+              + " synced; existing group migrated with two devices and shared name");
       result.putLong("receivedMs", received);
       result.putLong("sentMs", 45000);
       result.putBoolean("syncedEpisodeSelection",episodeSelection);
@@ -50,6 +56,7 @@ final class WatchSyncRegression {
       WatchProgress.preferenceName = previous;
       WatchSync.testPairingCode = oldCode;
       WatchSync.pending = wasPending;
+      SyncGroup.current=previousGroup;
     }
   }
 }

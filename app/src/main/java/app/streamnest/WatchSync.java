@@ -39,6 +39,10 @@ final class WatchSync {
   }
 
   static void disconnect(Context c) throws Exception {
+    String previous = code(c);
+    Context app = c.getApplicationContext();
+    worker.execute(() -> {try{if(!previous.isEmpty())SyncGroup.call(app,previous,"DELETE",new JSONObject().put("deviceId",SyncGroup.deviceId(app)));}catch(Exception ignored){}});
+    SyncGroup.current = null;
     new SecretStore(c).put("watchSyncCode", "");
     status = "Not connected";
   }
@@ -55,7 +59,7 @@ final class WatchSync {
             String pairing = code(app);
             if (pairing.isEmpty()) return;
             sync(app, pairing);
-            if (pairing.equals(code(app))) status = "Synced";
+            if (pairing.equals(code(app))) {status = "Synced"; SyncGroup.refresh(app);}
           } catch (Exception e) {
             status = "Offline — progress stays on this device";
           } finally {

@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import {createRequire} from 'node:module';
 import worker from './worker.mjs';
 const require=createRequire(import.meta.url),C=require('../desktop/overlay/butter-provider/streamnest-sync-crypto');
-function environment(){const database=new DatabaseSync(':memory:');database.exec(fs.readFileSync(new URL('schema.sql',import.meta.url),'utf8'));return {database,DB:{prepare(sql){let values=[];return {bind(...v){values=v;return this;},async first(){return database.prepare(sql).get(...values)||null;},async run(){const result=database.prepare(sql).run(...values);return {meta:{changes:Number(result.changes)}};}};}},RATE:{limit:async()=>({success:true})}};}
+function environment(){const database=new DatabaseSync(':memory:');database.exec(fs.readFileSync(new URL('schema.sql',import.meta.url),'utf8'));return {database,DB:{prepare(sql){let values=[];return {bind(...v){values=v;return this;},async first(){return database.prepare(sql).get(...values)||null;},async all(){return {results:database.prepare(sql).all(...values)};},async run(){const result=database.prepare(sql).run(...values);return {meta:{changes:Number(result.changes)}};}};}},RATE:{limit:async()=>({success:true})}};}
 function request(method,auth,data,revision){const headers={Authorization:'Bearer '+auth};if(revision!==undefined)headers['If-Match']=String(revision);return new Request('https://sync.example/v1/progress',{method,headers,body:data?JSON.stringify(data):undefined});}
 test('private groups are separated and server stores only opaque encrypted history',async()=>{
  const env=environment(),code=C.create(),other=C.create(),auth=C.auth(code),data={'episode:tt123:1:1':{positionMs:120000,durationMs:1500000,updatedAt:Date.now()}};
@@ -51,5 +51,40 @@ test('short pairing is encrypted, expires and can be consumed only once',async()
   assert.equal((await worker.fetch(req('PUT'),env)).status,200);
   env.database.prepare('UPDATE pairing_tickets SET expires_at=0').run();
   assert.equal((await worker.fetch(req('POST'),env)).status,404);
+ }finally{env.database.close();}
+});
+
+const groupRequest=(code,method,data)=>new Request('https://sync.example/v1/group',{method,headers:{Authorization:'Bearer '+C.auth(code)},body:data?JSON.stringify(data):undefined});
+const device={deviceId:'a'.repeat(32),deviceName:'TheBeast'};
+test('existing group identity/history survive naming and device registration',async()=>{
+ const env=environment(),code=C.create();try{
+  const payload=C.seal(code,{'episode:tt1:1:4':{positionMs:12345}});
+  await worker.fetch(request('PUT',C.auth(code),payload,0),env);
+  assert.equal((await worker.fetch(groupRequest(code,'PUT',{...device,groupName:'Home'}),env)).status,200);
+  let read=await(await worker.fetch(groupRequest(code,'PUT',{deviceId:'b'.repeat(32),deviceName:'MSI'}),env)).json();
+  assert.equal(read.name,'Home');assert.equal(read.devices.length,2);
+  assert.equal((await(await worker.fetch(groupRequest(C.create(),'GET'),env)).json()).devices.length,0);
+  const progress=await(await worker.fetch(request('GET',C.auth(code)),env)).json();assert.deepEqual(C.open(code,progress.payload),C.open(code,payload));assert.equal(progress.revision,1);
+  await worker.fetch(groupRequest(code,'PUT',{...device,groupName:'Family'}),env);
+  read=await(await worker.fetch(groupRequest(code,'GET'),env)).json();assert.equal(read.name,'Family');assert.equal(read.devices.length,2);
+  await worker.fetch(groupRequest(code,'DELETE',device),env);
+  assert.equal((await(await worker.fetch(groupRequest(code,'GET'),env)).json()).devices.length,1);
+  assert.equal((await(await worker.fetch(request('GET',C.auth(code)),env)).json()).revision,1);
+ }finally{env.database.close();}
+});
+test('metadata validates names, payloads and device IDs without touching history',async()=>{
+ const env=environment(),code=C.create();try{
+  for(const body of [{...device,groupName:''},{...device,deviceName:'x'.repeat(65)},{...device,deviceId:'bad'},{...device,groupName:'bad\nname'}])assert.equal((await worker.fetch(groupRequest(code,'PUT',body),env)).status,400);
+  assert.equal((await worker.fetch(new Request('https://sync.example/v1/group'),env)).status,401);
+  assert.equal((await worker.fetch(groupRequest(code,'PUT',{...device,extra:'x'.repeat(5000)}),env)).status,413);
+  assert.equal(env.database.prepare('SELECT COUNT(*) AS total FROM sync_devices').get().total,0);
+ }finally{env.database.close();}
+});
+test('private owner data denies missing/wrong keys and excludes encrypted history and credentials',async()=>{
+ const env=environment(),code=C.create();env.ADMIN_TOKEN='owner-secret-'.repeat(4);try{
+  await worker.fetch(groupRequest(code,'PUT',{...device,groupName:'Home'}),env);
+  const req=token=>new Request('https://sync.example/admin/data',{headers:token?{Authorization:'Bearer '+token}:{}});
+  assert.equal((await worker.fetch(req(),env)).status,401);assert.equal((await worker.fetch(req('wrong'),env)).status,401);
+  const answer=await worker.fetch(req(env.ADMIN_TOKEN),env);assert.equal(answer.status,200);const text=await answer.text();assert(text.includes('TheBeast'));assert(!text.includes(code));assert(!text.includes(C.auth(code)));assert(!text.includes('payload'));
  }finally{env.database.close();}
 });

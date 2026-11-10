@@ -25,3 +25,15 @@ Choose Show pairing code on a connected device, then enter its eight characters 
 Use the normal phone camera for QR pairing. The HTTPS page offers Open StreamNest, followed by in-app confirmation. A built-in camera scanner is not provided. The fragment carries the temporary code and is not sent in the landing-page request.
 
 The pairing broker stores an AES-GCM encrypted ticket and a separately derived lookup digest. The ticket contains the existing group recovery key, encrypted using a key derived from the temporary code. Short codes have 40 bits of randomness and rely on short expiry and server rate limits. Progress continues using the existing 128-bit recovery key and encrypted sync protocol.
+
+## Named groups and owner dashboard (0.18.0)
+
+Updating keeps the existing recovery key and encrypted watch history. Updated devices register automatically with their existing group; older versions continue syncing progress but do not appear in the new device list until updated. Choose Save group name once, and all updated paired devices see that name after syncing. The Create a sync group action disappears while connected. Device names can be changed independently on each device.
+
+The list shows registered devices and their last synchronization time, not a real-time online indicator. Disconnect removes that device from the list without deleting the group's shared history. Inactive device entries expire after 90 days; groups expire after 180 days without metadata updates.
+
+Group/device names and activity timestamps are administrative metadata visible to the service owner. Playback titles/positions remain encrypted. Do not put sensitive information into names. Names are limited to 64 characters and a group supports up to 32 registered devices.
+
+The private owner dashboard is at `/admin` on the sync endpoint. `/admin/data` requires the separate ADMIN_TOKEN Worker secret; no administration key is bundled in an app or committed to GitHub. On the deploying Windows account, manually run `tools/open-sync-dashboard.ps1` to copy the locally encrypted owner key and open the dashboard. Paste the key to load groups. The page keeps it only in memory; it is not placed in a URL or browser storage. The local key file is protected with Windows user encryption and is excluded from Git.
+
+Apply the additive schema.sql migration before deploying this service update. Metadata failure does not block encrypted progress sync.
