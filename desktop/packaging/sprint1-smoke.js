@@ -19,10 +19,10 @@
   (async()=>{
    try{
     const element=document.createElement('video');
-    element.id='sprint1-video';element.className='video-js';
+    element.id='sprint1-video';element.className='video-js vjs-default-skin';
     element.style.cssText='position:fixed;top:50px;left:20px;z-index:999999;width:960px;height:540px';element.muted=true;
     document.body.appendChild(element);
-    player=videojs(element,{controls:true});
+    player=videojs(element,{controls:true,width:960,height:540});
     player.src({type:'video/mp4',src:require('url').pathToFileURL(process.env.STREAMNEST_SMOKE_VIDEO).href});
     player.play();
     for(let i=0;i<100&&!(player.duration()>0);i++)await wait(100);
@@ -43,6 +43,7 @@
     assert(next&&previous,'Episode navigation missing');
     assert(next.getBoundingClientRect().width>=120&&next.getBoundingClientRect().height>=40,'Episode control too small');
     const box=player.el().getBoundingClientRect(),buttonBox=next.getBoundingClientRect();
+    result.playerBox={left:box.left,right:box.right,bottom:box.bottom};result.buttonBox={left:buttonBox.left,right:buttonBox.right,bottom:buttonBox.bottom};
     assert(buttonBox.bottom<=box.bottom+1&&buttonBox.right<=box.right+1,'Episode control clipped by player');
     result.navigationLabels=[previous.textContent.trim(),next.textContent.trim()];
     Settings.streamnestAutoSkip=false;
