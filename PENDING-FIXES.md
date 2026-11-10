@@ -1,5 +1,7 @@
 # Pending fixes and verification
 
+Current sprint/release status is in [SPRINTS.md](SPRINTS.md) and [VALIDATION.md](VALIDATION.md). Source discovery shipped in 0.20.0: independent trusted anime episode/batch lookup, verified member selection and retryable provider errors. External torrent peer availability is not guaranteed. Older dated entries below are historical verification notes.
+
 Updated 4 November 2026. Version 0.11.0 implements launch renewal, subtitle archive decoding and completed conversion writes, dynamic loopback subtitle serving, pinned anime pagination and broader independent discovery. Live desktop Percy Jackson S1E1 search/download produced 540 cues and the real video.js subtitle display rendered a downloaded cue in an isolated hidden renderer. Android fresh/expired anonymous access is covered by regression probes; tablet playback survives subtitle settings return.
 
 TV correction: the reported Percy Jackson S1E1 stall occurred on the user's TV, not the tablet. Android now waits for verified video headers/footer, detects actual video output and retries startup twice (including one software decoder attempt). The original TV/source combination still needs a TV retest. Local fixtures do not establish that it is fixed on that TV.
