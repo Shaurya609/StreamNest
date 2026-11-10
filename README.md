@@ -5,7 +5,7 @@ Native Android app for browsing movies, series and anime, with torrent-based pla
 | Download | Package |
 | --- | --- |
 | [Android / Google TV / projector](https://github.com/Shaurya609/StreamNest/releases/latest) | Universal APK — includes ARM32 and ARM64 |
-| [Windows desktop — standalone preview](https://github.com/Shaurya609/StreamNest/releases/tag/desktop-v0.18.0) | Installer or portable ZIP; Popcorn Time is not required |
+| [Windows desktop — standalone preview](https://github.com/Shaurya609/StreamNest/releases/tag/desktop-v0.19.0) | Installer or portable ZIP; Popcorn Time is not required |
 
 [All releases](https://github.com/Shaurya609/StreamNest/releases) · [Desktop setup](desktop/STANDALONE.md) · [Sprint status](SPRINTS.md) · [Pending verification](PENDING-FIXES.md)
 
@@ -22,6 +22,7 @@ Automatic series/anime episode selection and cross-device resume are available i
 - Movies in 1080p/2160p. Episodes default to Auto with 720p/SD fallback and explicit manual choices.
 - Additional episode source discovery, exact season-pack member selection and bounded startup source recovery.
 - Previous/next episode icons and automatic next episode on natural playback completion, including season boundaries.
+- Optional next-episode preload after the current download completes, with previous-cache cleanup after displayed video starts. Disabled by default; see [sprint status](SPRINTS.md).
 - Intro/credits skip controls when community timestamps match the episode; credits skipping preserves later scenes.
 - Full-screen landscape playback, automatically hiding icon controls, seeking and remote navigation.
 - Transparent SVG branding and Android vector launcher/TV artwork.

@@ -16,7 +16,7 @@ Cloudflare schema migration and service deployment are complete. Owner authoriza
 
 Passed: 72 desktop/catalog/backend checks, Android build/unit/lint, live isolated Android group migration/rename/device list and hidden native Windows named-group/pairing/disconnect flow. Production packaging and installed-app update acceptance are tracked in VALIDATION.md.
 
-## Sprint 3 — 0.19.0, release verification
+## Sprint 3 — released in 0.19.0
 
 Optional next-episode preloading is disabled by default on Android and Windows. It starts only once the current selected video is fully downloaded. One speculative episode is selected with existing canonical episode/source/quality rules. Low-storage checks reserve 256 MiB; cancellation closes the speculative engine before removing its files. Android adopts the preloaded engine; Windows reuses its files after the preload client closes. Active playback remains independent.
 
