@@ -251,7 +251,7 @@ public class WatchSyncActivity extends Activity {
               org.json.JSONArray rows=group.optJSONArray("devices");
               StringBuilder names=new StringBuilder();
               if(rows!=null)for(int i=0;i<rows.length();i++){if(i>0)names.append(", ");names.append(rows.getJSONObject(i).optString("name"));}
-              devices.setText((rows==null?0:rows.length())+" devices · "+names);
+              devices.setText((rows==null?0:rows.length())+" devices Â· "+names);
             }else devices.setText(connected?SyncGroup.error:"");
           }catch(Exception ignored){}
           ui.postDelayed(this, 1000);

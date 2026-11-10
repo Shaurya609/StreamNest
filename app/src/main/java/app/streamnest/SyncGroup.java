@@ -35,7 +35,7 @@ final class SyncGroup {
     JSONObject body=new JSONObject().put("deviceId",deviceId(c)).put("deviceName",deviceName(c));
     if(name!=null)body.put("groupName",name);
     try {JSONObject result=call(c,code,"PUT",body);if(code.equals(WatchSync.code(c))){current=result;error="";last=System.currentTimeMillis();}}
-    catch(Exception e){error="Group details unavailable — watch sync still works";throw e;}
+    catch(Exception e){error="Group details unavailable â€” watch sync still works";throw e;}
   }
   static synchronized void refresh(Context c) {if(System.currentTimeMillis()-last<60000)return;last=System.currentTimeMillis();Context app=c.getApplicationContext();worker.execute(()->{try{update(app,null);}catch(Exception ignored){}});}
 }
