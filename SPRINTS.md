@@ -6,9 +6,9 @@ Implemented: prominent desktop player Previous/Next controls; icon/text intro an
 
 Passed: Android decoded-video fixture, hidden native Windows player and real Settings/pairing dialog, encrypted desktop-to-Android 125-second resume and 45-second rewind back to desktop. Tests used disposable groups/profiles; the owner's existing group was not replaced.
 
-Remaining acceptance checks: upgrade the actual installed apps using the auto-update flow, and retry the original MSI short-code case. Clipboard variants pass, but the original exact input is unknown. Windows installation/restart stays deferred while the owner is working.
+Android production auto-update to 0.18.0/code26 is confirmed. Remaining acceptance checks: upgrade the actual installed Windows app using the auto-update flow, and retry the original MSI short-code case. Clipboard variants pass, but the original exact input is unknown. Windows installation/restart stays deferred while the owner is working.
 
-## Sprint 2 — 0.18.0
+## Sprint 2 — released in 0.18.0
 
 Implemented: existing-group naming without re-pairing; per-device names and registered-device lists; connected-group status and hidden Create action while connected; a separate protected owner dashboard with creation/last-sync times. Existing apps keep progress-sync compatibility, and device registration appears as apps update. Metadata service failures do not block progress uploads.
 
