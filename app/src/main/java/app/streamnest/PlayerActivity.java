@@ -25,6 +25,7 @@ public class PlayerActivity extends Activity {
   long skipRemaining = 5000, skipClock;
   long pendingSeek = -1;
   boolean skipCancelled, skipAutoEnabled;
+  TorrentEngine cacheCommitted;
   List<SkipSegments.Segment> segments = new ArrayList<>();
   SkipSegments.Segment activeSegment;
   boolean changingEpisode, endedHandled, pendingAuto, skipRequested;
@@ -278,7 +279,8 @@ public class PlayerActivity extends Activity {
           public void onProgressChanged(SeekBar b, int p, boolean user) {}
         });
     loadEpisodeQueue();
-    startStream();
+    // Finish view attachment before starting Android's foreground-service deadline.
+    ui.post(()->{if(!isFinishing()&&!isDestroyed())startStream();});
     ui.post(tick);
   }
 
@@ -375,7 +377,8 @@ public class PlayerActivity extends Activity {
     episodeWorker.execute(
         () -> {
           try {
-            List<Catalog.Source> choices =
+            List<Catalog.Source> prepared=EpisodePreload.choices(episodeQueue.optString("imdb")+":"+EpisodeLibrary.key(row));
+            List<Catalog.Source> choices = prepared!=null?prepared:
                 EpisodeQueue.resolve(episodeQueue, row, DeviceProfile.lite(this));
             ui.post(
                 () -> {
@@ -841,6 +844,10 @@ public class PlayerActivity extends Activity {
           TorrentEngine e = StreamService.engine;
           if (mediaSet && videoOutputs > 0 && player.isPlaying() && player.getTime() > 1000)
             playedVideo = true;
+          if(playedVideo&&e!=null&&!e.closed){
+            if(cacheCommitted!=e&&StreamService.retiring==null){cacheCommitted=e;StreamService.playing(getApplicationContext(),e,getIntent().getStringExtra("episodeIdentity"));}
+            EpisodePreload.consider(PlayerActivity.this,e,episodeQueue,neighbour(1));
+          }
           long now = SystemClock.elapsedRealtime();
           if (mediaSet
               && mediaOpenedAt > 0

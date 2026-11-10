@@ -14,6 +14,7 @@ import org.videolan.libvlc.Media;
 /** Device-only regression; fixture is supplied locally, never bundled in the app. */
 public class PlaybackRegression extends Instrumentation {
   PlayerActivity activity;
+  boolean preload;
   String watchSyncCode, shortPairingCode, expectedPairingAuth;
   boolean pairingUiDirect, skipLive, catalog, subtitles, storage, resilience, episodes, appUpdates, watchSyncUi, resumeUi;
 
@@ -33,11 +34,13 @@ public class PlaybackRegression extends Instrumentation {
     shortPairingCode = args == null ? null : args.getString("shortPairingCode");
     expectedPairingAuth = args == null ? null : args.getString("expectedPairingAuth");
     pairingUiDirect = args != null && "true".equals(args.getString("pairingUiDirect"));
+    preload=args!=null&&"true".equals(args.getString("preload"));
     start();
   }
 
   @Override
   public void onStart() {
+    if(preload){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,PreloadRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
     if (shortPairingCode != null) {
       Bundle result = new Bundle();
       try {

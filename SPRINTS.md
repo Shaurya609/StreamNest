@@ -6,7 +6,7 @@ Implemented: prominent desktop player Previous/Next controls; icon/text intro an
 
 Passed: Android decoded-video fixture, hidden native Windows player and real Settings/pairing dialog, encrypted desktop-to-Android 125-second resume and 45-second rewind back to desktop. Tests used disposable groups/profiles; the owner's existing group was not replaced.
 
-Android production auto-update to 0.18.0/code26 is confirmed. Remaining acceptance checks: upgrade the actual installed Windows app using the auto-update flow, and retry the original MSI short-code case. Clipboard variants pass, but the original exact input is unknown. Windows installation/restart stays deferred while the owner is working.
+Android production auto-update to 0.18.0/code26 is confirmed. Laptop production update to 0.18.0 is confirmed by the owner. Remaining acceptance check: retry the original MSI short-code case. Clipboard variants pass, but the original exact input is unknown. All Windows checks continue in the background while the owner works.
 
 ## Sprint 2 — released in 0.18.0
 
@@ -16,6 +16,14 @@ Cloudflare schema migration and service deployment are complete. Owner authoriza
 
 Passed: 72 desktop/catalog/backend checks, Android build/unit/lint, live isolated Android group migration/rename/device list and hidden native Windows named-group/pairing/disconnect flow. Production packaging and installed-app update acceptance are tracked in VALIDATION.md.
 
+## Sprint 3 — 0.19.0, release verification
+
+Optional next-episode preloading is disabled by default on Android and Windows. It starts only once the current selected video is fully downloaded. One speculative episode is selected with existing canonical episode/source/quality rules. Low-storage checks reserve 256 MiB; cancellation closes the speculative engine before removing its files. Android adopts the preloaded engine; Windows reuses its files after the preload client closes. Active playback remains independent.
+
+Previous episode data is retained until the next video has decoded frames, and its previous downloader has closed. Desktop exit waits for speculative clients before deleting cache. Failed source discovery does not skip over the missing episode.
+
+Passed: 79 desktop/catalog/backend checks; hidden Windows real local torrent transfer, next-cache reuse, decoded next video, previous-cache purge and cancellation preserving active video; Android native hash-verified fixture pieces, engine adoption, decoded video before purge and cancellation preserving active cache. Android local HTTP/peer fixture transport stalled and remains unverified; no claim of a successful native network transfer is made for that harness. Validation and release status are in VALIDATION.md.
+
 ## Later work
 
-Additional source discovery (including unavailable anime), the home page and recommendations, and optional next-episode preloading with previous-episode cache removal remain separate future work.
+Additional source discovery (including unavailable anime) was part of the original Sprint 2 plan and remains carried forward. Sprint 4 is the home page, Continue Watching and recommendations; its owner dashboard was delivered early in Sprint 2.

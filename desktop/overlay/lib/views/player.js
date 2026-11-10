@@ -196,6 +196,8 @@
         },
 
         closePlayer: function () {
+            const active=this.model.get('torrentModel');
+            if(active)require('./butter-provider/streamnest-preload').retire(active.attributes,active.get('torrent'),App.WebTorrent);
             win.info('Player closed');
             $('head > title').text('Popcorn-Time');
             if (this._AutoPlayCheckTimer) {
@@ -257,10 +259,7 @@
             if (this.isMovie() === 'episode' && this.next_episode_model) {
                 if ((!Settings.preloadNextEpisodeTime || (this.video.duration() - this.video.currentTime() < Settings.preloadNextEpisodeTime * 60)) && this.video.currentTime() > 30) {
                     if (!this.autoplayisshown) {
-                        if (Settings.preloadNextEpisodeTime && !this.precachestarted) {
-                            App.vent.trigger('stream:start', this.next_episode_model, 'preload');
-                            this.precachestarted = true;
-                        }
+
                         if ((this.video.duration() - this.video.currentTime()) < 60) {
                             var playingNext = $('.playing_next');
                             this.autoplayisshown = true;
@@ -678,7 +677,8 @@
         navigateEpisode: function(direction){
             const tm=this.model.get('torrentModel');if(!tm||this._streamnestNavigating||this.isDestroyed())return;
             this._streamnestNavigating=true;this._streamnestNavButtons&&this._streamnestNavButtons.prop('disabled',true);
-            require('./butter-provider/streamnest-playback').resolve(tm.attributes,direction).then(attrs=>{
+            require('./butter-provider/streamnest-preload').next(tm.attributes,direction).then(async attrs=>{
+                await require('./butter-provider/streamnest-preload').take(attrs);
                 if(this.isDestroyed())return;
                 this.dontTouchFS=true;this.closePlayer();App.vent.trigger('stream:start',new Backbone.Model(attrs));
             }).catch(error=>{if(this.isDestroyed())return;this._streamnestNavigating=false;this._streamnestNavButtons&&this._streamnestNavButtons.each(function(){const button=$(this);button.prop('disabled',!require('./butter-provider/streamnest-playback').neighbour(tm.attributes,Number(button.attr('data-direction'))));});$('.notification_alert').text(error.message).fadeIn('fast').delay(4000).fadeOut('fast');});
@@ -707,6 +707,12 @@
                 const position=this.video.currentTime(),length=this.video.duration();
                 if(Number.isFinite(position))this._streamnestPosition=position;if(Number.isFinite(length))this._streamnestLength=length;
                 if(position>1&&!this.video.paused())this._streamnestPlayed=true;
+                if(!this._streamnestNavigating&&App.settings){
+                    const preload=require('./butter-provider/streamnest-preload'),torrent=tm.get('torrent');
+                    preload.consider(tm.attributes,torrent,Number((tm.get('video_file')||{}).index),Settings.streamnestPreloadNext===true,App.settings.tmpLocation);
+                    const element=this.player.el().querySelector&&this.player.el().querySelector('video');
+                    if(element&&element.videoWidth>0&&!this.video.paused()&&(element.webkitDecodedFrameCount>0||element.getVideoPlaybackQuality&&element.getVideoPlaybackQuality().totalVideoFrames>0)&&torrent)preload.playing(torrent.path);
+                }
                 if(!this._streamnestSkipRequested&&length>0&&Settings.streamnestSkipButtons!==false){this._streamnestSkipRequested=true;P.segments(tm.attributes,length).then(rows=>{if(!this.isDestroyed())this._streamnestSegments=rows;}).catch(()=>{});}
                 this._streamnestSegment=P.active(this._streamnestSegments,position);
                 const segment=this._streamnestSegment;this._streamnestSkip.toggle(!!segment&&!this._streamnestNavigating);

@@ -974,7 +974,7 @@ public class MainActivity extends Activity {
             new String[] {
               "Catalog servers",
               "OpenSubtitles account",
-              "Cache folder & Low Memory mode",
+              "Playback & storage",
               "Open torrent",
               "Test film",
               "Exit StreamNest",

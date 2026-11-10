@@ -1,5 +1,5 @@
 {
-  "version": "0.18.0",
+  "version": "0.19.0",
   "target": "Popcorn Time 0.5.1",
   "files": [
     {
@@ -100,7 +100,7 @@
     },
     {
       "path": "butter-provider/streamnest-playback.js",
-      "sha256": "5eeed89576db522bb5ba384f46c07ffc391dcabf3b0b28cbbcb139deeb08f482"
+      "sha256": "10685ecdc234dd08574338444f8d734243bd94de94e9209d4277abf6231b1d9c"
     },
     {
       "path": "butter-provider/streamnest-progress.js",
@@ -168,7 +168,7 @@
     },
     {
       "path": "lib/views/player.js",
-      "sha256": "2f951d1950d571845e98868c63b7ed7ca07fc961f526e3ada6bf161b54b507a5"
+      "sha256": "61801318a463a6aff2a34f07ac948b97d733b794d2db57897ad4992d78c191a5"
     },
     {
       "path": "lib/views/quality_selector.js",
@@ -176,7 +176,7 @@
     },
     {
       "path": "lib/views/settings_container.js",
-      "sha256": "850661b75a8a0f41a606225d116e4487a0efef831dd153d3e3c5a4664e462eda"
+      "sha256": "ecb439db905d4c7e9f820fbd3100ba1cc8cc96436cc4af55b1b3d6e1f34799c6"
     },
     {
       "path": "lib/views/show_detail.js",
@@ -184,7 +184,7 @@
     },
     {
       "path": "streamer.js",
-      "sha256": "72be417957908b378346a614a4f05c922ed405bd3b987da1b2eaf6841f91291a"
+      "sha256": "24561e5b3eefaf505e47b4951336c36ab387fd825602b5fdb14457da2c3545ef"
     },
     {
       "path": "templates/filter-bar.tpl",
@@ -192,7 +192,7 @@
     },
     {
       "path": "templates/settings-container.tpl",
-      "sha256": "0eca4519d6660349ecd28d2c95a0a735d522e00d18c760c4fce28c7bcb82e5d6"
+      "sha256": "3af0ee59f07209b4860717a575a9d5086c28260a5bcdc136b52ceeab8ca52975"
     },
     {
       "path": "templates/show-detail.tpl",
@@ -209,6 +209,14 @@
     {
       "path": "butter-provider/streamnest-group.js",
       "sha256": "0f3df75a724a00358f20329006d576635bddeab1c95438c8c67d9a75ce7af175"
+    },
+    {
+      "path": "butter-provider/streamnest-preload.js",
+      "sha256": "91a264ef872478197432eb06b72844e9f9a71061e1b1d24984fb0d75993e7ac3"
+    },
+    {
+      "path": "app.js",
+      "sha256": "3b008fe11dd92a331833c62f3b2628f9e658b5499b0644e20b9e93f8b5176ee1"
     }
   ]
 }

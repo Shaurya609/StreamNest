@@ -126,7 +126,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
             if(model.get('type')==='episode' && !this.isLocalFile) {
                 try {
                     const identity=model.get('imdb_id')+':'+model.get('season')+':'+model.get('episode');
-                    if(!model.get('streamnestRetry')) {
+                    if(!model.get('streamnestRetry')&&!model.get('streamnestPrepared')) {
                         let rows=(model.get('streamnestSources')||[]).slice();
                         if(!rows.length)rows=Object.values(model.get('torrents')||{}).filter(Boolean);
                         if(!rows.some(row=>row.fileIndex>=0))try{rows.push(...await StreamNestEpisodes.alternatives(model.get('imdb_id'),Number(model.get('season')),Number(model.get('episode'))));}catch(e){}
@@ -137,9 +137,9 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                     if(!model.get('torrent'))throw Error('No source available for the selected episode');
                     if(!this.downloadOnly) {
                         for(const old of App.WebTorrent.torrents.slice())if(old.streamnestEpisode && old.streamnestEpisode!==identity)
-                            await new Promise(resolve=>old.destroy(()=>resolve()));
+                            await new Promise(resolve=>old.destroy(()=>{require('./butter-provider/streamnest-preload').releasedTorrent(old);resolve();}));
                         if(this._runGeneration!==generation)return;
-                        location=StreamNestCache.prepare(location,identity,model.get('torrent'),require('path').join(nw.App.dataPath,'streamnest-episode-cache.json'));
+                        location=require('./butter-provider/streamnest-preload').directory(model.attributes,location);
                         model.set('streamnestEpisode',identity);
                     }
                     this.armRecovery(generation);
@@ -244,7 +244,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                     }
                 } else {
                     const closingClient=App.WebTorrent;
-                    App.streamnestStop=new Promise(resolve=>closingClient.destroy(()=>resolve()));
+                    App.streamnestStop=new Promise(resolve=>closingClient.destroy(()=>{require('./butter-provider/streamnest-preload').released(closingClient);resolve();}));
                     App.WebTorrent = new WebTorrent({
                         maxConns     : parseInt(Settings.connectionLimit, 10) || 55,
                         downloadLimit: parseInt(parseFloat(Settings.downloadLimit, 10) * parseInt(Settings.maxLimitMult, 10)) || -1,
@@ -954,6 +954,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
       };
 
     var streamer = new WebTorrentStreamer();
+    App.vent.on('preload:stop',()=>require('./butter-provider/streamnest-preload').cancel().catch(()=>{}));
 
     App.vent.on('stream:loadExistTorrents', streamer.initExistTorrents.bind(streamer));
     App.vent.on('stream:start', (model,state)=>streamer.start(model,state).catch(error=>streamer.handleErrors(error)));

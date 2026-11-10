@@ -9,7 +9,8 @@ import org.libtorrent4j.alerts.*;
 final class TorrentEngine implements AutoCloseable {
   volatile String message = "Starting torrent engine…", url;
   volatile boolean closed;
-  boolean lite, publicMetadataLookup, episodeRequest;
+  boolean lite, publicMetadataLookup, episodeRequest, preloadOnly;
+  boolean verifiedComplete;
   int fileIndex = -1, requestedSeason, requestedEpisode, absoluteEpisode;
   String expectedFilename = "", sourceUrl;
   volatile TorrentHandle handle;
@@ -62,7 +63,7 @@ final class TorrentEngine implements AutoCloseable {
         });
     SettingsPack settings =
         new SettingsPack()
-            .connectionsLimit(lite ? 32 : 100)
+            .connectionsLimit(preloadOnly ? 16 : lite ? 32 : 100)
             .maxPeerlistSize(lite ? 200 : 1000)
             .activeDownloads(1)
             .alertQueueSize(300);
@@ -160,6 +161,8 @@ final class TorrentEngine implements AutoCloseable {
     size = files.fileSize(chosen);
     offset = files.fileOffset(chosen);
     pieceLength = info.pieceLength();
+    if (preloadOnly && !PreloadStorage.canFit(size,root.getUsableSpace()))
+      throw new IOException("Not enough free space to preload this episode");
     Priority[] priorities = Priority.array(Priority.IGNORE, files.numFiles());
     priorities[chosen] = Priority.DEFAULT;
     handle.prioritizeFiles(priorities);
@@ -227,8 +230,21 @@ final class TorrentEngine implements AutoCloseable {
     while (!closed) {
       if (url == null && startupReady()) url = readyUrl;
       message = updateStatus();
+      if(preloadOnly && root.getUsableSpace()<256L*1024*1024)
+        throw new IOException("Preloading stopped to keep storage available");
       Thread.sleep(1000);
     }
+  }
+
+  boolean complete() {
+    try {
+    if(closed||handle==null||!handle.isValid()||size<=0||pieceLength<=0)return false;
+    if(verifiedComplete)return true;
+    if(handle.status().progress()<1)return false;
+    int first=(int)(offset/pieceLength),last=(int)((offset+size-1)/pieceLength);
+    for(int i=first;i<=last;i++)if(!handle.havePiece(i))return false;
+    return verifiedComplete=true;
+    }catch(Exception stopped){return false;}
   }
 
   boolean startupReady() {
@@ -294,7 +310,7 @@ final class TorrentEngine implements AutoCloseable {
     }
   }
 
-  public void close() {
+  public synchronized void close() {
     closed = true;
     url = null;
     if (server != null) server.stop();

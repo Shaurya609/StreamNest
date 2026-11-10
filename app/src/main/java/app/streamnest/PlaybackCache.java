@@ -8,7 +8,7 @@ import java.util.*;
 final class PlaybackCache {
   static volatile boolean exiting;
 
-  static void prepareEpisode(Context c, String identity, File current) throws Exception {
+  static synchronized void prepareEpisode(Context c, String identity, File current, boolean activate) throws Exception {
     if (identity == null || identity.isEmpty()) return;
     SharedPreferences prefs = c.getSharedPreferences("playback_cache", 0);
     org.json.JSONObject saved = new org.json.JSONObject(prefs.getString("episodes", "{}"));
@@ -19,7 +19,8 @@ final class PlaybackCache {
     }
     String currentPath = current.getCanonicalPath();
     Set<String> recorded = new HashSet<>(prefs.getStringSet("entries", Collections.emptySet()));
-    for (String path : EpisodeCachePolicy.obsolete(episodes, identity, currentPath)) {
+    for (String path : activate ? EpisodeCachePolicy.obsolete(episodes, identity, currentPath) : Collections.<String>emptyList()) {
+      if(EpisodePreload.protects(new File(path)))continue;
       try {
         File entry = new File(path);
         CachePurger.deleteEntry(entry.getParentFile(), entry);
@@ -37,7 +38,20 @@ final class PlaybackCache {
         .commit()) throw new IOException("Could not record episode cache");
   }
 
-  static void record(Context c, File root, File entry) throws IOException {
+  static synchronized void discard(Context c,File entry) {
+    if(entry==null)return;
+    try {
+      TorrentEngine active=StreamService.engine;
+      if((active!=null&&active.root!=null&&active.root.getCanonicalFile().equals(entry.getCanonicalFile()))||EpisodePreload.protects(entry))return;
+      CachePurger.deleteEntry(entry.getParentFile(),entry);
+      SharedPreferences prefs=c.getSharedPreferences("playback_cache",0);
+      Set<String> paths=new HashSet<>(prefs.getStringSet("entries",Collections.emptySet()));paths.remove(entry.getCanonicalPath());
+      org.json.JSONObject saved=new org.json.JSONObject(prefs.getString("episodes","{}"));saved.remove(entry.getCanonicalPath());
+      prefs.edit().putStringSet("entries",paths).putString("episodes",saved.toString()).commit();
+    }catch(Exception ignored){}
+  }
+
+  static synchronized void record(Context c, File root, File entry) throws IOException {
     File base = root.getCanonicalFile();
     File target = entry.getCanonicalFile();
     if (!base.equals(target.getParentFile())) throw new IOException("Invalid cache entry");
@@ -59,6 +73,7 @@ final class PlaybackCache {
   }
 
   static void exit(Context context) {
+    EpisodePreload.cancel();
     Context c = context.getApplicationContext();
     exiting = true;
     c.stopService(new Intent(c, StreamService.class));
@@ -68,7 +83,7 @@ final class PlaybackCache {
         });
   }
 
-  static void purge(Context c) {
+  static synchronized void purge(Context c) {
     SharedPreferences prefs = c.getSharedPreferences("playback_cache", 0);
     Set<String> pending = new HashSet<>(prefs.getStringSet("entries", Collections.emptySet()));
     // The internal default folder is exclusively owned by this app, including older builds.
@@ -79,6 +94,7 @@ final class PlaybackCache {
     for (String path : pending) {
       File entry = new File(path);
       try {
+        if(EpisodePreload.protects(entry)){failed.add(path);continue;}
         CachePurger.deleteEntry(entry.getParentFile(), entry);
       } catch (IOException e) {
         failed.add(path);

@@ -30,6 +30,12 @@ public class PlaybackSettingsActivity extends Activity {
     autoNext.setOnCheckedChangeListener(
         (v, on) -> getSharedPreferences("playback", 0).edit().putBoolean("autoNext", on).apply());
     box.addView(autoNext);
+    CheckBox preload = new CheckBox(this);
+    preload.setText("Pre-load next episode");preload.setTextColor(Color.WHITE);
+    preload.setChecked(EpisodePreload.enabled(this));
+    preload.setOnCheckedChangeListener((v,on)->{getSharedPreferences("playback",0).edit().putBoolean("preloadNext",on).apply();if(!on)EpisodePreload.cancel();});
+    box.addView(preload);
+    label(box,"Starts after the current episode is fully downloaded. Uses additional storage and bandwidth. Previous episode data is removed only after the next video starts playing.",14);
     Switch skip = new Switch(this);
     skip.setText("Show intro and credits skip buttons");
     skip.setTextColor(Color.WHITE);

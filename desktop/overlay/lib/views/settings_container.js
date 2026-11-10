@@ -346,6 +346,7 @@
                 case 'translateEpisodes':
                 case 'showAdvancedSettings':
                 case 'alwaysOnTop':
+                case 'streamnestPreloadNext':
                 case 'streamnestAutoSkip':
                 case 'streamnestSkipButtons':
                 case 'playNextEpisodeAuto':
@@ -365,6 +366,7 @@
                 case 'favoritesTabEnable':
                 case 'watchedTabEnable':
                     value = field.is(':checked');
+                    if(field.attr('name')==='streamnestPreloadNext'&&!value)require('./butter-provider/streamnest-preload').cancel().catch(()=>{});
                     break;
                 case 'httpApiEnabled':
                     apiDataChanged = true;
