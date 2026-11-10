@@ -18,7 +18,13 @@ public class PlayerActivity extends Activity {
   TextView status, time, playingTitle;
   org.json.JSONObject episodeQueue;
   List<org.json.JSONObject> episodeRows = new ArrayList<>();
-  ImageButton previousEpisode, nextEpisode, skipSegment;
+  ImageButton previousEpisode, nextEpisode;
+  Button skipSegment;
+  SkipButtonBackground skipBackground;
+  String skipKey = "";
+  long skipRemaining = 5000, skipClock;
+  long pendingSeek = -1;
+  boolean skipCancelled, skipAutoEnabled;
   List<SkipSegments.Segment> segments = new ArrayList<>();
   SkipSegments.Segment activeSegment;
   boolean changingEpisode, endedHandled, pendingAuto, skipRequested;
@@ -131,7 +137,7 @@ public class PlayerActivity extends Activity {
         "Back 10 seconds",
         buttons,
         () -> {
-          if (player != null) player.setTime(Math.max(0, player.getTime() - 10000));
+          if (player != null) seekTo(Math.max(0, player.getTime() - 10000));
         });
     pause =
         button(
@@ -157,24 +163,33 @@ public class PlayerActivity extends Activity {
         buttons,
         () -> {
           if (player != null)
-            player.setTime(Math.min(player.getLength(), player.getTime() + 10000));
+            seekTo(Math.min(player.getLength(), player.getTime() + 10000));
         });
     nextEpisode =
         button(R.drawable.ic_next_episode, "Next episode", buttons, () -> changeEpisode(1, false));
     nextEpisode.setVisibility(View.GONE);
-    skipSegment = new ImageButton(this);
-    skipSegment.setImageResource(R.drawable.ic_skip_segment);
-    skipSegment.setBackgroundColor(0xe02389cf);
+    skipSegment = new Button(this);
+    skipSegment.setText("Skip Intro");
+    skipSegment.setTextColor(-1);
+    skipSegment.setAllCaps(false);
+    skipSegment.setMinWidth((int)(200*getResources().getDisplayMetrics().density));
+    skipSegment.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_skip_segment,0,0,0);
+    skipSegment.setCompoundDrawablePadding((int)(8*getResources().getDisplayMetrics().density));
+    skipSegment.setPadding((int)(16*getResources().getDisplayMetrics().density),8,
+        (int)(16*getResources().getDisplayMetrics().density),14);
+    skipBackground = new SkipButtonBackground(getResources().getDisplayMetrics().density);
+    skipSegment.setBackground(skipBackground);
     int skipSize = (int) (56 * getResources().getDisplayMetrics().density);
     FrameLayout.LayoutParams skipParams =
-        new FrameLayout.LayoutParams(skipSize, skipSize, Gravity.RIGHT | Gravity.CENTER_VERTICAL);
+        new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, skipSize, Gravity.RIGHT | Gravity.CENTER_VERTICAL);
     skipParams.rightMargin = 24;
     root.addView(skipSegment, skipParams);
     skipSegment.setVisibility(View.GONE);
+
     skipSegment.setOnClickListener(
         v -> {
           if (activeSegment != null) {
-            player.setTime(activeSegment.end);
+            seekTo(activeSegment.end);
             updateSegment(activeSegment.end);
           }
           setControlsVisible(true);
@@ -210,8 +225,14 @@ public class PlayerActivity extends Activity {
             persistProgress(true);
             episodeEnded();
           }
+          if (e.type == MediaPlayer.Event.TimeChanged && pendingSeek >= 0
+              && Math.abs(player.getTime() - pendingSeek) < 2000) {
+            pendingSeek = -1;
+            persistProgress(false);
+            WatchSync.request(this, true);
+          }
           if (e.type == MediaPlayer.Event.Playing) scheduleHide();
-          if (e.type == MediaPlayer.Event.Paused) persistProgress(false);
+          if (e.type == MediaPlayer.Event.Paused) { persistProgress(false); WatchSync.request(this, true); }
           if (e.type == MediaPlayer.Event.Paused || e.type == MediaPlayer.Event.EndReached)
             setControlsVisible(true);
           if (e.type == MediaPlayer.Event.Playing && !opened) {
@@ -249,7 +270,7 @@ public class PlayerActivity extends Activity {
 
           public void onStopTrackingTouch(SeekBar b) {
             if (player.getLength() > 0)
-              player.setTime(player.getLength() * b.getProgress() / 10000);
+              seekTo(player.getLength() * b.getProgress() / 10000);
             dragging = false;
             scheduleHide();
           }
@@ -261,8 +282,18 @@ public class PlayerActivity extends Activity {
     ui.post(tick);
   }
 
+  void seekTo(long position) {
+    if (player == null) return;
+    if (position < Math.max(lastLength, player.getLength()) - 10000) {
+      endedHandled = false;
+      pendingAuto = false;
+    }
+    pendingSeek = position;
+    player.setTime(position);
+  }
+
   void persistProgress(boolean completed) {
-    if (player == null || !playedVideo) return;
+    if (player == null || !playedVideo || !completed && endedHandled) return;
     long duration = Math.max(lastLength, player.getLength()),
         position = completed ? duration : player.getTime();
     if (duration <= 0 || position < 0) return;
@@ -273,6 +304,7 @@ public class PlayerActivity extends Activity {
     savedPlaybackIdentity = identity;
     savedPlaybackPosition = position;
     WatchProgress.save(this, identity, position, duration);
+    WatchSync.request(this, true);
   }
 
   String positionKey() {
@@ -406,6 +438,7 @@ public class PlayerActivity extends Activity {
                   endedHandled = false;
                   pendingAuto = false;
                   skipRequested = false;
+                  pendingSeek = -1;
                   subtitleBusy = false;
                   segments = new ArrayList<>();
                   activeSegment = null;
@@ -467,11 +500,41 @@ public class PlayerActivity extends Activity {
 
   void updateSegment(long position) {
     activeSegment = SkipSegments.active(segments, position);
-    skipSegment.setVisibility(activeSegment != null && !changingEpisode ? View.VISIBLE : View.GONE);
-    if (activeSegment != null) {
-      String label = activeSegment.type.equals("intro") ? "Skip intro" : "Skip credits";
+    String current = activeSegment == null ? "" :
+        activeSegment.type + ":" + activeSegment.start + ":" + activeSegment.end;
+    long now = SystemClock.elapsedRealtime();
+    boolean changed = !current.equals(skipKey);
+    if (changed) {
+      skipKey = current;
+      skipRemaining = 5000;
+      skipClock = now;
+      skipCancelled = false;
+    }
+    boolean visible = activeSegment != null && !changingEpisode;
+    boolean enabled = getSharedPreferences("playback", 0).getBoolean("autoSkip", true);
+    if (enabled && !skipAutoEnabled) {
+      skipRemaining = 5000;
+      skipClock = now;
+      skipCancelled = false;
+      changed = true;
+    }
+    skipAutoEnabled = enabled;
+    boolean auto = enabled && !skipCancelled;
+    boolean running = player != null && player.isPlaying() && viewsAttached && hasWindowFocus() && !dragging;
+    if (visible && auto && running)
+      skipRemaining -= Math.min(1000, Math.max(0, now - (skipClock == 0 ? now : skipClock)));
+    skipClock = now;
+    skipSegment.setVisibility(visible ? View.VISIBLE : View.GONE);
+    if (visible && auto && !running) skipBackground.freeze(changed);
+    else skipBackground.progress((5000-skipRemaining+(running ? 500 : 0))/5000f,visible && auto,changed);
+    if (visible) {
+      String label = activeSegment.type.equals("intro") ? "Skip Intro" : "Skip Credits";
+      skipSegment.setText(label + (auto ? "  " + Math.max(1, (skipRemaining + 999) / 1000) + "s" : ""));
       skipSegment.setContentDescription(label);
-      skipSegment.setTooltipText(label);
+      if (auto && skipRemaining <= 0) {
+        skipCancelled = true;
+        seekTo(activeSegment.end);
+      }
     }
   }
 
@@ -947,6 +1010,7 @@ public class PlayerActivity extends Activity {
   @Override
   protected void onStop() {
     persistProgress(false);
+    WatchSync.request(this, true);
     if (player != null) {
       resumeOnReturn = !isFinishing() && player.isPlaying() && !userPaused;
       if (player.isPlaying()) player.pause();

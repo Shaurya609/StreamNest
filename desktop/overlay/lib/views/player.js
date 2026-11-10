@@ -215,7 +215,7 @@
                 App.vent.trigger(type + ':watched', this.model.attributes, 'database');
             }
 
-            this.persistProgress(false);
+            this.persistProgress(false);require('./butter-provider/streamnest-sync').request(true);
             // remember position
             if (this.video.currentTime() / this.video.duration() < 0.8) {
                 AdvSettings.set('lastWatchedTitle', this.model.get('title'));
@@ -365,6 +365,7 @@
         },
 
         onPlayerPlay: function () {
+            this._progressEnded=false;
             // Trigger a resize so the subtitles are adjusted
             $(window).trigger('resize');
 
@@ -396,7 +397,7 @@
         },
 
         onPlayerPause: function () {
-            this.persistProgress(false);
+            this.persistProgress(false);require('./butter-provider/streamnest-sync').request(true);
             if (this.player.scrubbing) {
                 this.wasSeek = true;
             } else {
@@ -582,6 +583,7 @@
                     if(!this.video.paused())this.persistProgress(false);this._progressSavedAt=Date.now();
                 }
             });
+            this.player.on('seeked',()=>{this.persistProgress(false);require('./butter-provider/streamnest-sync').request(true);});
             this.player.on('error', this.onPlayerError.bind(this));
 
             this.metadataCheck();
@@ -647,12 +649,13 @@
         },
 
         persistProgress: function(completed){
-            if(!this.video||!(this._progressPlayed||this._streamnestPlayed))return;
+            if(!this.video||!(this._progressPlayed||this._streamnestPlayed)||this._progressEnded&&!completed)return;
+            if(completed)this._progressEnded=true;
             const model=this.model.get('torrentModel'),attrs=model?model.attributes:this.model.attributes,P=require('./butter-provider/streamnest-progress');
             const duration=this.video.duration(),position=completed?duration:this.video.currentTime(),key=P.identity(attrs);
             if(!(duration>0)||!Number.isFinite(position)||position<0)return;
             if(!completed&&key===this._progressLastKey&&Math.abs(position-this._progressLastPosition)<1)return;
-            this._progressLastKey=key;this._progressLastPosition=position;P.save(attrs,position,duration);
+            this._progressLastKey=key;this._progressLastPosition=position;P.save(attrs,position,duration);if(completed)require('./butter-provider/streamnest-sync').request(true);
         },
         sendToTrakt: function (method) {
             if (!this.video) {
@@ -677,13 +680,21 @@
         setupEpisodeControls: function(){
             const tm=this.model.get('torrentModel');if(this._StreamNestTimer||!tm||tm.get('type')!=='episode'||!Array.isArray(tm.get('auto_play_data')))return;
             const P=require('./butter-provider/streamnest-playback'),bar=$(this.player.el()).find('.vjs-control-bar');
+            bar.css({height:"48px"});
             this._streamnestNavButtons=$();
             for(const item of [{direction:-1,label:'Previous episode',icon:'fa-step-backward'},{direction:1,label:'Next episode',icon:'fa-step-forward'}]){
                 const button=$('<button type="button" class="vjs-control vjs-button"><i class="fa"></i></button>').attr({'title':item.label,'aria-label':item.label});
-                button.attr('data-direction',item.direction);button.find('i').addClass(item.icon);button.prop('disabled',!P.neighbour(tm.attributes,item.direction));button.on('click',()=>this.navigateEpisode(item.direction));bar.append(button);this._streamnestNavButtons=this._streamnestNavButtons.add(button);
+                button.css({width:'auto',minWidth:'120px',height:'44px',padding:'0 12px',margin:'0 4px',background:'#303b4c',color:'#fff',fontSize:'14px',borderRadius:'5px'});button.append(document.createTextNode(' '+item.label));button.attr('data-direction',item.direction);button.find('i').addClass(item.icon);button.prop('disabled',!P.neighbour(tm.attributes,item.direction));button.on('click',()=>this.navigateEpisode(item.direction));bar.append(button);this._streamnestNavButtons=this._streamnestNavButtons.add(button);
             }
-            this._streamnestSkip=$('<button type="button" class="vjs-control vjs-button" style="display:none;position:absolute;right:24px;bottom:90px;width:52px;height:48px;background:#2389cf;z-index:25"><i class="fa fa-fast-forward"></i></button>');
-            $(this.player.el()).append(this._streamnestSkip);this._streamnestSkip.on('click',()=>{if(this._streamnestSegment)this.player.currentTime(this._streamnestSegment.end);});
+            this._streamnestSkip=$('<button type="button" class="vjs-control vjs-button" style="display:none;position:absolute;right:24px;bottom:90px;width:auto;min-width:190px;height:58px;background:#20232bee;z-index:25"><i class="fa fa-fast-forward"></i></button>');
+            $(this.player.el()).append(this._streamnestSkip);this._streamnestSkip.on('click',()=>{if(this._streamnestSegment){this._skipCancelled=true;this.player.currentTime(this._streamnestSegment.end);}});
+            $(this.player.el()).append(`<style>
+              .video-js .streamnest-skip{border:1px solid #ddd;border-radius:10px;background:#20232bee;color:#fff;padding:6px 18px 14px 48px;line-height:normal;font-size:16px;font-weight:600}
+              .video-js .streamnest-skip:before{content:"\\f050";font-family:FontAwesome!important;font-size:20px;position:absolute;left:14px;top:9px;width:24px;height:24px;line-height:24px}
+              .video-js .streamnest-skip:after{content:"";position:absolute;left:16px;right:16px;bottom:9px;height:4px;border-radius:4px;background:linear-gradient(white,white) left center/var(--skip-progress,0%) 100% no-repeat,#55585e;transition:background-size .5s linear}
+              .video-js .streamnest-skip.manual:after{display:none}
+            </style>`);
+            this._streamnestSkip.addClass('streamnest-skip');
             this._streamnestSegments=[];
             this._StreamNestTimer=setInterval(()=>{
                 if(this.isDestroyed())return;
@@ -693,7 +704,23 @@
                 if(!this._streamnestSkipRequested&&length>0&&Settings.streamnestSkipButtons!==false){this._streamnestSkipRequested=true;P.segments(tm.attributes,length).then(rows=>{if(!this.isDestroyed())this._streamnestSegments=rows;}).catch(()=>{});}
                 this._streamnestSegment=P.active(this._streamnestSegments,position);
                 const segment=this._streamnestSegment;this._streamnestSkip.toggle(!!segment&&!this._streamnestNavigating);
-                if(segment)this._streamnestSkip.attr({'title':segment.type==='intro'?'Skip intro':'Skip credits','aria-label':segment.type==='intro'?'Skip intro':'Skip credits'});
+                const now=Date.now(),segmentKey=segment?segment.type+':'+segment.start+':'+segment.end:'';
+                if(segmentKey!==this._skipKey){this._skipKey=segmentKey;this._skipRemaining=5000;this._skipClock=now;this._skipCancelled=false;}
+                const enabled=Settings.streamnestAutoSkip!==false;
+                if(enabled&&!this._skipWasEnabled){this._skipRemaining=5000;this._skipClock=now;this._skipCancelled=false;}
+                this._skipWasEnabled=enabled;
+                const auto=enabled&&!this._skipCancelled;
+                if(segment&&auto&&!this.video.paused()&&!this._streamnestNavigating)
+                    this._skipRemaining-=Math.min(1000,Math.max(0,now-(this._skipClock||now)));
+                this._skipClock=now;
+                this._streamnestSkip.toggleClass('manual',!auto);
+                if(!segment)this._streamnestSkip.css('--skip-progress','0%');
+                else if(auto&&!this.video.paused())this._streamnestSkip.css('--skip-progress',Math.max(0,Math.min(100,(5500-this._skipRemaining)/50))+'%');
+                if(segment){
+                    const label=segment.type==='intro'?'Skip Intro':'Skip Credits';
+                    this._streamnestSkip.text(label+(auto?'  '+Math.max(1,Math.ceil(this._skipRemaining/1000))+'s':'')).attr({'title':label,'aria-label':label});
+                    if(auto&&this._skipRemaining<=0){this._skipCancelled=true;this.player.currentTime(segment.end);}
+                }
             },500);
         },
         playNextNot: function () {

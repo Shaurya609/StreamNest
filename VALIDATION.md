@@ -178,3 +178,8 @@ Actual tablet update follow-up: the 0.15.1 launch did not produce an update file
 Actual installed tablet subsequently reported 0.16.0/code24. Production-app targeted pairing screen passed QR decoding, camera-link short-code prefilling and invalid-input handling without changing saved pairing. A fresh disposable desktop-created ticket was redeemed/decrypted by the installed Android app; second redemption was rejected.
 
 Normal installed-app entry was also verified using the tablet UI: Settings > Resume & sync devices opened the 0.16.0 screen with eight-character input, Show pairing code and Show recovery key controls. The automated Settings instrumentation had stalled behind the Android install-completion screen and was stopped; this UI check replaced that blocked navigation check.
+
+## Sprint 1 implementation — 0.17.0
+
+- Android verification clone rendered decoded fixture video with icon/text/progress skip controls, manual seeking, Settings-disabled automatic skipping and five-second automatic seeking. Subtitle settings return, advancing video and preserved user pause passed. Clone removed and production Gradle configuration restored. The first cold fixture attempt did not render; starting the clone in the foreground and allowing 15 seconds for decoder startup passed.
+- Desktop source-handler regressions cover five playing seconds, pause, Settings disable/manual skip, larger navigation controls, completion-teardown protection and a pause arriving during an in-flight sync. All 67 desktop/catalog/backend checks passed. Clipboard tests cover full-width text, invisible separators and dash variants; the exact original MSI input is unknown.

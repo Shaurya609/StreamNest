@@ -203,6 +203,8 @@ public class PlaybackRegression extends Instrumentation {
       return;
     }
     Bundle result = new Bundle();
+    android.content.SharedPreferences playbackPrefs = getTargetContext().getSharedPreferences("playback",0);
+    boolean hadAuto = playbackPrefs.contains("autoSkip"), previousAuto = playbackPrefs.getBoolean("autoSkip",true);
     try {
       File fixture = new File(getTargetContext().getCacheDir(), "playback-regression.mp4");
       if (!fixture.isFile()) throw new AssertionError("Supply the local playback fixture first");
@@ -243,6 +245,38 @@ public class PlaybackRegression extends Instrumentation {
           throw new AssertionError(segmentType + " did not seek");
         assertFrame(segmentType + " seek");
       }
+      main(() -> { activity.player.pause(); activity.player.setTime(6000); });
+      SystemClock.sleep(700);
+      main(() -> {
+        activity.segments = new ArrayList<>();
+        activity.segments.add(new SkipSegments.Segment("intro",5000,20000));
+        activity.skipKey = "";
+        activity.player.play();
+        activity.updateSegment(activity.player.getTime());
+        if (!activity.skipSegment.getText().toString().startsWith("Skip Intro"))
+          throw new AssertionError("Skip label missing");
+        activity.getSharedPreferences("playback",0).edit().putBoolean("autoSkip",false).apply();
+      });
+      SystemClock.sleep(6200);
+      if (activity.player.getTime() >= 19000)
+        throw new AssertionError("Settings did not disable auto-skip");
+      main(() -> { activity.skipSegment.performClick(); });
+      SystemClock.sleep(700);
+      assertFrame("cancel and manual skip");
+      main(() -> { activity.player.pause(); activity.player.setTime(6000); });
+      SystemClock.sleep(700);
+      main(() -> {
+        activity.segments = new ArrayList<>();
+        activity.segments.add(new SkipSegments.Segment("intro",5000,18000));
+        activity.skipKey = "";
+        activity.getSharedPreferences("playback",0).edit().putBoolean("autoSkip",true).apply();
+        activity.player.play();
+        activity.updateSegment(activity.player.getTime());
+      });
+      SystemClock.sleep(6500);
+      if (activity.player.getTime() < 17000)
+        throw new AssertionError("Five-second auto-skip did not seek");
+      assertFrame("automatic skip");
       main(() -> {
         activity.segments.clear();
         activity.updateSegment(activity.player.getTime());
@@ -284,13 +318,16 @@ public class PlaybackRegression extends Instrumentation {
           });
       result.putString(
           "result",
-          "PASS: decoded frames after subtitle menu and settings return; position advances; user"
+          "PASS: icon/text/progress manual/automatic skip and Settings disable; decoded frames after subtitle menu and settings return; position advances; user"
               + " pause preserved");
       finish(Activity.RESULT_OK, result);
     } catch (Throwable error) {
       result.putString("result", "FAIL: " + error);
       finish(Activity.RESULT_CANCELED, result);
     } finally {
+      android.content.SharedPreferences.Editor restore = playbackPrefs.edit();
+      if (hadAuto) restore.putBoolean("autoSkip",previousAuto); else restore.remove("autoSkip");
+      restore.apply();
       if (activity != null) main(() -> activity.finish());
     }
   }
@@ -309,15 +346,17 @@ public class PlaybackRegression extends Instrumentation {
   }
 
   void waitForFrame() {
-    for (int i = 0; i < 30; i++) {
+    Throwable last = null;
+    for (int i = 0; i < 75; i++) {
       try {
         assertFrame("startup");
         return;
-      } catch (Throwable ignored) {
+      } catch (Throwable failure) {
+        last = failure;
         SystemClock.sleep(200);
       }
     }
-    throw new AssertionError("Video did not render");
+    throw new AssertionError("Video did not render", last);
   }
 
   TextureView texture(View view) {

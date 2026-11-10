@@ -346,6 +346,7 @@
                 case 'translateEpisodes':
                 case 'showAdvancedSettings':
                 case 'alwaysOnTop':
+                case 'streamnestAutoSkip':
                 case 'streamnestSkipButtons':
                 case 'playNextEpisodeAuto':
                 case 'updateNotification':

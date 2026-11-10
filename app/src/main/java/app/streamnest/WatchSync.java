@@ -11,6 +11,7 @@ final class WatchSync {
   static final ExecutorService worker =
       new ThreadPoolExecutor(0, 1, 30, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
   static volatile boolean pending;
+  static boolean followup;
   static volatile String testPairingCode;
   static long last;
   static volatile String status = "Not connected";
@@ -43,7 +44,8 @@ final class WatchSync {
   }
 
   static synchronized void request(Context c, boolean force) {
-    if (pending || !force && System.currentTimeMillis() - last < 30000) return;
+    if (pending) { if (force) followup = true; return; }
+    if (!force && System.currentTimeMillis() - last < 10000) return;
     Context app = c.getApplicationContext();
     pending = true;
     last = System.currentTimeMillis();
@@ -57,7 +59,10 @@ final class WatchSync {
           } catch (Exception e) {
             status = "Offline — progress stays on this device";
           } finally {
-            pending = false;
+            synchronized (WatchSync.class) {
+              pending = false;
+              if (followup) { followup = false; request(app, true); }
+            }
           }
         });
   }

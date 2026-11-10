@@ -38,10 +38,17 @@ public class PlaybackSettingsActivity extends Activity {
         (v, on) ->
             getSharedPreferences("playback", 0).edit().putBoolean("skipButtons", on).apply());
     box.addView(skip);
+    Switch autoSkip = new Switch(this);
+    autoSkip.setText("Automatically skip intros and credits after five seconds");
+    autoSkip.setTextColor(Color.WHITE);
+    autoSkip.setChecked(getSharedPreferences("playback", 0).getBoolean("autoSkip", true));
+    autoSkip.setOnCheckedChangeListener((v, on) ->
+        getSharedPreferences("playback", 0).edit().putBoolean("autoSkip", on).apply());
+    box.addView(autoSkip);
     label(
         box,
         "Skip buttons use community timestamps from IntroDB, SkipDB (ODbL 1.0 + reciprocity) and AniSkip when available. Coverage"
-            + " and release timings vary. Credits are skipped only when you choose; scenes after"
+            + " and release timings vary. Auto-skip can be disabled in these settings; scenes after"
             + " credits are preserved when the timestamps identify them.",
         14);
     path = label(box, "", 15);

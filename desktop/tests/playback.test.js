@@ -17,13 +17,13 @@ test('actual player ended handler advances only once and rejects early EOF',()=>
 
 test('actual player renders navigation with autoplay off and skips only the active segment',()=>{
  const vm=require('vm'),fs=require('fs'),path=require('path'),App={View:{}};let timer,seekTo;const created=[];
- function node(){return {attrs:{},props:{},handlers:{},find(){return node();},append(){return this;},attr(k,v){if(typeof k==='object')Object.assign(this.attrs,k);else if(v!==undefined)this.attrs[k]=v;else return this.attrs[k];return this;},prop(k,v){this.props[k]=v;return this;},on(k,v){this.handlers[k]=v;return this;},addClass(){return this;},add(){return this;},toggle(v){this.visible=v;return this;}};}
+ function node(){return {css(){return this;},text(){return this;},hide(){return this;},toggleClass(){return this;},attrs:{},props:{},handlers:{},find(){return node();},append(){return this;},attr(k,v){if(typeof k==='object')Object.assign(this.attrs,k);else if(v!==undefined)this.attrs[k]=v;else return this.attrs[k];return this;},prop(k,v){this.props[k]=v;return this;},on(k,v){this.handlers[k]=v;return this;},addClass(){return this;},add(){return this;},toggle(v){this.visible=v;return this;}};}
  const $=value=>{if(value&&value.attrs)return value;const n=node();if(typeof value==='string'&&value.startsWith('<button'))created.push(n);return n;};
- const context={window:{App},Marionette:{View:{extend:x=>x}},require:s=>s.includes('streamnest-progress')?{save:()=>{}}:require(path.resolve(__dirname,'../overlay',s)),$,Settings:{streamnestSkipButtons:false},setInterval:cb=>{timer=cb;return 1;}};
+ const context={window:{App},Marionette:{View:{extend:x=>x}},require:s=>s.includes('streamnest-progress')?{save:()=>{}}:require(path.resolve(__dirname,'../overlay',s)),$,document:{createTextNode:t=>t},Settings:{streamnestSkipButtons:false,streamnestAutoSkip:false},setInterval:cb=>{timer=cb;return 1;}};
  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../overlay/lib/views/player.js'),'utf8'),context);
  const data={...attrs,episode:1,auto_play:false},tm={get:k=>k==='type'?'episode':data[k],attributes:data};const view={model:{get:k=>k==='torrentModel'?tm:null},player:{el:()=>({}),currentTime:p=>seekTo=p},video:{currentTime:()=>45,duration:()=>1440,paused:()=>false},isDestroyed:()=>false,navigateEpisode:()=>{}};
  App.View.Player.setupEpisodeControls.call(view);assert.equal(created.length,3);assert.equal(created[0].props.disabled,true);assert.equal(created[1].props.disabled,false);
- view._streamnestSegments=[{type:'intro',start:30,end:120}];timer();assert.equal(view._streamnestPlayed,true);assert.equal(view._streamnestSkip.visible,true);assert.equal(view._streamnestSkip.attrs['aria-label'],'Skip intro');view._streamnestSkip.handlers.click();assert.equal(seekTo,120);
+ view._streamnestSegments=[{type:'intro',start:30,end:120}];timer();assert.equal(view._streamnestPlayed,true);assert.equal(view._streamnestSkip.visible,true);assert.equal(view._streamnestSkip.attrs['aria-label'],'Skip Intro');view._streamnestSkip.handlers.click();assert.equal(seekTo,120);
  App.View.Player.setupEpisodeControls.call(view);assert.equal(created.length,3);
 });
 
@@ -31,12 +31,13 @@ test('MAL skip identity is attached only to explicit matching first-season episo
 
 test('paused player does not rewrite stale progress; a rewind and completion are saved',()=>{
  const vm=require('vm'),fs=require('fs'),path=require('path'),App={View:{}},saved=[];
- const progress={identity:()=> 'episode:tt123:1:1',save:(a,p,d)=>saved.push({p,d})};
+ const progress={request:()=>{},identity:()=> 'episode:tt123:1:1',save:(a,p,d)=>saved.push({p,d})};
  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../overlay/lib/views/player.js'),'utf8'),{window:{App},Marionette:{View:{extend:x=>x}},require:()=>progress});
  let position=125;const view={_progressPlayed:true,model:{get:()=>({attributes:attrs})},video:{duration:()=>1500,currentTime:()=>position}};
  const persist=App.View.Player.persistProgress;persist.call(view,false);persist.call(view,false);
  assert.equal(saved.length,1);position=45;persist.call(view,false);assert.equal(saved[1].p,45);
  persist.call(view,true);assert.equal(saved[2].p,1500);
+ position=0;persist.call(view,false);assert.equal(saved.length,3);
 });
 
 test('anonymous fallback requires exact episode, duration match and confidence',()=>{

@@ -1,7 +1,8 @@
 'use strict';
 const crypto=require('crypto'),https=require('https');
 const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-function normalize(value){const text=String(value).replace(/[\s-]/g,'').toUpperCase();if(!/^[A-HJ-NP-Z2-9]{8}$/.test(text))throw Error('Enter the eight-character code');return text;}
+function input(value){return String(value).normalize('NFKC').replace(/[\s\u200B-\u200D\uFEFF\u2010-\u2015\u2212-]/g,'');}
+function normalize(value){const text=input(value).toUpperCase();if(!/^[A-HJ-NP-Z2-9]{8}$/.test(text))throw Error('Enter the eight-character code');return text;}
 function create(){return [...crypto.randomBytes(8)].map(b=>alphabet[b&31]).join('');}
 function digest(value){return crypto.createHash('sha256').update('StreamNest pairing v1:'+normalize(value)).digest();}
 function lookup(value){return crypto.createHash('sha256').update('StreamNest pairing lookup v1:'+normalize(value)).digest('hex');}
@@ -13,4 +14,4 @@ function call(endpoint,short,method,payload,auth){return new Promise((resolve,re
  let body='';res.on('data',b=>{body+=b;if(body.length>2000)req.destroy(Error('Invalid pairing response'));});res.on('end',()=>{try{const doc=JSON.parse(body);if(res.statusCode!==200)throw Error(doc.error||'Pairing unavailable');resolve(doc);}catch(e){reject(e);}});
  });req.setTimeout(10000,()=>req.destroy(Error('Pairing timed out')));req.on('error',reject);req.end(payload);
 });}
-module.exports={normalize,create,digest,lookup,seal,open,call};
+module.exports={input,normalize,create,digest,lookup,seal,open,call};

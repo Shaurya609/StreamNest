@@ -16,8 +16,12 @@
   S=require('./butter-provider/streamnest-sync');App.vent.trigger('settings:show');await new Promise(r=>setTimeout(r,300));
   const opener=document.getElementById('streamnestSyncOpen');assert(opener,'Settings sync button missing');opener.click();let panel=document.getElementById('streamnest-sync-panel');assert(panel&&visible(panel),'Sync dialog is outside the visible viewport');result.settingsButtonOpenedVisibleDialog=true;
   assert(panel.getAttribute('role')==='dialog','Dialog semantics missing');const input=panel.querySelector('input'),qr=panel.querySelector('img');assert(getComputedStyle(qr).display==='none','Empty pairing displays a blank QR');
-  input.value='invalid-code';await button(panel,'Connect with this code').onclick();assert(panel.innerText.includes('Enter the complete pairing code'),'Invalid pairing failed silently');result.invalidCodeReported=true;
+  input.value='invalid-code';await button(panel,'Connect with this code').onclick();assert(panel.innerText.includes('eight-character pairing code'),'Invalid pairing failed silently');result.invalidCodeReported=true;
   await button(panel,'Create a sync group').onclick();pairing=S.config().code;await button(panel,'Show pairing code').onclick();assert(pairing&&S.status==='Synced','Pairing did not connect to live service');await new Promise(r=>setTimeout(r,900));assert(qr.src.startsWith('data:image/')&&getComputedStyle(qr).display!=='none','Pairing QR is not visible');result.livePairingAndQr=true;
+  input.value=input.value.replace(' ','\u200b');
+  await button(panel,'Connect with this code').onclick();
+  assert(S.config().code===pairing&&S.status==='Synced','Pasted short code failed to connect');
+  result.shortCodeClipboardPairing=true;
   result.controls=Array.from(panel.querySelectorAll('button')).map(b=>{const style=getComputedStyle(b);assert(style.color!==style.backgroundColor&&b.getBoundingClientRect().height>=40,'Unreadable or undersized sync control');return b.textContent;});
   await button(panel,'Sync now').onclick();assert(S.status==='Synced','Sync now failed');
   await button(panel,'Disconnect this device').onclick();await new Promise(r=>setTimeout(r,900));assert(!S.config().code&&input.value===''&&getComputedStyle(qr).display==='none','Disconnect did not clear pairing and QR');result.disconnectClearedPairing=true;

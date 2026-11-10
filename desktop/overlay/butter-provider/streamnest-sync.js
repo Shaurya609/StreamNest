@@ -1,7 +1,7 @@
 'use strict';
 const fs=require('fs'),path=require('path'),https=require('https'),C=require('./streamnest-sync-crypto');
 const root=typeof nw!=='undefined'?nw.App.dataPath:require('os').tmpdir(),configPath=path.join(root,'streamnest-watch-sync.json');
-let inFlight=null,last=0,status='Not connected';
+let followup=false,inFlight=null,last=0,status='Not connected';
 function config(){try{const value=JSON.parse(fs.readFileSync(configPath,'utf8'));return value&&typeof value==='object'?value:{};}catch(e){return {};}}
 function endpoint(){const url=JSON.parse(fs.readFileSync(path.join(__dirname,'watch-sync.json'),'utf8')).endpoint;if(!/^https:\/\/[A-Za-z0-9.-]+$/.test(url))throw Error('Sync service is not configured yet');return url;}
 function call(method,code,payload,revision){return new Promise((resolve,reject)=>{
@@ -22,13 +22,13 @@ async function sync(code){
  }throw Error('Another device is syncing; retry shortly');
 }
 async function request(force=false){
- if(inFlight)return inFlight;
- const code=config().code;if(!code||!force&&Date.now()-last<30000)return;
- last=Date.now();inFlight=sync(code).then(()=>{if(config().code===code)status='Synced';},()=>{status='Offline — progress stays on this device';}).finally(()=>{inFlight=null;});return inFlight;
+ if(inFlight){if(force)followup=true;return inFlight;}
+ const code=config().code;if(!code||!force&&Date.now()-last<10000)return;
+ last=Date.now();inFlight=sync(code).then(()=>{if(config().code===code)status='Synced';},()=>{status='Offline — progress stays on this device';}).finally(()=>{inFlight=null;if(followup){followup=false;request(true);}});return inFlight;
 }
 async function beforeSelection(){let timer;try{await Promise.race([request(true),new Promise(resolve=>{timer=setTimeout(resolve,2000);})]);}finally{clearTimeout(timer);}}
 
-async function connect(code){if(String(code).replace(/[\s-]/g,'').length===8){const P=require('./streamnest-pairing');code=P.open(code,(await P.call(endpoint(),code,'POST')).payload);}code=C.format(C.parse(code));fs.writeFileSync(configPath,JSON.stringify({code}),{mode:0o600});status='Connecting…';return request(true);}
+async function connect(code){const P=require('./streamnest-pairing');code=P.input(code);if(code.length===8){code=P.open(code,(await P.call(endpoint(),code,'POST')).payload);}else if(code.length!==36)throw Error('Enter an eight-character pairing code or the complete recovery key');code=C.format(C.parse(code));fs.writeFileSync(configPath,JSON.stringify({code}),{mode:0o600});status='Connecting…';return request(true);}
 function disconnect(){fs.writeFileSync(configPath,'{}',{mode:0o600});status='Not connected';}
 function show(win){
  const d=win.document;let old=d.getElementById('streamnest-sync-panel');if(old)old.remove();
