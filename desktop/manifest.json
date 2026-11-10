@@ -128,7 +128,7 @@
     },
     {
       "path": "butter-provider/streamnest-sync.js",
-      "sha256": "a57d87caec9dd1037ddc1ad6d93a75626cf7fd8737139a2d715469f6e8c8787d"
+      "sha256": "6df4e17a6c4ddcf142094df9dc2806e61d5fa06af7276d82fc758bafb7f2dca2"
     },
     {
       "path": "butter-provider/tv.js",
@@ -208,7 +208,7 @@
     },
     {
       "path": "butter-provider/streamnest-group.js",
-      "sha256": "f22594a244ac79863032425fccb5c40ece890c5895e928454e3713ae339dbeca"
+      "sha256": "0f3df75a724a00358f20329006d576635bddeab1c95438c8c67d9a75ce7af175"
     }
   ]
 }
