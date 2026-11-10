@@ -168,7 +168,7 @@
     },
     {
       "path": "lib/views/player.js",
-      "sha256": "f0484802d32026042d8efbb52319934e5f80a1e2b83f48914ba2eb83f723aade"
+      "sha256": "e0f7b435dd46dfc722af9b2242942c544771a6a57f0ba8ece6bca63afc7b4934"
     },
     {
       "path": "lib/views/quality_selector.js",

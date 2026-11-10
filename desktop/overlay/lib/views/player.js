@@ -583,7 +583,7 @@
                     if(!this.video.paused())this.persistProgress(false);this._progressSavedAt=Date.now();
                 }
             });
-            this.player.on('seeked',()=>{this.persistProgress(false);require('./butter-provider/streamnest-sync').request(true);});
+            this.player.on('seeked',this.onProgressSeeked.bind(this));
             this.player.on('error', this.onPlayerError.bind(this));
 
             this.metadataCheck();
@@ -646,6 +646,12 @@
                 }
             }
             this.prevSub = this.model.get('defaultSubtitle') === 'none' && Settings.subtitle_language !== 'none' ? $('.vjs-menu-item:contains("' + App.Localization.langcodes[Settings.subtitle_language].nativeName +'")')[0] || $('.vjs-selected')[0] : $('.vjs-selected')[0];
+        },
+
+        onProgressSeeked: function(){
+            if(this.video.currentTime()<this.video.duration()-10)this._progressEnded=false;
+            this.persistProgress(false);
+            require('./butter-provider/streamnest-sync').request(true);
         },
 
         persistProgress: function(completed){

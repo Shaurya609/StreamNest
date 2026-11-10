@@ -107,3 +107,15 @@ test('a pause during an active upload queues the latest timestamp',async()=>{
  assert.equal(puts,2);
  assert.equal(C.open(code,remote)['episode:tt123:1:1'].positionMs,200000);
 });
+
+test('rewinding a completed paused episode saves the intended position',()=>{
+ const App={View:{}},saved=[];let uploads=0;
+ const context={window:{App},Marionette:{View:{extend:value=>value}},
+  require:()=>({request:()=>uploads++})};
+ vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../overlay/lib/views/player.js'),'utf8'),context);
+ const view={_progressEnded:true,video:{currentTime:()=>45,duration:()=>1500},
+  persistProgress(){if(!this._progressEnded)saved.push(this.video.currentTime());}};
+ App.View.Player.onProgressSeeked.call(view);
+ assert.deepEqual(saved,[45]);
+ assert.equal(uploads,1);
+});
