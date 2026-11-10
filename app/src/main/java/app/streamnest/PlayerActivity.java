@@ -851,9 +851,10 @@ public class PlayerActivity extends Activity {
         public void run() {
           if (isFinishing()) return;
           TorrentEngine e = StreamService.engine;
+          boolean currentEngine=e!=null&&source.equals(e.sourceUrl)&&java.util.Objects.equals(e.episodeIdentity,getIntent().getStringExtra("episodeIdentity"));
           if (mediaSet && videoOutputs > 0 && player.isPlaying() && player.getTime() > 1000)
             playedVideo = true;
-          if(playedVideo&&e!=null&&!e.closed){
+          if(playedVideo&&currentEngine&&!e.closed){
             if(cacheCommitted!=e&&StreamService.retiring==null&&hasRenderedVideo()){cacheCommitted=e;StreamService.playing(getApplicationContext(),e,getIntent().getStringExtra("episodeIdentity"));}
             EpisodePreload.consider(PlayerActivity.this,e,episodeQueue,neighbour(1));
           }
@@ -876,7 +877,7 @@ public class PlayerActivity extends Activity {
             softwareDecoder = ++startupRetries == 2;
             lastProgressAt = now;
           }
-          if (e != null && source.equals(e.sourceUrl) && e.receivedBytes > lastReceived) {
+          if (currentEngine && e.receivedBytes > lastReceived) {
             lastReceived = e.receivedBytes;
             lastProgressAt = SystemClock.elapsedRealtime();
           }
@@ -903,8 +904,7 @@ public class PlayerActivity extends Activity {
               && episodeMessage.startsWith("Video could not start")) {
             episodeMessage = null;
           }
-          if (e != null
-              && source.equals(e.sourceUrl)
+          if (currentEngine
               && e.fileIndex == getIntent().getIntExtra("fileIndex", -1)) {
             status.setText(
                 episodeMessage != null
