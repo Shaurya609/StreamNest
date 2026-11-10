@@ -88,3 +88,17 @@ test('private owner data denies missing/wrong keys and excludes encrypted histor
   const answer=await worker.fetch(req(env.ADMIN_TOKEN),env);assert.equal(answer.status,200);const text=await answer.text();assert(text.includes('TheBeast'));assert(!text.includes(code));assert(!text.includes(C.auth(code)));assert(!text.includes('payload'));
  }finally{env.database.close();}
 });
+
+test('disconnect and expiry remove device metadata without confusing it with online presence',async()=>{
+ const env=environment(),code=C.create();try{
+  await worker.fetch(groupRequest(code,'PUT',{...device,groupName:'Home'}),env);
+  env.database.prepare('UPDATE sync_devices SET seen_at=?').run(Date.now()-91*86400000);
+  assert.equal((await(await worker.fetch(groupRequest(code,'GET'),env)).json()).devices.length,0);
+  await worker.scheduled({},env);
+  assert.equal(env.database.prepare('SELECT COUNT(*) AS total FROM sync_devices').get().total,0);
+  await worker.fetch(groupRequest(code,'PUT',device),env);
+  await worker.fetch(request('DELETE',C.auth(code)),env);
+  assert.equal(env.database.prepare('SELECT COUNT(*) AS total FROM sync_devices').get().total,0);
+  assert.equal(env.database.prepare('SELECT COUNT(*) AS total FROM sync_groups').get().total,0);
+ }finally{env.database.close();}
+});

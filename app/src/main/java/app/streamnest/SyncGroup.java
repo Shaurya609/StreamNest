@@ -12,6 +12,7 @@ final class SyncGroup {
   static volatile JSONObject current;
   static volatile String error = "";
   static long last;
+  static final java.util.concurrent.ExecutorService worker=java.util.concurrent.Executors.newSingleThreadExecutor();
   static android.content.SharedPreferences prefs(Context c) {return c.getSharedPreferences("sync-group",0);}
   static String deviceName(Context c) {return prefs(c).getString("deviceName",Build.MODEL);}
   static synchronized String deviceId(Context c) {
@@ -36,5 +37,5 @@ final class SyncGroup {
     try {JSONObject result=call(c,code,"PUT",body);if(code.equals(WatchSync.code(c))){current=result;error="";last=System.currentTimeMillis();}}
     catch(Exception e){error="Group details unavailable — watch sync still works";throw e;}
   }
-  static void refresh(Context c) {if(System.currentTimeMillis()-last<60000)return;last=System.currentTimeMillis();try{update(c,null);}catch(Exception ignored){}}
+  static synchronized void refresh(Context c) {if(System.currentTimeMillis()-last<60000)return;last=System.currentTimeMillis();Context app=c.getApplicationContext();worker.execute(()->{try{update(app,null);}catch(Exception ignored){}});}
 }

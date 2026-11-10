@@ -41,7 +41,7 @@ final class WatchSync {
   static void disconnect(Context c) throws Exception {
     String previous = code(c);
     Context app = c.getApplicationContext();
-    worker.execute(() -> {try{if(!previous.isEmpty())SyncGroup.call(app,previous,"DELETE",new JSONObject().put("deviceId",SyncGroup.deviceId(app)));}catch(Exception ignored){}});
+    SyncGroup.worker.execute(() -> {try{if(!previous.isEmpty())SyncGroup.call(app,previous,"DELETE",new JSONObject().put("deviceId",SyncGroup.deviceId(app)));}catch(Exception ignored){}});
     SyncGroup.current = null;
     new SecretStore(c).put("watchSyncCode", "");
     status = "Not connected";

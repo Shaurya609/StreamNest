@@ -12,10 +12,11 @@ function call(method,code,payload,revision){return new Promise((resolve,reject)=
   res.on('end',()=>{if(res.statusCode===409)return resolve({conflict:true});if(res.statusCode!==200)return reject(Error('Sync service HTTP '+res.statusCode));try{resolve(JSON.parse(Buffer.concat(chunks)));}catch(e){reject(e);}});
  });req.setTimeout(10000,()=>req.destroy(Error('Sync timed out')));req.on('error',reject);req.end(bytes);
 });}
-let group=null,groupError='',lastGroup=0;
+let group=null,groupError='',lastGroup=0,groupQueue=Promise.resolve();
 function saveConfig(value){fs.writeFileSync(configPath,JSON.stringify(value),{mode:0o600});}
 function device(){let value=config();if(!value.deviceId){value.deviceId=require('crypto').randomBytes(16).toString('hex');saveConfig(value);}return {deviceId:value.deviceId,deviceName:value.deviceName||require('os').hostname().slice(0,64)||'Windows'};}
-async function groupUpdate(name){const code=config().code;if(!code)return;const data=device();if(name!==undefined)data.groupName=name;try{const response=await require('./streamnest-group').call(endpoint(),C.auth(code),'PUT',data);if(config().code===code){group=response;groupError='';lastGroup=Date.now();}return response;}catch(e){groupError='Group details unavailable — watch sync still works';throw e;}}
+function groupUpdate(name){const code=config().code;groupQueue=groupQueue.catch(()=>{}).then(()=>performGroupUpdate(name,code));return groupQueue;}
+async function performGroupUpdate(name,code){if(!code||config().code!==code)return;const data=device();if(name!==undefined)data.groupName=name;try{const response=await require('./streamnest-group').call(endpoint(),C.auth(code),'PUT',data);if(config().code===code){group=response;groupError='';lastGroup=Date.now();}return response;}catch(e){groupError='Group details unavailable — watch sync still works';throw e;}}
 function refreshGroup(){if(Date.now()-lastGroup<60000)return;lastGroup=Date.now();groupUpdate().catch(()=>{});}
 async function sync(code){
  const progress=require('./streamnest-progress');
@@ -34,7 +35,7 @@ async function request(force=false){
 async function beforeSelection(){let timer;try{await Promise.race([request(true),new Promise(resolve=>{timer=setTimeout(resolve,2000);})]);}finally{clearTimeout(timer);}}
 
 async function connect(code){const P=require('./streamnest-pairing');code=P.input(code);if(code.length===8){code=P.open(code,(await P.call(endpoint(),code,'POST')).payload);}else if(code.length!==36)throw Error('Enter an eight-character pairing code or the complete recovery key');code=C.format(C.parse(code));saveConfig({...config(),code});group=null;lastGroup=0;status='Connectingâ€¦';return request(true);}
-function disconnect(){const previous=config();if(previous.code&&previous.deviceId)require('./streamnest-group').call(endpoint(),C.auth(previous.code),'DELETE',{deviceId:previous.deviceId}).catch(()=>{});saveConfig({deviceId:previous.deviceId,deviceName:previous.deviceName});group=null;status='Not connected';}
+function disconnect(){const previous=config();if(previous.code&&previous.deviceId)groupQueue=groupQueue.catch(()=>{}).then(()=>require('./streamnest-group').call(endpoint(),C.auth(previous.code),'DELETE',{deviceId:previous.deviceId})).catch(()=>{});saveConfig({deviceId:previous.deviceId,deviceName:previous.deviceName});group=null;status='Not connected';}
 function show(win){
  const d=win.document;let old=d.getElementById('streamnest-sync-panel');if(old)old.remove();
  const panel=d.createElement('div');panel.id='streamnest-sync-panel';panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label','Resume across devices');panel.style.cssText='position:fixed;top:8%;right:12%;bottom:8%;left:12%;box-sizing:border-box;overflow:auto;z-index:99999;background:#20232b;color:#f3f4f6;padding:24px;border:1px solid #697080;border-radius:10px;font:16px/1.5 sans-serif';d.body.appendChild(panel);

@@ -186,7 +186,7 @@ public class WatchSyncActivity extends Activity {
     String name=(deviceOnly?deviceName:groupName).getText().toString().trim();
     if(name.isEmpty()){error="Enter a name";return;}
     if(deviceOnly)SyncGroup.prefs(this).edit().putString("deviceName",name).apply();
-    WatchSync.worker.execute(()->{try{SyncGroup.update(this,deviceOnly?null:name);ui.post(()->error=null);}catch(Exception e){ui.post(()->error=e.getMessage());}});
+    SyncGroup.worker.execute(()->{try{SyncGroup.update(this,deviceOnly?null:name);ui.post(()->error=null);}catch(Exception e){ui.post(()->error=e.getMessage());}});
   }
 
   void connect() {

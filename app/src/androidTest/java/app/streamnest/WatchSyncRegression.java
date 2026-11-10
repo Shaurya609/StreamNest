@@ -42,6 +42,15 @@ final class WatchSyncRegression {
         org.json.JSONObject chosen=ResumeEpisodeSelection.choose("tt123",episodes,WatchProgress.records(context),System.currentTimeMillis());
         if(chosen==null||chosen.optInt("season")!=1||chosen.optInt("episode")!=1)throw new AssertionError("Newer rewind did not select replayed episode");
       }
+      WatchSyncActivity screen=(WatchSyncActivity)instrument.startActivitySync(new android.content.Intent(context,WatchSyncActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
+      try {
+        instrument.waitForIdleSync();
+        instrument.runOnMainSync(()->{
+          if(screen.createGroup.getVisibility()!=android.view.View.GONE)throw new AssertionError("Connected Android offers group creation");
+          if(!screen.groupHeading.getText().toString().contains("Household"))throw new AssertionError("Connected group name missing from Android UI");
+          if(!screen.devices.getText().toString().contains("2 devices"))throw new AssertionError("Android device list missing");
+        });
+      } finally {instrument.runOnMainSync(screen::finish);}
       Bundle result = new Bundle();
       result.putString(
           "result",
