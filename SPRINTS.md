@@ -22,7 +22,7 @@ Optional next-episode preloading is disabled by default on Android and Windows. 
 
 Previous episode data is retained until the next video has decoded frames, and its previous downloader has closed. Desktop exit waits for speculative clients before deleting cache. Failed source discovery does not skip over the missing episode.
 
-Passed: 79 desktop/catalog/backend checks; hidden Windows real local torrent transfer, next-cache reuse, decoded next video, previous-cache purge and cancellation preserving active video; Android native hash-verified fixture pieces, engine adoption, decoded video before purge and cancellation preserving active cache. Android local HTTP/peer fixture transport stalled and remains unverified; no claim of a successful native network transfer is made for that harness. Validation and release status are in VALIDATION.md.
+Passed: 79 desktop/catalog/backend checks; hidden Windows real local torrent transfer, next-cache reuse, decoded next video, previous-cache purge and cancellation preserving active video; Android native hash-verified fixture pieces, engine adoption, decoded video before purge and cancellation preserving active cache. Android local HTTP/peer fixture transport stalled and remains unverified; no claim of a successful native network transfer is made for that harness. Tablet production auto-update to 0.19.0/code27 is confirmed; preloading stays disabled by default and its previous unpaired state is unchanged. Windows update is available and left to the owner while working. Validation is in VALIDATION.md.
 
 ## Later work
 
