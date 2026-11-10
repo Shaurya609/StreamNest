@@ -1,5 +1,5 @@
 {
-  "version": "0.19.0",
+  "version": "0.19.1",
   "target": "Popcorn Time 0.5.1",
   "files": [
     {
@@ -168,7 +168,7 @@
     },
     {
       "path": "lib/views/player.js",
-      "sha256": "61801318a463a6aff2a34f07ac948b97d733b794d2db57897ad4992d78c191a5"
+      "sha256": "1dcc9236b6aa931da59bb1524476e97ba1a7b9b9ea343c95f2f6932580d28619"
     },
     {
       "path": "lib/views/quality_selector.js",

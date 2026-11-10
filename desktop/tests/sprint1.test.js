@@ -14,7 +14,7 @@ function playerHarness(auto=true){
  const nodes=[];
  function element(){
   const node={attrs:{},handlers:{},style:{},value:'',visible:true};
-  for(const method of ['append','find','add','prop','addClass','toggleClass'])node[method]=()=>node;
+  for(const method of ['append','after','find','add','prop','addClass','toggleClass'])node[method]=()=>node;
   node.css=value=>{node.style=value;return node;};
   node.attr=(key,value)=>{
    if(typeof key==='object')Object.assign(node.attrs,key);
@@ -54,7 +54,7 @@ test('actual desktop skip control waits five playing seconds and pauses its coun
  assert.equal(h.position,10);
  h.pause(false);h.step();
  assert.equal(h.position,20);
- assert(h.nodes.some(node=>node.attrs['aria-label']==='Next episode'&&node.style.minWidth==='120px'));
+ assert(h.nodes.some(node=>node.attrs['aria-label']==='Next episode'&&node.value===''));
 });
 test('settings-disabled auto-skip preserve manual skipping',()=>{
  for(const auto of [true,false]){

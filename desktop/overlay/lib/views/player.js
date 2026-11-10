@@ -331,7 +331,7 @@
             const tm=this.model.get('torrentModel');
             if(tm && (tm.get('streamnestCandidates')||[]).length>1){
                 const control=$('<button class="vjs-control vjs-button" title="Try another source" aria-label="Try another source">↻</button>');
-                $(this.player.el()).find('.vjs-control-bar').append(control);
+                $(this.player.el()).find('.vjs-control-bar:not(.player-header-background)').append(control);
                 control.on('click',()=>{
                     const attrs=require('./butter-provider/streamnest-episodes').nextAttempt(tm.attributes);
                     if(!attrs)return;
@@ -685,16 +685,24 @@
         },
         setupEpisodeControls: function(){
             const tm=this.model.get('torrentModel');if(this._StreamNestTimer||!tm||tm.get('type')!=='episode'||!Array.isArray(tm.get('auto_play_data')))return;
-            const P=require('./butter-provider/streamnest-playback'),bar=$(this.player.el()).find('.vjs-control-bar');
-            bar.css({height:"48px"});
+            const P=require('./butter-provider/streamnest-playback'),bar=$(this.player.el()).find('.vjs-control-bar:not(.player-header-background)');
+            bar.addClass('streamnest-episode-bar');
             this._streamnestNavButtons=$();
             for(const item of [{direction:-1,label:'Previous episode',icon:'fa-step-backward'},{direction:1,label:'Next episode',icon:'fa-step-forward'}]){
-                const button=$('<button type="button" class="vjs-control vjs-button"><i class="fa"></i></button>').attr({'title':item.label,'aria-label':item.label});
-                button.css({width:'auto',minWidth:'120px',height:'44px',padding:'0 12px',margin:'0 4px',background:'#303b4c',color:'#fff',fontSize:'14px',borderRadius:'5px'});button.append(document.createTextNode(' '+item.label));button.attr('data-direction',item.direction);button.find('i').addClass(item.icon);button.prop('disabled',!P.neighbour(tm.attributes,item.direction));button.on('click',()=>this.navigateEpisode(item.direction));bar.append(button);this._streamnestNavButtons=this._streamnestNavButtons.add(button);
+                const button=$('<button type="button" class="vjs-control vjs-button streamnest-episode-nav"><i class="fa" aria-hidden="true"></i></button>').attr({'title':item.label,'aria-label':item.label,'data-direction':item.direction});
+                button.find('i').addClass(item.icon);button.prop('disabled',!P.neighbour(tm.attributes,item.direction));button.on('click',()=>this.navigateEpisode(item.direction));this._streamnestNavButtons=this._streamnestNavButtons.add(button);
             }
+            bar.find('.vjs-play-control').after(this._streamnestNavButtons);
             this._streamnestSkip=$('<button type="button" class="vjs-control vjs-button" style="display:none;position:absolute;right:24px;bottom:90px;width:auto;min-width:190px;height:58px;background:#20232bee;z-index:25"><i class="fa fa-fast-forward"></i></button>');
             $(this.player.el()).append(this._streamnestSkip);this._streamnestSkip.on('click',()=>{if(this._streamnestSegment){this._skipCancelled=true;this.player.currentTime(this._streamnestSegment.end);}});
             $(this.player.el()).append(`<style>
+              .vjs-popcorn-skin .streamnest-episode-nav{position:relative;float:left;top:17px;width:28px;min-width:0;height:30px;margin:0 0 0 8px;padding:0;border:0;border-radius:0;background:transparent;color:#fff;font-size:14px;line-height:30px;cursor:pointer}
+              .vjs-popcorn-skin .streamnest-episode-nav:before{display:none}
+              .vjs-popcorn-skin .streamnest-episode-nav i{font-family:"Font Awesome 6 Free";font-weight:900;font-size:14px;line-height:30px}
+              .vjs-popcorn-skin .streamnest-episode-nav:hover{filter:brightness(.7)}
+              .vjs-popcorn-skin .streamnest-episode-nav:focus{outline:1px solid #fff;outline-offset:1px}
+              .vjs-popcorn-skin .streamnest-episode-nav:disabled{opacity:.35;cursor:default}
+              .vjs-popcorn-skin .streamnest-episode-bar .vjs-progress-control{left:270px}
               .video-js .streamnest-skip{border:1px solid #ddd;border-radius:10px;background:#20232bee;color:#fff;padding:6px 18px 14px 48px;line-height:normal;font-size:16px;font-weight:600}
               .video-js .streamnest-skip:before{content:"\\f050";font-family:"Font Awesome 6 Free"!important;font-weight:900;font-size:20px;position:absolute;left:14px;top:9px;width:24px;height:24px;line-height:24px}
               .video-js .streamnest-skip:after{content:"";position:absolute;left:16px;right:16px;bottom:9px;height:4px;border-radius:4px;background:linear-gradient(white,white) left center/var(--skip-progress,0%) 100% no-repeat,#55585e;transition:background-size .5s linear}
