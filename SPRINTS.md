@@ -26,4 +26,4 @@ Passed: 79 desktop/catalog/backend checks; hidden Windows real local torrent tra
 
 ## Later work
 
-Additional source discovery (including unavailable anime) was part of the original Sprint 2 plan and remains carried forward. Sprint 4 is the home page, Continue Watching and recommendations; its owner dashboard was delivered early in Sprint 2.
+Source discovery implementation is complete for indexed episode lookup plus independent trusted anime releases and verified numbered batches; release acceptance is recorded in VALIDATION.md. External peer availability remains outside discovery guarantees. Sprint 4 is the home page, Continue Watching and recommendations; its owner dashboard was delivered early in Sprint 2.

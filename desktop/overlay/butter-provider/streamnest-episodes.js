@@ -34,31 +34,30 @@ function qualities(rows) {
 function parseStreams(doc) {
   const out = [], seen = new Set();
   for (const row of doc.streams || []) {
-    if (!/^[a-f0-9]{40}$/i.test(row.infoHash || '') || !Number.isInteger(row.fileIdx) || row.fileIdx < 0) continue;
+    if (!row || !/^[a-f0-9]{40}$/i.test(row.infoHash || '') || !Number.isInteger(row.fileIdx) || row.fileIdx < 0 || row.fileIdx>100000) continue;
     const label = (row.name || '') + ' ' + (row.title || ''), q = quality(label);
     if (!q || seen.has(row.infoHash.toLowerCase()+':'+row.fileIdx) || camera(label)) continue;
     const key = row.infoHash.toLowerCase()+':'+row.fileIdx;
     seen.add(key);
-    const match = (row.title || '').match(/👤\s*(\d+)/);
+    const match = (row.title || '').match(/\uD83D\uDC64\s*(\d+)/);
     let magnet = 'magnet:?xt=urn:btih:' + row.infoHash;
-    for (const tracker of (row.sources || []).slice(0,12))
+    for (const tracker of (Array.isArray(row.sources) ? row.sources : []).slice(0,12))
       if (/^tracker:(?:https?|udp):\/\/\S+$/.test(tracker)) magnet += '&tr=' + encodeURIComponent(tracker.slice(8));
     out.push({key, url:magnet, magnet, quality:q, title:label.replace(/[\r\n]/g,' '),
       seed:match ? Number(match[1]) : 0, peer:0, size:0, provider:'Alternative', source:'',
-      fileIndex:row.fileIdx, file:row.behaviorHints && row.behaviorHints.filename || ''});
+      fileIndex:row.fileIdx, file:path.basename(String(row.behaviorHints && row.behaviorHints.filename || '').split(String.fromCharCode(92)).join('/'))});
     if (out.length >= 80) break;
   }
   return out;
 }
-async function alternatives(id, season, episode) {
-  if (!/^tt\d+$/.test(id) || Number(season) < 0 || Number(episode) <= 0) return [];
-  const key = `${id}:${Number(season)}:${Number(episode)}`, old = cache.get(key);
-  if (old && Date.now()-old.time < 600000) return old.rows;
-  const rows = parseStreams(await get('https://torrentio.strem.fun/stream/series/'+key+'.json'));
-  cache.set(key,{time:Date.now(),rows});
-  while(cache.size>12) cache.delete(cache.keys().next().value);
-  return rows;
+async function alternatives(id,season,episode,context={}) {return require('./streamnest-discovery').find(id,season,episode,context);}
+function attempts(rows,selected='Auto'){
+ const ordered=rank(rows,selected),seen=new Set(),unique=ordered.filter(s=>{const key=require('./streamnest-discovery').key(s);if(seen.has(key))return false;seen.add(key);return true;});
+ const result=unique.slice(0,6),fallback=unique.find(s=>s.provider==='Nyaa');
+ if(result.length===6&&fallback&&!result.some(s=>s.provider==='Nyaa'))result[5]=fallback;
+ return result;
 }
+
 function canonical(meta) {
   return (meta.videos || []).filter(e => Number.isInteger(e.season) && Number.isInteger(e.episode)).map(e=>({
     season:e.season,episode:e.episode,title:e.name || e.title || 'Episode '+e.episode,
@@ -68,6 +67,8 @@ function canonical(meta) {
 function mapped(doc,id) {
   if (!doc.mappings || doc.mappings.imdb_id !== id) return [];
   return Object.entries(doc.episodes || {}).filter(([key,e])=>Number.isInteger(e.seasonNumber)&&Number.isInteger(e.episodeNumber)).map(([key,e])=>({
+    animeMapped:doc.mappings.mal_id>0,
+    kitsuId:doc.mappings.kitsu_id>0&&/^[1-9][0-9]*$/.test(key)?Number(doc.mappings.kitsu_id):0,kitsuEpisode:/^[1-9][0-9]*$/.test(key)?Number(key):0,
     skipMalId:doc.mappings.mal_id>0&&e.seasonNumber===1&&key===String(e.episodeNumber)?Number(doc.mappings.mal_id):0,
     season:e.seasonNumber,episode:e.episodeNumber,absolute:Number(e.absoluteEpisodeNumber)||0,
     title: typeof e.title==='object' ? e.title.en || e.title['x-jat'] || 'Episode '+e.episodeNumber : e.title || 'Episode '+e.episodeNumber,
@@ -94,7 +95,7 @@ function merge(metadata, source, collect) {
 }
 async function detail(id,old,source,collect) {
   let metadata=[];
-  const mal = old && old.malId || (id==='tt0388629' ? 21 : 0);
+  const mal = old && old.malId || ({tt0388629:21,tt7441658:34572,tt4644488:30694}[id] || 0);
   if (mal) try { metadata=mapped(await get('https://api.ani.zip/mappings?mal_id='+mal),id); } catch(e) {}
   if (!metadata.length) try {
     const meta=(await get('https://v3-cinemeta.strem.io/meta/series/'+id+'.json')).meta;
@@ -107,6 +108,7 @@ async function detail(id,old,source,collect) {
     }));
   } catch(e) {}
   const rows=merge(metadata,source,collect);
+  for(const row of rows)row.streamnestSeriesTitle=old&&old.title||'';
   if(old && (old.animeSeries || mal))try{await require('./streamnest-releases').attach(rows,old.title);}catch(e){}
   for (const mappedMal of new Set(rows.map(row=>row.skipMalId).filter(id=>id>0))) {
     const pages=[...new Set(rows.filter(row=>row.skipMalId===mappedMal&&row.episode>0)
@@ -140,7 +142,7 @@ function selectFile(files, model) {
     return m && model.absolute>0 && Number(m[1])===Number(model.absolute);
   });
   if (matched.length===1) return matched[0].index;
-  if (!matched.length && videos.length===1) return videos[0].index;
+  if (!model.streamnestStrictEpisode&&!matched.length&&videos.length===1&&!/(?:s[0-9]{1,2}e[0-9]{1,4}|[0-9]{1,2}x[0-9]{1,4}| \- \d{1,4})/i.test(videos[0].file.path)) return videos[0].index;
   throw Error('Cannot uniquely identify the requested episode in this pack');
 }
 function nextAttempt(attrs) {
@@ -158,4 +160,4 @@ function nextUnwatched(episodes,watched,mode){
   if(mode!=='firstUnwatched'){let last=-1;rows.forEach((e,n)=>{if(seen.has(e.season+':'+e.episode))last=n;});if(last>=0&&last+1<rows.length)return rows[last+1];}
   return rows.find(e=>!seen.has(e.season+':'+e.episode))||rows[0];
 }
-module.exports={quality,rank,qualities,parseStreams,alternatives,canonical,mapped,merge,detail,selectFile,nextAttempt,compareId,nextUnwatched};
+module.exports={attempts,quality,rank,qualities,parseStreams,alternatives,canonical,mapped,merge,detail,selectFile,nextAttempt,compareId,nextUnwatched};

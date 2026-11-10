@@ -129,9 +129,9 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                     if(!model.get('streamnestRetry')&&!model.get('streamnestPrepared')) {
                         let rows=(model.get('streamnestSources')||[]).slice();
                         if(!rows.length)rows=Object.values(model.get('torrents')||{}).filter(Boolean);
-                        if(!rows.some(row=>row.fileIndex>=0))try{rows.push(...await StreamNestEpisodes.alternatives(model.get('imdb_id'),Number(model.get('season')),Number(model.get('episode'))));}catch(e){}
+                        if(!rows.some(row=>row.fileIndex>=0))try{rows.push(...await StreamNestEpisodes.alternatives(model.get('imdb_id'),Number(model.get('season')),Number(model.get('episode')),model.attributes));}catch(e){}
                         if(this._runGeneration!==generation)return;
-                        const candidates=StreamNestEpisodes.rank(rows,model.get('streamnestQuality')||'Auto').filter((row,index,all)=>all.findIndex(other=>other.url===row.url&&other.fileIndex===row.fileIndex)===index).slice(0,6);
+                        const candidates=StreamNestEpisodes.attempts(rows,model.get('streamnestQuality')||'Auto');
                         if(candidates.length){const first=candidates[0];model.set({torrent:first.url,file_name:first.file||'',fileIndex:first.fileIndex,streamnestCandidates:candidates,streamnestAttempt:0});}
                     }
                     if(!model.get('torrent'))throw Error('No source available for the selected episode');

@@ -11,3 +11,11 @@ function text(url,redirects=0,deadline=Date.now()+14000){return new Promise((res
  });const timer=setTimeout(()=>req.destroy(Error('Metadata deadline')),Math.max(1,deadline-Date.now()));req.on('close',()=>clearTimeout(timer));req.setTimeout(Math.min(8000,Math.max(1,deadline-Date.now())),()=>req.destroy(Error('Metadata timeout')));req.on('error',reject);
 });}
 module.exports=async (url,deadline)=>JSON.parse(await text(url,0,deadline));module.exports.text=text;
+
+module.exports.bytes=(url,deadline=Date.now()+8000,limit=4000000)=>new Promise((resolve,reject)=>{
+ if(new URL(url).protocol!=='https:'||Date.now()>=deadline)return reject(Error('Metadata deadline'));
+ const req=https.get(url,{headers:{'User-Agent':'StreamNest','Accept':'application/x-bittorrent'}},res=>{
+  if(res.statusCode!==200){res.resume();return reject(Error('Torrent metadata HTTP '+res.statusCode));}
+  let size=0,chunks=[];res.on('data',b=>{size+=b.length;if(size>limit)req.destroy(Error('Torrent metadata too large'));else chunks.push(b);});res.on('error',reject);res.on('end',()=>resolve(Buffer.concat(chunks)));
+ });const timer=setTimeout(()=>req.destroy(Error('Metadata deadline')),Math.max(1,deadline-Date.now()));req.on('close',()=>clearTimeout(timer));req.on('error',reject);
+});

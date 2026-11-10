@@ -29,6 +29,7 @@ final class TitleScreen extends Dialog {
   BaseAdapter episodeAdapter;
   boolean loaded, lookingForAlternatives;
   boolean manualEpisodeSelection;
+  String sourceLookupError;
   Spinner episodeQualityPicker;
   java.util.concurrent.Future<?> alternateJob;
 
@@ -288,7 +289,7 @@ final class TitleScreen extends Dialog {
                 ? (episodeMode()
                     ? (lookingForAlternatives
                         ? "Looking for alternative episode sources…"
-                        : "No playable source listed. Tap to retry alternatives.")
+                        : sourceLookupError!=null?sourceLookupError:"No matching source found. Tap to retry.")
                     : "No 1080p or 4K source is currently listed.")
                 : (episodeMode() && selectedQuality.equals("Auto") ? "Auto → " : "")
                     + best.seeds
@@ -539,6 +540,7 @@ final class TitleScreen extends Dialog {
   void selectEpisode(JSONObject ep) {
     if (selected != ep) selectedQuality = "Auto";
     selected = ep;
+    sourceLookupError=null;
     heading.setText(ep.optString("title", "Episode")
         + (ep.optBoolean("filler") ? " · Filler" : "")
         + (ep.optBoolean("recap") ? " · Recap" : ""));
@@ -561,14 +563,14 @@ final class TitleScreen extends Dialog {
     episodeAdapter.notifyDataSetChanged();
     if (alternateJob != null) alternateJob.cancel(true);
     lookingForAlternatives = true;
-    health.setOnClickListener(v -> selectEpisode(selected));
+    health.setOnClickListener(v -> {EpisodeDiscovery.invalidate(title.id,selected.optInt("season"),selected.optInt("episode"));selectEpisode(selected);});
     updateControls();
     alternateJob =
         a.work.submit(
             () -> {
               try {
                 List<Catalog.Source> alternate =
-                    AlternateEpisodes.find(title.id, ep.optInt("season"), ep.optInt("episode"));
+                    EpisodeDiscovery.find(title.id,ep,title.title);
                 a.ui.post(
                     () -> {
                       if (!isShowing() || a.isDestroyed() || selected != ep) return;
@@ -580,10 +582,11 @@ final class TitleScreen extends Dialog {
                       lookingForAlternatives = false;
                       updateControls();
                     });
-              } catch (Exception ignored) {
+              } catch (Exception lookupFailure) {
                 a.ui.post(
                     () -> {
                       if (isShowing() && selected == ep) {
+                        sourceLookupError="Source lookup incomplete. Tap to retry.";
                         lookingForAlternatives = false;
                         updateControls();
                       }

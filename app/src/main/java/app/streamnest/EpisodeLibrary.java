@@ -33,6 +33,7 @@ final class EpisodeLibrary {
                   .put("synopsis", m.optString("summary", "").replaceAll("<[^>]+>", " "))
                   .put("airdate", m.optString("airdate", ""));
       if (m.has("skipMalId")) e.put("skipMalId", m.getInt("skipMalId"));
+      for(String field:new String[]{"kitsuId","kitsuEpisode","animeMapped"})if(m.has(field))e.put(field,m.get(field));
       if (m.has("absolute")) e.put("absolute", m.getInt("absolute"));
       String key = key(e);
       if (!seen.add(key)) continue;
@@ -93,12 +94,16 @@ final class EpisodeLibrary {
       sourceError = e;
     }
     JSONArray metadata = new JSONArray();
-    if (title.raw.optInt("malId") > 0)
+    int identityMal = title.raw.optInt("malId");
+    // Explicit TV identities avoid ambiguous IMDb reverse mappings to related OVAs.
+    if (identityMal == 0 && id.equals("tt7441658")) identityMal = 34572;
+    if (identityMal == 0 && id.equals("tt4644488")) identityMal = 30694;
+    if (identityMal > 0)
       try {
         metadata =
             CanonicalEpisodes.fromMappings(
                 CatalogHttp.object(
-                    "https://api.ani.zip/mappings?mal_id=" + title.raw.optInt("malId"), null),
+                    "https://api.ani.zip/mappings?mal_id=" + identityMal, null),
                 id);
       } catch (Exception ignored) {
       }

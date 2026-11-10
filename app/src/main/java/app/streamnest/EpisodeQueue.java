@@ -13,7 +13,8 @@ final class EpisodeQueue {
     List<Catalog.Source> find(String imdb, int season, int episode) throws Exception;
   }
 
-  static Finder finder = AlternateEpisodes::find;
+  static final Finder DEFAULT_FINDER=AlternateEpisodes::find;
+  static Finder finder = DEFAULT_FINDER;
 
   static String create(Context c, Catalog.Title title, List<JSONObject> episodes, String quality)
       throws Exception {
@@ -33,6 +34,9 @@ final class EpisodeQueue {
             "episode",
             "absolute",
             "skipMalId",
+            "animeMapped",
+            "kitsuId",
+            "kitsuEpisode",
             "title",
             "airdate",
             "liveRelease",
@@ -74,13 +78,15 @@ final class EpisodeQueue {
       throws Exception {
     if (EpisodePlayback.future(row)) throw new IOException("This episode has not aired yet");
     List<Catalog.Source> sources = PlaybackPlan.sources(row);
+    Exception lookupError=null;
     try {
       sources.addAll(
-          finder.find(doc.getString("imdb"), row.optInt("season"), row.optInt("episode")));
-    } catch (Exception ignored) {
+          finder==DEFAULT_FINDER?EpisodeDiscovery.find(doc.getString("imdb"),row,doc.optString("title")):finder.find(doc.getString("imdb"), row.optInt("season"), row.optInt("episode")));
+    } catch (Exception failure) {lookupError=failure;
     }
     List<Catalog.Source> attempts =
         AlternateEpisodes.attempts(sources, doc.optString("quality", "Auto"), lite);
+    if(attempts.isEmpty()&&lookupError!=null)throw new IOException("Source lookup incomplete. Retry source lookup.",lookupError);
     if (attempts.isEmpty())
       throw new IOException(
           "No source found for this episode. Try another quality from episode details.");

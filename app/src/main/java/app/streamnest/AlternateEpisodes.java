@@ -13,9 +13,10 @@ final class AlternateEpisodes {
     List<Catalog.Source> out = new ArrayList<>();
     Set<String> seen = new HashSet<>();
     JSONArray rows = document.optJSONArray("streams");
-    if (rows == null) return out;
+    if (rows == null) throw new java.io.IOException("Invalid source index response");
     for (int n = 0; n < rows.length() && out.size() < 80; n++) {
-      JSONObject row = rows.getJSONObject(n);
+      JSONObject row = rows.optJSONObject(n);
+      if (row == null) continue;
       String hash = row.optString("infoHash").toLowerCase(Locale.ROOT);
       if (!hash.matches("[0-9a-f]{40}")) continue;
       String title = row.optString("title"), name = row.optString("name");
@@ -23,8 +24,10 @@ final class AlternateEpisodes {
           PlaybackPlan.episodeQuality(
               new Catalog.Source((name + " " + title).replace('\n', ' '), "", 0));
       if (quality.isEmpty()) continue;
+      Object raw=row.opt("fileIdx");
+      if(!(raw instanceof Number)||((Number)raw).doubleValue()!=((Number)raw).intValue())continue;
       int index = row.optInt("fileIdx", -1);
-      if (index < 0) continue; // Exact member is required for these alternative records.
+      if (index < 0 || index>100000) continue; // Exact member is required for these alternative records.
       if (!seen.add(hash + ":" + index)) continue;
       int seeds = 0;
       Matcher m = Pattern.compile("👤\\s*(\\d+)").matcher(title);
@@ -53,28 +56,25 @@ final class AlternateEpisodes {
               seeds);
       source.fileIndex = index;
       JSONObject hints = row.optJSONObject("behaviorHints");
-      if (hints != null) source.filename = hints.optString("filename");
+      if (hints != null) source.filename = new java.io.File(hints.optString("filename").replace((char)92,'/')).getName();
       out.add(source);
     }
     return out;
   }
 
-  static List<Catalog.Source> find(String imdb, int season, int episode) throws Exception {
+  static List<Catalog.Source> find(String imdb,int season,int episode) throws Exception {return find(imdb,season,episode,System.nanoTime()+18000000000L);}
+  static List<Catalog.Source> find(String imdb, int season, int episode,long deadline) throws Exception {
     if (!imdb.matches("tt[0-9]+") || season < 0 || episode <= 0) return Collections.emptyList();
     String key = imdb + ":" + season + ":" + episode;
     synchronized (cache) {
-      if (cache.containsKey(key) && System.currentTimeMillis() - ages.get(key) < 600000)
+      if (cache.containsKey(key) && System.currentTimeMillis() - ages.get(key) < (cache.get(key).isEmpty()?30000:600000))
         return new ArrayList<>(cache.get(key));
     }
     List<Catalog.Source> rows =
         parse(
             new JSONObject(
                 new String(
-                    Net.bytes(
-                        "https://torrentio.strem.fun/stream/series/" + key + ".json",
-                        2000000,
-                        6000,
-                        12000),
+                    Net.catalogBytes("https://torrentio.strem.fun/stream/series/"+key+".json",2000000,Math.min(deadline,System.nanoTime()+6000000000L)),
                     java.nio.charset.StandardCharsets.UTF_8)));
     synchronized (cache) {
       cache.put(key, rows);
@@ -129,6 +129,10 @@ final class AlternateEpisodes {
       if (next == null) break;
       remaining.remove(next);
       if (seen.add(next.url + ":" + next.fileIndex)) out.add(next);
+    }
+    if(out.size()==6&&out.stream().noneMatch(s->s.label.contains(" · Nyaa"))){
+      List<Catalog.Source> fallback=new ArrayList<>();for(Catalog.Source s:sources)if(s.label.contains(" · Nyaa"))fallback.add(s);
+      Catalog.Source extra=PlaybackPlan.episodeBest(fallback,quality,lite);if(extra!=null)out.set(out.size()-1,extra);
     }
     return out;
   }

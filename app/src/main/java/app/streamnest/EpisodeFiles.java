@@ -51,7 +51,7 @@ final class EpisodeFiles {
       }
     if (episodeRequest) {
       if (matched.size() == 1) return matched.get(0);
-      if (matched.isEmpty() && videos.size() == 1) return videos.get(0);
+      if (matched.isEmpty() && videos.size() == 1 && !Pattern.compile("(?i)(s[0-9]{1,2}e[0-9]{1,4}|[0-9]{1,2}x[0-9]{1,4}| - [0-9]{1,4})").matcher(paths.get(videos.get(0))).find()) return videos.get(0);
       throw new IOException("Cannot uniquely identify this episode in the season pack");
     }
     return videos.stream()

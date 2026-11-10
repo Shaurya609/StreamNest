@@ -560,6 +560,7 @@
                         torrents: value.torrents,
                         streamnestSources: value.streamnestSources || [],
                         absolute: value.absolute || 0,
+                        animeMapped:value.animeMapped===true,kitsuId:value.kitsuId||0,kitsuEpisode:value.kitsuEpisode||0,streamnestSeriesTitle:that.model.get('title'),
                         malId: value.skipMalId || 0,
                         first_aired: value.first_aired || 0,
                         airdate: value.airdate || '',
@@ -613,6 +614,7 @@
                 fileIndex: Number($(e.currentTarget).attr('data-fileindex')),
                 absolute: (that.model.get('selectedEpisode')||{}).absolute || 0,
                 malId: (that.model.get('selectedEpisode')||{}).skipMalId || 0,
+                animeMapped:(that.model.get('selectedEpisode')||{}).animeMapped===true,kitsuId:(that.model.get('selectedEpisode')||{}).kitsuId||0,kitsuEpisode:(that.model.get('selectedEpisode')||{}).kitsuEpisode||0,streamnestSeriesTitle:that.model.get('title'),
                 streamnestQuality: that.model.get('streamnestQuality') || 'Auto',
                 streamnestSources: (that.model.get('selectedEpisode')||{}).streamnestSources || [],
                 auto_play: auto_play,
@@ -724,14 +726,17 @@
 
             _this.ui.startStreaming.show();
             const requestId=(_this._sourceRequest||0)+1;_this._sourceRequest=requestId;
-            require('./butter-provider/streamnest-episodes').alternatives(_this.model.get('imdb_id'),Number(season),Number(episode)).then(rows=>{
+            let discoveryStatus=_this.$('.streamnest-source-status');if(!discoveryStatus.length){discoveryStatus=$('<button type="button" class="streamnest-source-status" style="display:block;background:transparent;color:#ddd;border:0;padding:8px" aria-live="polite"></button>');startStreaming.after(discoveryStatus);}
+            discoveryStatus.text('Checking episode sources…').show().off('click').on('click',()=>{require('./butter-provider/streamnest-discovery').invalidate();_this.selectEpisode($elem);});
+            require('./butter-provider/streamnest-episodes').alternatives(_this.model.get('imdb_id'),Number(season),Number(episode),Object.assign({},selectedEpisode,{streamnestSeriesTitle:_this.model.get('title')})).then(rows=>{
                 if(_this.isDestroyed()||_this._sourceRequest!==requestId)return;
                 const all=(selectedEpisode.streamnestSources||[]).concat(rows);
                 const seen=new Set();selectedEpisode.streamnestSources=all.filter(row=>{const k=row.url+'|'+row.fileIndex;if(seen.has(k))return false;seen.add(k);return true;});
                 selectedEpisode.torrents=require('./butter-provider/streamnest-episodes').qualities(selectedEpisode.streamnestSources);
                 const view=_this.getRegion('qualitySelector').currentView;
                 if(view)view.updateTorrents(selectedEpisode.torrents);
-            }).catch(()=>{});
+                discoveryStatus.text('No matching source found. Retry source lookup.').toggle(!selectedEpisode.streamnestSources.length);
+            }).catch(()=>{if(!_this.isDestroyed()&&_this._sourceRequest===requestId)discoveryStatus.text('Source lookup incomplete. Retry source lookup.').show();});
 
 
             App.vent.trigger('update:torrents', this.model.get('showTorrents') ? {

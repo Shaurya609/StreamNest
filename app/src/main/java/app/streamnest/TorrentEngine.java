@@ -80,7 +80,7 @@ final class TorrentEngine implements AutoCloseable {
         try {
           File saved = new File(root, ".streamnest.torrent");
           byte[] bytes =
-              saved.isFile() && saved.length() < 4000000
+              saved.isFile() && saved.length() <= 8388608
                   ? java.nio.file.Files.readAllBytes(saved.toPath())
                   : null;
           if (bytes != null) {
@@ -90,7 +90,7 @@ final class TorrentEngine implements AutoCloseable {
           }
           if (info == null) {
             message = "Fetching torrent metadata…";
-            bytes = Net.bytes(TorrentMetadata.endpoint(expected), 4000000, 4000, 6000);
+            bytes = Net.bytes(TorrentMetadata.endpoint(expected), 8388608, 4000, 6000);
             TorrentInfo candidate = new TorrentInfo(bytes);
             if (candidate.isValid() && candidate.infoHash().toHex().equalsIgnoreCase(expected)) {
               info = candidate;

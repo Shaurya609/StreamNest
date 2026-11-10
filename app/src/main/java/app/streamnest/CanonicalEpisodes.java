@@ -49,6 +49,9 @@ final class CanonicalEpisodes {
               .put("name", name.isEmpty() ? "Episode " + e.optInt("episodeNumber") : name)
               .put("summary", e.optString("overview", ""))
               .put("airdate", e.optString("airDate", e.optString("airdate", "")));
+      row.put("animeMapped",mappings.optInt("mal_id")>0);
+      if(mappingKey.matches("[1-9][0-9]*")&&mappings.optInt("kitsu_id")>0)
+        row.put("kitsuId",mappings.getInt("kitsu_id")).put("kitsuEpisode",Integer.parseInt(mappingKey));
       if (e.optInt("absoluteEpisodeNumber") > 0)
         row.put("absolute", e.optInt("absoluteEpisodeNumber"));
       if (mappings.optInt("mal_id") > 0
