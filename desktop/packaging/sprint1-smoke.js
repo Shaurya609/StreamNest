@@ -36,7 +36,7 @@
     await wait(1200);
     assert(view._streamnestSkip.text().startsWith('Skip Intro'),'Skip label missing');
     const icon=getComputedStyle(view._streamnestSkip[0],'::before');
-    assert(icon.content!=='none'&&icon.fontFamily.includes('FontAwesome'),'Skip icon missing');
+    assert(icon.content!=='none'&&icon.fontFamily.includes('Font Awesome 6 Free')&&icon.fontWeight==='900','Skip icon missing');
     result.iconAndText=true;
     const next=player.el().querySelector('[aria-label="Next episode"]');
     const previous=player.el().querySelector('[aria-label="Previous episode"]');

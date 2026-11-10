@@ -696,7 +696,7 @@
             $(this.player.el()).append(this._streamnestSkip);this._streamnestSkip.on('click',()=>{if(this._streamnestSegment){this._skipCancelled=true;this.player.currentTime(this._streamnestSegment.end);}});
             $(this.player.el()).append(`<style>
               .video-js .streamnest-skip{border:1px solid #ddd;border-radius:10px;background:#20232bee;color:#fff;padding:6px 18px 14px 48px;line-height:normal;font-size:16px;font-weight:600}
-              .video-js .streamnest-skip:before{content:"\\f050";font-family:FontAwesome!important;font-size:20px;position:absolute;left:14px;top:9px;width:24px;height:24px;line-height:24px}
+              .video-js .streamnest-skip:before{content:"\\f050";font-family:"Font Awesome 6 Free"!important;font-weight:900;font-size:20px;position:absolute;left:14px;top:9px;width:24px;height:24px;line-height:24px}
               .video-js .streamnest-skip:after{content:"";position:absolute;left:16px;right:16px;bottom:9px;height:4px;border-radius:4px;background:linear-gradient(white,white) left center/var(--skip-progress,0%) 100% no-repeat,#55585e;transition:background-size .5s linear}
               .video-js .streamnest-skip.manual:after{display:none}
             </style>`);
