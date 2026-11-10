@@ -91,6 +91,7 @@ public class StreamService extends Service {
   static void configure(TorrentEngine next,Intent i) {
     String source=i.getStringExtra("source");
     next.sourceUrl = source;
+    next.episodeIdentity=i.getStringExtra("episodeIdentity");
     next.fileIndex = i.getIntExtra("fileIndex", -1);
     next.expectedFilename =
         i.getStringExtra("filename") == null ? "" : i.getStringExtra("filename");

@@ -13,7 +13,7 @@ final class TorrentEngine implements AutoCloseable {
   volatile boolean preloadOnly;
   boolean verifiedComplete;
   int fileIndex = -1, requestedSeason, requestedEpisode, absoluteEpisode;
-  String expectedFilename = "", sourceUrl;
+  String expectedFilename = "", sourceUrl, episodeIdentity;
   volatile TorrentHandle handle;
   SessionManager session;
   TorrentInfo info;
