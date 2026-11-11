@@ -1,0 +1,8 @@
+package app.streamnest;
+import org.junit.Test;import org.json.*;import static org.junit.Assert.*;
+public class ArtworkTest {
+ @Test public void missingSharedPosterGetsCanonicalArtwork()throws Exception{JSONObject raw=new JSONObject().put("imdb","tt11280740").put("title","Severance");assertEquals("https://images.metahub.space/poster/medium/tt11280740/img",Artwork.primary(raw));assertEquals(Artwork.primary(raw),HomeSync.metadata(raw,"shows").getString("poster_big"));assertEquals(Artwork.primary(raw),Catalog.parse(raw,"shows").poster);}
+ @Test public void knownHttpCdnUpgradesAndPrivateSchemesAreRejected()throws Exception{assertEquals("https://image.tmdb.org/a.jpg",Artwork.url("http://image.tmdb.org/a.jpg"));assertEquals("",Artwork.url("file:///secret"));assertEquals("",Artwork.url("https://user:password@example.com/a.jpg"));assertEquals(1,Artwork.candidates(new JSONObject().put("imdb","tt1").put("poster_big","file:///secret")).size());}
+ @Test public void independentArtworkRequiresMatchingImdb()throws Exception{JSONObject doc=new JSONObject().put("externals",new JSONObject().put("imdb","tt1")).put("image",new JSONObject().put("medium","https://static.tvmaze.com/a.jpg"));assertEquals("",Artwork.tvmaze(doc,"tt2"));assertEquals("https://static.tvmaze.com/a.jpg",Artwork.tvmaze(doc,"tt1"));}
+ @Test public void homeKeepsValidCinemetaPoster()throws Exception{JSONObject raw=new JSONObject().put("imdb","tt1").put("title","Show").put("poster","https://static.tvmaze.com/a.jpg");JSONObject lean=HomeLibrary.lean(raw,"shows",true);assertEquals("https://static.tvmaze.com/a.jpg",Artwork.primary(lean));}
+}

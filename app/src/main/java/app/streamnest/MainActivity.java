@@ -375,7 +375,7 @@ public class MainActivity extends Activity {
   }
 
   void renderHome(List<HomeFeed.Row> rows){
-    content.removeAllViews();final Map<ImageView,String> homeImages=new LinkedHashMap<>();final Set<ImageView> requested=new HashSet<>();ScrollView scroll=new ScrollView(this);LinearLayout body=new LinearLayout(this);body.setOrientation(LinearLayout.VERTICAL);scroll.addView(body);content.addView(scroll,new LinearLayout.LayoutParams(-1,-1));
+    content.removeAllViews();final Map<ImageView,Catalog.Title> homeImages=new LinkedHashMap<>();final Set<ImageView> requested=new HashSet<>();ScrollView scroll=new ScrollView(this);LinearLayout body=new LinearLayout(this);body.setOrientation(LinearLayout.VERTICAL);scroll.addView(body);content.addView(scroll,new LinearLayout.LayoutParams(-1,-1));
     TextView heading=text("Something for your next watch",25,-1);heading.setPadding(dp(8),dp(14),dp(8),dp(16));body.addView(heading);
     for(HomeFeed.Row section:rows){
       if(section.cards.isEmpty()&&!section.name.equals("Continue Watching"))continue;
@@ -383,7 +383,7 @@ public class MainActivity extends Activity {
       if(section.cards.isEmpty()){TextView empty=text("Start watching a title. Your place will appear here automatically.",13,0xffa3a7af);empty.setPadding(dp(8),0,dp(8),dp(12));body.addView(empty);continue;}
       HorizontalScrollView rail=new HorizontalScrollView(this);rail.setHorizontalScrollBarEnabled(false);LinearLayout cards=new LinearLayout(this);rail.addView(cards);body.addView(rail);
       for(HomeFeed.Card entry:section.cards){Catalog.Title title=entry.title;LinearLayout card=new LinearLayout(this);card.setOrientation(LinearLayout.VERTICAL);card.setPadding(dp(7),dp(6),dp(7),dp(10));card.setFocusable(true);card.setFocusableInTouchMode(true);card.setClickable(true);card.setBackground(focusBackground());
-        int width=DeviceProfile.lite(this)?112:138;cards.addView(card,new LinearLayout.LayoutParams(dp(width),-2));ImageView poster=new ImageView(this);poster.setScaleType(ImageView.ScaleType.CENTER_CROP);poster.setBackgroundColor(0xff25262b);card.addView(poster,new LinearLayout.LayoutParams(-1,dp((width-14)*3/2)));homeImages.put(poster,title.poster);
+        int width=DeviceProfile.lite(this)?112:138;cards.addView(card,new LinearLayout.LayoutParams(dp(width),-2));ImageView poster=new ImageView(this);poster.setScaleType(ImageView.ScaleType.CENTER_CROP);poster.setBackgroundColor(0xff25262b);card.addView(poster,new LinearLayout.LayoutParams(-1,dp((width-14)*3/2)));homeImages.put(poster,title);
         TextView label=text(title.title,13,-1);label.setMaxLines(2);label.setEllipsize(android.text.TextUtils.TruncateAt.END);label.setPadding(0,dp(6),0,0);card.addView(label);
         String caption=title.kind.equals("movies")?"Movie":title.kind.equals("animes")?"Anime":"Series";
         if(entry.progress!=null){String[] parts=entry.historyKey.split(":");if(parts.length==4)caption="S"+parts[2]+" · E"+parts[3];if(entry.progress.optBoolean("nextEpisode"))caption="Up next · "+caption;else {long seconds=entry.progress.optLong("positionMs")/1000;caption+=" · Resume at "+(seconds/60)+":"+String.format(java.util.Locale.ROOT,"%02d",seconds%60);}
@@ -392,7 +392,7 @@ public class MainActivity extends Activity {
         TextView meta=text(caption,11,0xffa3a7af);meta.setMaxLines(2);card.addView(meta);card.setContentDescription(title.title+" · "+caption);card.setOnClickListener(v->details(title));
       }
     }
-    Runnable visiblePosters=()->{android.graphics.Rect rect=new android.graphics.Rect();for(Map.Entry<ImageView,String> image:homeImages.entrySet())if(image.getKey().getGlobalVisibleRect(rect)){if(image.getKey().getDrawable()==null&&requested.add(image.getKey()))posters.load(image.getValue(),image.getKey());}else requested.remove(image.getKey());};
+    Runnable visiblePosters=()->{android.graphics.Rect rect=new android.graphics.Rect();for(Map.Entry<ImageView,Catalog.Title> image:homeImages.entrySet())if(image.getKey().getGlobalVisibleRect(rect)){if(image.getKey().getDrawable()==null&&requested.add(image.getKey()))posters.load(image.getValue(),image.getKey());}else requested.remove(image.getKey());};
     scroll.getViewTreeObserver().addOnScrollChangedListener(visiblePosters::run);
     scroll.getViewTreeObserver().addOnGlobalLayoutListener(visiblePosters::run);scroll.post(visiblePosters);
   }

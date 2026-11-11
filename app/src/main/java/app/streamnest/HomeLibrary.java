@@ -15,7 +15,7 @@ final class HomeLibrary {
    edit.apply();revision++;
  }catch(Exception ignored){}}
  static JSONObject lean(JSONObject row,String kind,boolean lite)throws Exception{
-  JSONObject out=new JSONObject();for(String key:new String[]{"imdb","imdb_id","imdb_code","id","title","name","year","language","genres","rating","trendRank","latestRank","date_uploaded_unix","poster_big","poster_med","large_cover_image","images","animeSeries","malId","verifiedQualities","verifiedHdEpisodes","metadataOnly","regionalCatalog","homeEpisodeOrder","homeEpisodeOrderAt"})if(row.has(key))out.put(key,row.get(key));
+  JSONObject out=new JSONObject();for(String key:new String[]{"imdb","imdb_id","imdb_code","id","title","name","year","language","genres","rating","trendRank","latestRank","date_uploaded_unix","poster_big","poster","poster_med","large_cover_image","images","animeSeries","malId","verifiedQualities","verifiedHdEpisodes","metadataOnly","regionalCatalog","homeEpisodeOrder","homeEpisodeOrderAt"})if(row.has(key))out.put(key,row.get(key));
   String description=row.optString("description",row.optString("description_full",row.optString("synopsis")));out.put("description",description.substring(0,Math.min(description.length(),lite?400:1200)));
   if(kind.equals("movies"))for(String key:new String[]{"torrents","items","items_lang"})if(row.has(key))out.put(key,row.get(key));return out;
  }

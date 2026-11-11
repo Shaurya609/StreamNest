@@ -49,3 +49,8 @@ Home recommendation rows now belong to the existing sync group. Android/Windows 
 ## Home layout follow-up — 0.22.1
 
 Fixed Windows renderer-owned styling, navigation clearance and visible/preserved keyboard focus. Added real geometry and screenshot checks across desktop themes/sizes. Android phone/tablet/TV-sized/Low Memory layouts and remote navigation passed on a disposable tablet app; physical TV/projector retesting remains distinct. Recommendation data and pairing are unchanged.
+
+
+## Artwork and resume progress follow-up — 0.22.2
+
+Home artwork now repairs missing metadata through IMDb and bounded identity-checked fallbacks on Windows/Android. Desktop has an explicit watched-progress fill; Android progress is unchanged. Shared recommendation identities and order are retained. Validation includes real poster decoding and actual desktop fill geometry.

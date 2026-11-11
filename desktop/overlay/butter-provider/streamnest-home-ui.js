@@ -2,7 +2,7 @@
 function install(App,$){
  // Required Node modules can see NW's background document. Use the renderer owning jQuery nodes.
  const document=$('<div>')[0].ownerDocument;
- const H=require('./streamnest-home'),P=require('./streamnest-progress'),S=require('./streamnest-home-sync');
+ const H=require('./streamnest-home'),P=require('./streamnest-progress'),S=require('./streamnest-home-sync'),Art=require('./streamnest-artwork');
  const shared=(pool,history)=>{const code=require('./streamnest-sync').config().code;return S.apply(H.build(pool,history),pool,history,code?S.cached(code):null);};
  if(document.getElementById('sn-home-style'))return;
  const style=document.createElement('style');style.id='sn-home-style';style.textContent=`
@@ -13,7 +13,7 @@ function install(App,$){
  #main-window .sn-home .sn-card{appearance:none;display:block;height:auto;min-height:0;margin:0;box-shadow:none;white-space:normal;line-height:normal;flex:0 0 148px;width:148px;background:transparent;border:2px solid transparent;border-radius:7px;color:white;padding:3px;cursor:pointer;text-align:left;outline:none;}
  #main-window .sn-home .sn-card:focus,#main-window .sn-home .sn-card:hover{border-color:#48a9ff;background:#242b3b;}.sn-home .sn-card img{width:138px;height:207px;object-fit:cover;background:#252935;border-radius:4px;display:block;}
  .sn-home .sn-label{font:500 14px sans-serif;display:block;line-height:19px;height:38px;overflow:hidden;margin:8px 0 3px;}.sn-home .sn-meta{font:12px sans-serif;color:#b1b7c5;display:block;min-height:30px;line-height:15px;}
- .sn-home progress{width:100%;height:4px;display:block;accent-color:#3da8fa;}.sn-home button.sn-refresh{border:1px solid #596477;border-radius:4px;background:#232a36;color:white;padding:9px 14px;cursor:pointer;}
+ .sn-home .sn-poster{position:relative;width:138px;height:207px;display:block;background:#252935;border-radius:4px;overflow:hidden;}.sn-home .sn-art-missing{width:100%;height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;box-sizing:border-box;font:12px/18px sans-serif;color:#aeb8ca;}.sn-home [hidden]{display:none!important;}.sn-home .sn-resume-track{display:block;width:100%;height:5px;background:#3b465b;border:0;border-radius:3px;overflow:hidden;margin:5px 0 7px;}.sn-home .sn-resume-fill{display:block;height:100%;background:#3da8fa;border-radius:3px;}.sn-home button.sn-refresh{border:1px solid #596477;border-radius:4px;background:#232a36;color:white;padding:9px 14px;cursor:pointer;}
  `;document.head.appendChild(style);
  App.View.HomeBrowser=App.View.MovieBrowser.extend({
   onFilterChange(){},
@@ -31,13 +31,13 @@ function install(App,$){
    const before=pool.slice();H.enrich(pool,history).then(enriched=>{if((enriched.length!==before.length||enriched.some((row,n)=>row!==before[n]))&&!this.isDestroyed()&&generation===this.homeGeneration){this.libraryRevision=H.revision;this.paint(shared(enriched,history));}});
   },
   paint(rows){
-   const scroll=this.host.scrollTop(),focused=this.host[0].contains(document.activeElement)?document.activeElement:null,focusId=focused&&focused.getAttribute('data-home-key'),offsets=new Map([...this.host[0].querySelectorAll('.sn-rail')].map(r=>[r.getAttribute('data-home-row'),r.scrollLeft]));this.host.empty();$('<h1>').text('Something for your next watch').appendTo(this.host);$('<p class="sn-home-note">').text('Continue where you left off, or find your next favorite.').appendTo(this.host);
+   if(this.artworkCleanup)this.artworkCleanup.forEach(stop=>stop());this.artworkCleanup=[];const scroll=this.host.scrollTop(),focused=this.host[0].contains(document.activeElement)?document.activeElement:null,focusId=focused&&focused.getAttribute('data-home-key'),offsets=new Map([...this.host[0].querySelectorAll('.sn-rail')].map(r=>[r.getAttribute('data-home-row'),r.scrollLeft]));this.host.empty();$('<h1>').text('Something for your next watch').appendTo(this.host);$('<p class="sn-home-note">').text('Continue where you left off, or find your next favorite.').appendTo(this.host);
    for(const section of rows){if(!section.cards.length&&section.name!=='Continue Watching')continue;$('<h2>').text(section.name).appendTo(this.host);
     if(!section.cards.length){$('<p class="sn-home-note">').text('Start watching a title. Your place will appear here automatically.').appendTo(this.host);continue;}
     const rail=$('<div class="sn-rail">').attr('data-home-row',section.name).appendTo(this.host);
-    for(const entry of section.cards){const t=entry.title,button=$('<button type="button" class="sn-card">').appendTo(rail),image=$('<img loading="lazy" alt="">').appendTo(button);const poster=t.poster_big||t.large_cover_image||t.poster||t.images&&t.images.poster||'';image.on('error',()=>image.removeAttr('src'));if(/^https:\/\//i.test(poster))image.attr('src',poster);
+    for(const entry of section.cards){const t=entry.title,button=$('<button type="button" class="sn-card">').appendTo(rail),art=$('<span class="sn-poster">').appendTo(button),image=$('<img loading="lazy" alt="">').appendTo(art),placeholder=$('<span class="sn-art-missing" hidden>').text('Artwork unavailable').appendTo(art);this.artworkCleanup.push(Art.attach(t,image[0],placeholder[0]));
      $('<span class="sn-label">').text(t.title).appendTo(button);let caption=t.kind==='movies'?'Movie':t.kind==='animes'?'Anime':'Series';
-     if(entry.progress){const p=entry.progress,parts=entry.historyKey.split(':');if(parts.length===4)caption='S'+parts[2]+' · E'+parts[3];const seconds=Math.floor(p.positionMs/1000);if(p.nextEpisode)caption='Up next · '+caption;else caption+=' · Resume at '+Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');$('<progress max="1000">').attr('value',p.durationMs>0?Math.min(1000,p.positionMs*1000/p.durationMs):0).appendTo(button);}
+     if(entry.progress){const p=entry.progress,parts=entry.historyKey.split(':');if(parts.length===4)caption='S'+parts[2]+' · E'+parts[3];const seconds=Math.floor(p.positionMs/1000);if(p.nextEpisode)caption='Up next · '+caption;else caption+=' · Resume at '+Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');if(!p.nextEpisode){const ratio=Art.fraction(p),track=$('<span class="sn-resume-track" role="progressbar" aria-valuemin="0" aria-valuemax="100">').attr('aria-valuenow',ratio*100).attr('aria-label','Watched progress').appendTo(button);$('<span class="sn-resume-fill" aria-hidden="true">').css({width:(ratio*100)+'%',minWidth:ratio>0?'2px':'0'}).appendTo(track);}}
      $('<span class="sn-meta">').text(caption).appendTo(button);button.attr('data-home-key',section.name+':'+H.id(t));button.attr('aria-label',t.title+' · '+caption);button.on('click',()=>this.open(t,button));
      button.on('keydown',e=>{let next;if(e.key==='ArrowRight'||e.key==='ArrowLeft')next=e.key==='ArrowRight'?button.next():button.prev();else if(e.key==='ArrowDown'||e.key==='ArrowUp'){const rails=this.host.find('.sn-rail'),at=rails.index(rail)+(e.key==='ArrowDown'?1:-1);if(at>=0&&at<rails.length){const cards=rails.eq(at).find('.sn-card');next=cards.eq(Math.min(button.index(),cards.length-1));}}if(next){e.preventDefault();e.stopPropagation();if(next.length){next[0].focus({preventScroll:true});next[0].scrollIntoView({block:'nearest',inline:'nearest'});}}});
     }
@@ -51,7 +51,7 @@ function install(App,$){
    }catch(e){const note=this.host.find('.sn-home-error');note.remove();$('<p class="sn-home-error" role="alert">').text('Could not open this title. '+e.message).prependTo(this.host);}
    finally{this.opening=false;button.removeAttr('aria-busy');}
   },
-  onBeforeDestroy(){clearInterval(this.timer);document.defaultView.removeEventListener('resize',this.layoutHome);if(this.homeResize)this.homeResize.disconnect();this.homeGeneration=(this.homeGeneration||0)+1;}
+  onBeforeDestroy(){if(this.artworkCleanup)this.artworkCleanup.forEach(stop=>stop());clearInterval(this.timer);document.defaultView.removeEventListener('resize',this.layoutHome);if(this.homeResize)this.homeResize.disconnect();this.homeGeneration=(this.homeGeneration||0)+1;}
  });
 }
 module.exports={install};

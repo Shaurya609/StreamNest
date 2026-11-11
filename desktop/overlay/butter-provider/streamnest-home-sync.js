@@ -15,7 +15,7 @@ function metadata(t){
  const H=require('./streamnest-home'),id=H.id(t);if(!/^tt\d+$/.test(id)||!['movies','shows','animes'].includes(t.kind)||typeof t.title!=='string'||!t.title.trim())return null;
  const out={imdb:id,kind:t.kind,title:t.title.slice(0,150),genres:H.genres(t).filter(g=>g.length<=40).sort().slice(0,8)};
  for(const key of ['year','language'])if(t[key]!=null)out[key]=String(t[key]).slice(0,12);
- const poster=t.poster_big||t.large_cover_image||t.poster||t.images&&t.images.poster;if(typeof poster==='string'&&/^https:\/\//.test(poster)&&poster.length<=600)out.poster_big=poster;
+ const poster=require('./streamnest-artwork').candidates(t,false)[0];if(poster&&poster.length<=600)out.poster_big=poster;
  if(Number.isSafeInteger(t.malId)&&t.malId>0)out.malId=t.malId;
  return out;
 }

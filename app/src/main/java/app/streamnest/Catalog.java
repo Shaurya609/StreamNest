@@ -125,6 +125,7 @@ final class Catalog {
         images == null
             ? o.optString("large_cover_image", o.optString("poster_big", ""))
             : images.optString("poster", "");
+    t.poster = Artwork.primary(o);
     collect(o.opt("torrents"), "", t.sources);
     collect(o.opt("items"), "", t.sources);
     collect(o.opt("items_lang"), "", t.sources);

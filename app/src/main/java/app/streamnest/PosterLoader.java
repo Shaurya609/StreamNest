@@ -41,7 +41,9 @@ final class PosterLoader implements AutoCloseable {
             new ThreadPoolExecutor.DiscardOldestPolicy());
   }
 
-  void load(String url, ImageView view) {
+  void load(Catalog.Title title, ImageView view){List<String> urls=Artwork.candidates(title.raw);load(urls.isEmpty()?"":urls.get(0),view,urls,0,title);}
+  void load(String url, ImageView view) {load(url,view,Collections.emptyList(),0,null);}
+  void load(String url, ImageView view,List<String> urls,int at,Catalog.Title title) {
     view.setTag(url);
     view.setImageDrawable(null);
     Bitmap found = cache.get(url);
@@ -63,7 +65,7 @@ final class PosterLoader implements AutoCloseable {
               publish(url, view, existing);
               return;
             }
-            byte[] data = Net.bytes(url, 3 * 1024 * 1024);
+            byte[] data = Net.catalogBytes(url, 3 * 1024 * 1024,System.nanoTime()+8000000000L);
             BitmapFactory.Options bounds = new BitmapFactory.Options();
             bounds.inJustDecodeBounds = true;
             BitmapFactory.decodeByteArray(data, 0, data.length, bounds);
@@ -100,9 +102,11 @@ final class PosterLoader implements AutoCloseable {
               } catch (IOException ignored) {
               }
               publish(url, view, bitmap);
+              return;
             }
           } catch (Exception | OutOfMemoryError ignored) {
           }
+          if(!closed){String next=at+1<urls.size()?urls.get(at+1):title==null?"":Artwork.alternate(title);if(!next.isEmpty()&&!urls.subList(0,Math.min(at+1,urls.size())).contains(next))ui.post(()->{if(!closed&&url.equals(view.getTag()))load(next,view,urls,at+1,at+1<urls.size()?title:null);});}
         });
   }
 

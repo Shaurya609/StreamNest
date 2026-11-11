@@ -27,8 +27,7 @@ final class HomeSync {
     Catalog.Title t=Catalog.parse(raw,kind);List<String> genres=new ArrayList<>(HomeFeed.genres(t));genres.removeIf(g->g.length()>40);Collections.sort(genres);
     JSONObject out=new JSONObject().put("imdb",id).put("kind",kind).put("title",title.substring(0,Math.min(150,title.length()))).put("genres",new JSONArray(genres.subList(0,Math.min(8,genres.size()))));
     for(String key:new String[]{"year","language"})if(raw.has(key)){String s=raw.optString(key);out.put(key,s.substring(0,Math.min(12,s.length())));}
-    String poster=raw.optString("poster_big",raw.optString("large_cover_image",raw.optString("poster",raw.optJSONObject("images")==null?"":raw.optJSONObject("images").optString("poster"))));
-    if(poster.startsWith("https://")&&poster.length()<=600)out.put("poster_big",poster);if(WatchSyncCrypto.integer(raw,"malId")&&raw.optInt("malId")>0)out.put("malId",raw.getInt("malId"));return out;
+    String poster=Artwork.primary(raw);if(!poster.isEmpty()&&poster.length()<=600)out.put("poster_big",poster);if(WatchSyncCrypto.integer(raw,"malId")&&raw.optInt("malId")>0)out.put("malId",raw.getInt("malId"));return out;
   }
   static JSONObject clean(JSONObject value)throws Exception{
     if(value==null||value.optInt("schema")!=1||!value.optString("history").matches("[a-f0-9]{64}")||!WatchSyncCrypto.integer(value,"createdAt")||value.optLong("createdAt")<1||value.optLong("createdAt")>System.currentTimeMillis()+86400000||value.optJSONArray("rows")==null||value.optJSONObject("titles")==null||value.toString().getBytes(StandardCharsets.UTF_8).length>90000)return null;
