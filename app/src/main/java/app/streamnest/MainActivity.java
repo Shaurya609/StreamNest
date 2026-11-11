@@ -19,6 +19,7 @@ public class MainActivity extends Activity {
   LinearLayout filtersRow;
   String homeHistorySignature = "";
   long homeLibraryRevision;
+  final Runnable homeSyncPulse=new Runnable(){public void run(){if(homeTab&&!isDestroyed()){WatchSync.request(MainActivity.this,false);refreshHomeProgress();}if(!isDestroyed())ui.postDelayed(this,60000);}};
   final Runnable homeRefresh=()->{if(homeTab&&!isDestroyed())refreshHomeProgress();};
   final android.content.SharedPreferences.OnSharedPreferenceChangeListener homeProgressListener=(p,key)->{if(homeTab){MainActivity.this.ui.removeCallbacks(homeRefresh);MainActivity.this.ui.postDelayed(homeRefresh,250);}};
   Button sortControl, genreControl, qualityControl, languageControl;
@@ -1256,6 +1257,8 @@ public class MainActivity extends Activity {
     super.onResume();
     CatalogUpdates.add(catalogUpdated);
     getSharedPreferences(WatchProgress.preferenceName,0).registerOnSharedPreferenceChangeListener(homeProgressListener);
+    getSharedPreferences("group-home",0).registerOnSharedPreferenceChangeListener(homeProgressListener);
+    ui.removeCallbacks(homeSyncPulse);ui.post(homeSyncPulse);
     if(homeTab && content!=null) refreshHomeProgress();
     if (posters != null && activeLite != DeviceProfile.lite(this)) {
       recreate();
@@ -1265,6 +1268,8 @@ public class MainActivity extends Activity {
   @Override
   protected void onPause() {
     CatalogUpdates.remove(catalogUpdated);
+    ui.removeCallbacks(homeSyncPulse);
+    getSharedPreferences("group-home",0).unregisterOnSharedPreferenceChangeListener(homeProgressListener);
     getSharedPreferences(WatchProgress.preferenceName,0).unregisterOnSharedPreferenceChangeListener(homeProgressListener);
     super.onPause();
   }

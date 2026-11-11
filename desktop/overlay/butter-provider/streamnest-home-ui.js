@@ -19,7 +19,7 @@ function install(App,$){
    this.bar=new App.View.FilterBar({model:this.filter});this.showChildView('FilterBar',this.bar);
    const decorate=()=>{this.$('#nav-filters,.right .search').hide();this.$('.source').removeClass('active');this.$('#filterbar-home').addClass('active');};this.listenTo(this.bar,'render',decorate);decorate();
    this.host=$('<main class="sn-home" aria-label="Home"></main>');this.$('.list-region').empty().append(this.host);App.currentview='home';
-   this.refresh();this.timer=setInterval(()=>{if(['player','movie-detail','settings-container'].some(id=>{const node=document.getElementById(id);return node&&node.children.length;}))return;const signature=JSON.stringify(P.records());if(signature!==this.signature||this.libraryRevision!==H.revision)this.refresh();},3000);
+   this.lastHomeSync=Date.now();this.refresh();this.timer=setInterval(()=>{if(['player','movie-detail','settings-container'].some(id=>{const node=document.getElementById(id);return node&&node.children.length;}))return;if(Date.now()-this.lastHomeSync>=60000){this.lastHomeSync=Date.now();require('./streamnest-sync').request(true).then(()=>{if(!this.isDestroyed()&&(JSON.stringify(P.records())!==this.signature||this.libraryRevision!==H.revision))this.refresh();});}const signature=JSON.stringify(P.records());if(signature!==this.signature||this.libraryRevision!==H.revision)this.refresh();},3000);
   },
   refresh(){
    const history=P.records(),pool=H.load();this.signature=JSON.stringify(history);this.libraryRevision=H.revision;this.paint(shared(pool,history));const generation=this.homeGeneration=(this.homeGeneration||0)+1;
