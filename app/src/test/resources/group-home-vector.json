@@ -1,0 +1,75 @@
+{
+  "code": "0707-0707-0707-0707-0707-0707-0707-0707-D761",
+  "homeCode": "1A15-A3FF-6267-674A-BDFB-7CFE-BF74-33D5-4845",
+  "history": {
+    "movie:tt1": {
+      "positionMs": 12000,
+      "durationMs": 120000,
+      "updatedAt": 100
+    }
+  },
+  "snapshot": {
+    "schema": 1,
+    "history": "4f6ac9be25cbd5a05bb75b94fa2674dd05c0e041c21359e59029516e9a2b68bd",
+    "createdAt": 1000,
+    "rows": [
+      {
+        "name": "Picked for you",
+        "ids": [
+          "tt2",
+          "tt3"
+        ]
+      },
+      {
+        "name": "Movies",
+        "ids": [
+          "tt2"
+        ]
+      },
+      {
+        "name": "Series",
+        "ids": [
+          "tt3"
+        ]
+      },
+      {
+        "name": "Anime",
+        "ids": []
+      }
+    ],
+    "titles": {
+      "tt2": {
+        "imdb": "tt2",
+        "kind": "movies",
+        "title": "Shared movie",
+        "genres": [
+          "action"
+        ]
+      },
+      "tt3": {
+        "imdb": "tt3",
+        "kind": "shows",
+        "title": "Shared series",
+        "genres": [
+          "drama"
+        ]
+      },
+      "tt1": {
+        "imdb": "tt1",
+        "kind": "movies",
+        "title": "Watched",
+        "genres": [
+          "action"
+        ]
+      }
+    },
+    "watched": {
+      "tt1": 100
+    }
+  },
+  "encrypted": {
+    "v": 1,
+    "iv": "W3XloJcu4wazE2X0",
+    "body": "8AFGP2RhECt8Yo/qQeqIH789Nb30dQeOWwKwFtHo2/N5XOkWZKqhC1WHAsOHY3715OMI6tHf8jZk28JhAQxFKN8A/O+epHYr15ef0KwzHo5VwXd2G+EU9evevOnT+GdsUtpDZl1L8kJyS9igo7vEzbnWVoop/r0acf7qsFagsdb4zjITnrOz+dOWw4QUB7nQxYgJxqLf7uuFDl2Wa/2lWFKMiEu0ebmhzsPB7QlBLrsLi39AfJfEnFr6DVTRJ7oK3OFCyJOBShaseQk/AswmoHXNAZpz382cxjQXB68CFkx5nRCnvui/M7rcy9DOimqQmZwoF4idWvmR5L8WlVokbJlkt6JWduZEiR9bnoxUSp4XvvivqTc7Q4+8FjbthMjyvihMxwPrqDEwXSQqhB6rRdqx6FEnXhoWCYNY+7t7QXBK2oymIL53yuYHbnqjNoBoUG4RYacIUXj+4QVtqzDgajGDtZXn+rocoi+PQwstF/vt/gb3RswWnHeODJGu5K0jHKaVY2Y7AWXr4XigKrk/KlroCEmh6wW65JNZ6h24Pai2MPPZcMCFPdnbOYKTWkwUdhYBIQu4DpmLVf6BiQNZRTw9WkZRtuBls4NWT0aww3OKdJlRrLWT3gBiyjItTpUYSidQHplJhCn0hOcPDxgrrcO5YPb8BsBtINekUYUrm6WEK7aQF86V5Ws5TPXEaK47h/HDeb0MOC2JKdqU/GAhBDxLVw1vtKgKasKFBh4="
+  }
+}

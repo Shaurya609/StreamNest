@@ -37,3 +37,14 @@ Group/device names and activity timestamps are administrative metadata visible t
 The private owner dashboard is at `/admin` on the sync endpoint. `/admin/data` requires the separate ADMIN_TOKEN Worker secret; no administration key is bundled in an app or committed to GitHub. On the deploying Windows account, manually run `tools/open-sync-dashboard.ps1` to copy the locally encrypted owner key and open the dashboard. Paste the key to load groups. The page keeps it only in memory; it is not placed in a URL or browser storage. The local key file is protected with Windows user encryption and is excluded from Git.
 
 Apply the additive schema.sql migration before deploying this service update. Metadata failure does not block encrypted progress sync.
+
+
+## Shared Home recommendations (0.22.0)
+
+Update each paired device to 0.22.0. Existing groups work automatically; do not create another group or pair again. Recommendations, Recently added and the movie/series/anime/Hindi/Korean rows share an ordered list of title identities and lean display metadata. Low Memory mode displays the first six cards instead of twelve, preserving their order. Continue Watching still uses the latest synced playback positions and canonical episode selection.
+
+After progress sync, devices download the group's recommendation snapshot. The first updated device creates it; subsequent devices adopt it instead of re-ranking against their own catalogs. Watching a different title or changing the recent watch order refreshes the picks. A daily refresh allows catalog changes to appear. Simultaneous writers use revision checks and retry; previously synced watched identities are retained when a stale device connects. Source/quality selection remains local and availability can differ.
+
+Recommendations sync automatically on launch and with regular progress synchronization. They are eventually consistent, not instantaneous: offline devices retain their last shared Home and catch up after reconnecting. Before a first successful recommendation sync, local Home remains usable. Disconnecting returns to local recommendations; the saved shared snapshot is scoped to its group and is never used for another pairing.
+
+Recommendation titles, genres, poster URLs and watched-title ordering are encrypted on the device using a separately derived group key. They use a separate bounded snapshot in the existing service so older clients cannot erase it when uploading progress. Subtitle credentials, magnets, video files and private local paths are excluded. This adds an encrypted recommendation row per active group under the existing 180-day expiry, with no schema migration or new hosting service. Group/device names remain administrative metadata as described above.

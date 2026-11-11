@@ -34,6 +34,7 @@ final class WatchSync {
   static void connect(Context c, String code) throws Exception {
     String normalized = WatchSyncCrypto.format(WatchSyncCrypto.parse(code));
     new SecretStore(c).put("watchSyncCode", normalized);
+    HomeLibrary.revision++;
     status = "Connecting…";
     request(c, true);
   }
@@ -44,6 +45,7 @@ final class WatchSync {
     SyncGroup.worker.execute(() -> {try{if(!previous.isEmpty())SyncGroup.call(app,previous,"DELETE",new JSONObject().put("deviceId",SyncGroup.deviceId(app)));}catch(Exception ignored){}});
     SyncGroup.current = null;
     new SecretStore(c).put("watchSyncCode", "");
+    HomeLibrary.revision++;
     status = "Not connected";
   }
 
@@ -122,7 +124,10 @@ final class WatchSync {
               auth,
               WatchSyncCrypto.seal(pairing, merged),
               remote.getLong("revision"));
-      if (!response.optBoolean("conflict")) return;
+      if (!response.optBoolean("conflict")) {
+        try { HomeSync.sync(c,pairing); } catch(Exception ignored) { /* Progress already synced; Home retries. */ }
+        return;
+      }
     }
     throw new IOException("Another device is syncing; retry shortly");
   }

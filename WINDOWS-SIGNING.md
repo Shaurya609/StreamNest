@@ -1,5 +1,7 @@
 # Windows publisher signing
 
+Owner decision: signing is not planned for this personal project shared with friends. Releases remain labelled unsigned; signed auto-update metadata and artifact verification remain enabled. The options below are reference material if that decision changes.
+
 StreamNest releases remain explicitly unsigned until the owner obtains an approved signing identity. Signed update-feed metadata and artifact hashes are already implemented; these authenticate our updater's downloads but do not replace Windows publisher signing.
 
 ## Free open-source route

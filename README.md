@@ -15,7 +15,7 @@ Automatic series/anime episode selection and cross-device resume are available i
 
 ## Features
 
-- Home with synced Continue Watching, local genre-based recommendations, recently added titles and movie/series/anime/Hindi/Korean rows.
+- Home with synced Continue Watching and shared sync-group recommendations, recently added titles and movie/series/anime/Hindi/Korean rows.
 
 - Signed application-update checks on launch, background downloads and manual update checks.
 - Movie, series and anime catalogs with search, continuous pagination, English/Hindi filters and sorting.

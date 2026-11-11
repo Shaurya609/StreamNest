@@ -365,9 +365,9 @@ public class MainActivity extends Activity {
     browseJob=work.submit(()->{
       try{
         JSONObject history=WatchProgress.records(this);List<Catalog.Title> pool=HomeLibrary.load(this);
-        List<HomeFeed.Row> rows=HomeFeed.build(pool,history,DeviceProfile.lite(this)?6:12);
+        List<HomeFeed.Row> rows=HomeSync.build(this,pool,history,DeviceProfile.lite(this)?6:12);
         ui.post(()->{if(request==generation&&homeTab&&!isDestroyed()){homeHistorySignature=history.toString();homeLibraryRevision=HomeLibrary.revision;renderHome(rows);}});
-        List<Catalog.Title> before=new ArrayList<>(pool);pool=HomeLibrary.enrich(this,pool,history);if(pool.equals(before))return;List<HomeFeed.Row> enriched=HomeFeed.build(pool,history,DeviceProfile.lite(this)?6:12);
+        List<Catalog.Title> before=new ArrayList<>(pool);pool=HomeLibrary.enrich(this,pool,history);if(pool.equals(before))return;List<HomeFeed.Row> enriched=HomeSync.build(this,pool,history,DeviceProfile.lite(this)?6:12);
         ui.post(()->{if(request==generation&&homeTab&&!isDestroyed()){homeLibraryRevision=HomeLibrary.revision;renderHome(enriched);}});
       }catch(Exception e){ui.post(()->{if(request==generation&&homeTab&&!isDestroyed()){content.removeAllViews();content.addView(text("Home unavailable. Open Movies, Series or Anime, or tap above to retry.",16,0xffaaaaaa));}});}
     });

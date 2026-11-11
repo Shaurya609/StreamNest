@@ -33,4 +33,4 @@ async function enrich(pool,history){
  }return pool;
 }
 function episodeOrder(rows){return rows.filter(r=>!require('./streamnest-playback').future(r)).slice().sort((a,b)=>a.season-b.season||a.episode-b.episode).map(r=>r.season+':'+r.episode);}
-module.exports={get revision(){return revision;},episodeOrder,id,genres,build,load,remember,enrich};
+module.exports={get revision(){return revision+require('./streamnest-home-sync').revision;},episodeOrder,id,genres,build,load,remember,enrich};

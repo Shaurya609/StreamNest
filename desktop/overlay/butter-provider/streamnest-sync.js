@@ -24,7 +24,7 @@ async function sync(code){
   if(config().code!==code)return;
   const remote=await call('GET',code),incoming=remote.payload?C.open(code,remote.payload):{};
   if(config().code!==code)return;
-  progress.merge(incoming);const result=await call('PUT',code,C.seal(code,progress.records()),remote.revision);if(!result.conflict)return;
+  progress.merge(incoming);const result=await call('PUT',code,C.seal(code,progress.records()),remote.revision);if(!result.conflict){try{await require('./streamnest-home-sync').sync(code,(derived,payload,revision)=>call(payload?'PUT':'GET',derived,payload,revision),()=>config().code,progress.records(),()=>require('./streamnest-home').load());}catch(e){/* Home retries independently; progress already synced. */}return;}
  }throw Error('Another device is syncing; retry shortly');
 }
 async function request(force=false){
@@ -34,8 +34,8 @@ async function request(force=false){
 }
 async function beforeSelection(){let timer;try{await Promise.race([request(true),new Promise(resolve=>{timer=setTimeout(resolve,2000);})]);}finally{clearTimeout(timer);}}
 
-async function connect(code){const P=require('./streamnest-pairing');code=P.input(code);if(code.length===8){code=P.open(code,(await P.call(endpoint(),code,'POST')).payload);}else if(code.length!==36)throw Error('Enter an eight-character pairing code or the complete recovery key');code=C.format(C.parse(code));saveConfig({...config(),code});group=null;lastGroup=0;status='Connecting…';return request(true);}
-function disconnect(){const previous=config();if(previous.code&&previous.deviceId)groupQueue=groupQueue.catch(()=>{}).then(()=>require('./streamnest-group').call(endpoint(),C.auth(previous.code),'DELETE',{deviceId:previous.deviceId})).catch(()=>{});saveConfig({deviceId:previous.deviceId,deviceName:previous.deviceName});group=null;status='Not connected';}
+async function connect(code){const P=require('./streamnest-pairing');code=P.input(code);if(code.length===8){code=P.open(code,(await P.call(endpoint(),code,'POST')).payload);}else if(code.length!==36)throw Error('Enter an eight-character pairing code or the complete recovery key');code=C.format(C.parse(code));saveConfig({...config(),code});require('./streamnest-home-sync').changed();group=null;lastGroup=0;status='Connecting…';return request(true);}
+function disconnect(){const previous=config();if(previous.code&&previous.deviceId)groupQueue=groupQueue.catch(()=>{}).then(()=>require('./streamnest-group').call(endpoint(),C.auth(previous.code),'DELETE',{deviceId:previous.deviceId})).catch(()=>{});saveConfig({deviceId:previous.deviceId,deviceName:previous.deviceName});require('./streamnest-home-sync').changed();group=null;status='Not connected';}
 function show(win){
  const d=win.document;let old=d.getElementById('streamnest-sync-panel');if(old)old.remove();
  const panel=d.createElement('div');panel.id='streamnest-sync-panel';panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label','Resume across devices');panel.style.cssText='position:fixed;top:8%;right:12%;bottom:8%;left:12%;box-sizing:border-box;overflow:auto;z-index:99999;background:#20232b;color:#f3f4f6;padding:24px;border:1px solid #697080;border-radius:10px;font:16px/1.5 sans-serif';d.body.appendChild(panel);

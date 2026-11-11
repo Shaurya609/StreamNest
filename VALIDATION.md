@@ -262,3 +262,12 @@ Final 0.21.0 publication: Android CI 42981754595 and Windows CI 42981754619 pass
 An isolated official 0.20.0-to-0.21.0 profile migration passed across Node 13.10.1 to 26.12.1, preserving 125-second progress, disabled auto-skip, enabled preload, TV-series startup and anonymous subtitle mode. The same isolated application data/profile paths were retained. This does not claim a personal-account or installed-owner-profile migration.
 
 The separate native Android real-network preload harness still stalled at zero bytes/no peers despite test-only loopback settings. Hash-verified native fixture handover remains verified; successful native HTTP/peer preload transfer is not claimed. External live filler-page coverage and broader Korean source audio/subtitle timing remain bounded verification items.
+
+
+## Shared Home recommendations — 0.22.0
+
+105 Node checks and 178 Android unit checks cover domain-separated encrypted Home snapshots, desktop-to-Java cryptographic vectors, cross-platform row generation, different/missing local catalogs, bounded metadata, conflict retry adopting the winner, stale-device watched-identity retention, group-scoped cache and Low Memory prefix behavior. Existing progress encryption vectors remain unchanged. Build/lint and standard hidden Windows Home/next-episode/detail/navigation smoke pass.
+
+Live disposable-group test: desktop uploaded encrypted progress and recommendations; the isolated native Android verification app downloaded identical rows and displayed the shared first card even with its Home pool forced empty. Native watched-title update removed that title from shared recommendations. Desktop fetched the seven updated rows (84 card references) without re-ranking. The actual isolated Windows renderer displayed all seven rows in identical order, excluded the newly watched title and passed disconnect/group isolation. Both disposable encrypted rooms and group/device metadata were deleted. The verification package was uninstalled and production build configuration restored; no production Android APK was installed through ADB.
+
+Recommendations are eventually consistent and need 0.22.0 on participating devices. Existing groups need no re-pairing or backend schema/deployment change. Offline devices use a scoped cached snapshot; source availability can still vary. The separate recommendation storage uses the existing service quota and 180-day expiry. Public Windows signing is intentionally not planned per owner decision; signed update-feed verification remains enabled.

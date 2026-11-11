@@ -39,3 +39,8 @@ Remaining external dependencies: live Jikan filler-page verification (timed out)
 ## Source availability scope
 
 0.20.0 delivered the initial independent anime/batch discovery work. Broader movie/series/anime coverage remains an ongoing availability goal, with 0.21.0 adding independent series lookup and broader verified metadata. Finding a matching source does not guarantee reachable peers, working playback or a particular audio language.
+
+
+## Shared recommendations follow-up — 0.22.0
+
+Home recommendation rows now belong to the existing sync group. Android/Windows share encrypted ordering and lean metadata with backwards-compatible progress sync. Real disposable cross-platform sync, native Home rendering, Windows Home rendering, watched-title removal and group isolation passed. Low Memory shows the same row prefix. Windows signing is intentionally not planned by owner decision. Publication acceptance is recorded in VALIDATION.md.

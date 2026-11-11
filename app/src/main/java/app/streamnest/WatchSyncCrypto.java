@@ -78,6 +78,14 @@ final class WatchSyncCrypto {
   }
 
   static JSONObject open(String code, JSONObject doc) throws Exception {
+    return clean(openDocument(code, doc));
+  }
+
+  static String homeCode(String code) throws Exception {
+    return format(Arrays.copyOf(derive(parse(code), "StreamNest home namespace v1"),16));
+  }
+
+  static JSONObject openDocument(String code, JSONObject doc) throws Exception {
     if (doc.getInt("v") != 1) throw new java.io.IOException("Unsupported sync data");
     byte[] iv = Base64.getDecoder().decode(doc.getString("iv")),
         body = Base64.getDecoder().decode(doc.getString("body"));
@@ -91,7 +99,7 @@ final class WatchSyncCrypto {
     cipher.updateAAD(AAD);
     JSONObject plain = new JSONObject(new String(cipher.doFinal(body), StandardCharsets.UTF_8));
     if (plain.getInt("schema") != 1) throw new java.io.IOException("Unsupported watch data");
-    return clean(plain.optJSONObject("records"));
+    return plain.optJSONObject("records");
   }
 
   static boolean integer(JSONObject row, String key) {

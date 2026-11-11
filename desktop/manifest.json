@@ -1,7 +1,11 @@
 {
-  "version": "0.21.0",
+  "version": "0.22.0",
   "target": "Popcorn Time 0.5.1",
   "files": [
+    {
+      "path": "app.js",
+      "sha256": "3b008fe11dd92a331833c62f3b2628f9e658b5499b0644e20b9e93f8b5176ee1"
+    },
     {
       "path": "bootstrap.js",
       "sha256": "9ca7735068659085f2b4ea4613834812f572a36da2055c13dd3bbab489fedf79"
@@ -75,16 +79,44 @@
       "sha256": "87bee47e923d99fa842ace55c0b78d340f6b0d9716f233f73788293fb346b50a"
     },
     {
+      "path": "butter-provider/streamnest-discovery.js",
+      "sha256": "adb5cf45fb1d49c7b478b245a16ea44af27ec60d46727a727afa9fb721cad4c3"
+    },
+    {
       "path": "butter-provider/streamnest-episodes.js",
       "sha256": "8cecb3e542cd38c87a54a15f749278bddcf5f3a505977ceb6296efcfd1a1751e"
+    },
+    {
+      "path": "butter-provider/streamnest-eztv.js",
+      "sha256": "dead17eddf4c030bb281f0038c3dd61eb0eb0333752dabde443b92f817e69f9a"
+    },
+    {
+      "path": "butter-provider/streamnest-filler.js",
+      "sha256": "acccf809bbc72c681904276d603db381cadd2a42be9214fb8ecd5d799704cc96"
     },
     {
       "path": "butter-provider/streamnest-fresh.js",
       "sha256": "0e51728ae92454f91ee8adc77ba8d7de3191d1548c7577af58390983ffc28b38"
     },
     {
+      "path": "butter-provider/streamnest-group.js",
+      "sha256": "0f3df75a724a00358f20329006d576635bddeab1c95438c8c67d9a75ce7af175"
+    },
+    {
       "path": "butter-provider/streamnest-hindi.js",
       "sha256": "7074933465588ce99219458c2ed2817d03e068e88a908cc68fbb1bd63c7c7149"
+    },
+    {
+      "path": "butter-provider/streamnest-home-sync.js",
+      "sha256": "fc7394b352ca0fc7683f9055eb7bb499106b68628d293d422815ab0d57f6d608"
+    },
+    {
+      "path": "butter-provider/streamnest-home-ui.js",
+      "sha256": "fddf46a07adfa974a9d031309ff6f2c58e670f0d4a6fc2c136c01f4ca658cb46"
+    },
+    {
+      "path": "butter-provider/streamnest-home.js",
+      "sha256": "d1db7dd0eb56d9ac54a362e46659c67ea8b7b7eb6446fd62ac9819e7ed23e3a6"
     },
     {
       "path": "butter-provider/streamnest-net.js",
@@ -99,8 +131,16 @@
       "sha256": "d915469d62b6534b2dd0e6fea35e787f825387cd3d8f70d9a0f9d838c2706c57"
     },
     {
+      "path": "butter-provider/streamnest-pairing.js",
+      "sha256": "4613635f86ce196c3a5869b60194864e5571db2eef244a4f9735b685ffb55d3f"
+    },
+    {
       "path": "butter-provider/streamnest-playback.js",
       "sha256": "5e49058b9a8ca179d80ffd00841143be1ff2c9ea7c306f33f38a1f50aae51647"
+    },
+    {
+      "path": "butter-provider/streamnest-preload.js",
+      "sha256": "91a264ef872478197432eb06b72844e9f9a71061e1b1d24984fb0d75993e7ac3"
     },
     {
       "path": "butter-provider/streamnest-progress.js",
@@ -124,11 +164,11 @@
     },
     {
       "path": "butter-provider/streamnest-sync-crypto.js",
-      "sha256": "ac23c202f8ca0a4486a2dc2c6f599f94c67cb6abda4cc343679d32e6945d7c94"
+      "sha256": "3bc7c5c2da7080f51a324d9791f57982db4c482b72c18405c46512c9ba897c2e"
     },
     {
       "path": "butter-provider/streamnest-sync.js",
-      "sha256": "6df4e17a6c4ddcf142094df9dc2806e61d5fa06af7276d82fc758bafb7f2dca2"
+      "sha256": "34e187602b5e4d6081a46e80a0808838c0cb4d3b87056630b4035fc38f139fb0"
     },
     {
       "path": "butter-provider/tv.js",
@@ -159,8 +199,16 @@
       "sha256": "02880d9deaa3dcc39c84f1d38ebe8854aa374d4c789168dcf29bc6c163836c7c"
     },
     {
+      "path": "lib/views/filter_bar.js",
+      "sha256": "a37e4c832551ad1cca4ba0766d44616f34fbf58fa7469ee118fadc39c911a3f8"
+    },
+    {
       "path": "lib/views/loading.js",
       "sha256": "fdfa740fe431e524d9698ca501cb68a0eb22c004150e591c593512c698bd2009"
+    },
+    {
+      "path": "lib/views/main_window.js",
+      "sha256": "bd26fc0d478119653616d7c732a2916d6cc438485221035d9fcd5bf8e56e66cb"
     },
     {
       "path": "lib/views/play_control.js",
@@ -201,50 +249,6 @@
     {
       "path": "vendor/videojshooks.js",
       "sha256": "7e1711ad4e429833989858df07ab1bfd95a2004706644af130a6ceefb4ca5b18"
-    },
-    {
-      "path": "butter-provider/streamnest-pairing.js",
-      "sha256": "4613635f86ce196c3a5869b60194864e5571db2eef244a4f9735b685ffb55d3f"
-    },
-    {
-      "path": "butter-provider/streamnest-group.js",
-      "sha256": "0f3df75a724a00358f20329006d576635bddeab1c95438c8c67d9a75ce7af175"
-    },
-    {
-      "path": "butter-provider/streamnest-preload.js",
-      "sha256": "91a264ef872478197432eb06b72844e9f9a71061e1b1d24984fb0d75993e7ac3"
-    },
-    {
-      "path": "app.js",
-      "sha256": "3b008fe11dd92a331833c62f3b2628f9e658b5499b0644e20b9e93f8b5176ee1"
-    },
-    {
-      "path": "butter-provider/streamnest-discovery.js",
-      "sha256": "adb5cf45fb1d49c7b478b245a16ea44af27ec60d46727a727afa9fb721cad4c3"
-    },
-    {
-      "path": "butter-provider/streamnest-home-ui.js",
-      "sha256": "8013f7ef2b9ed2035d7d67be7d0aca7781ba19bdeb0c188ee3db7e45d5583a51"
-    },
-    {
-      "path": "butter-provider/streamnest-home.js",
-      "sha256": "ca74b5f048f69ef6642462f2f236efafc1b2acac4c4c0ef5a35b2d01383ad4cd"
-    },
-    {
-      "path": "lib/views/filter_bar.js",
-      "sha256": "a37e4c832551ad1cca4ba0766d44616f34fbf58fa7469ee118fadc39c911a3f8"
-    },
-    {
-      "path": "lib/views/main_window.js",
-      "sha256": "bd26fc0d478119653616d7c732a2916d6cc438485221035d9fcd5bf8e56e66cb"
-    },
-    {
-      "path": "butter-provider/streamnest-eztv.js",
-      "sha256": "dead17eddf4c030bb281f0038c3dd61eb0eb0333752dabde443b92f817e69f9a"
-    },
-    {
-      "path": "butter-provider/streamnest-filler.js",
-      "sha256": "acccf809bbc72c681904276d603db381cadd2a42be9214fb8ecd5d799704cc96"
     }
   ]
 }

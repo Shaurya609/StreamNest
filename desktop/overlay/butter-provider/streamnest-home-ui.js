@@ -1,6 +1,7 @@
  'use strict';
 function install(App,$){
- const H=require('./streamnest-home'),P=require('./streamnest-progress');
+ const H=require('./streamnest-home'),P=require('./streamnest-progress'),S=require('./streamnest-home-sync');
+ const shared=(pool,history)=>{const code=require('./streamnest-sync').config().code;return S.apply(H.build(pool,history),pool,history,code?S.cached(code):null);};
  if(document.getElementById('sn-home-style'))return;
  const style=document.createElement('style');style.id='sn-home-style';style.textContent=`
  .sn-home{height:100%;overflow:auto;background:#14161c;color:#f4f5fa;padding:24px 32px 60px;box-sizing:border-box;}
@@ -21,9 +22,9 @@ function install(App,$){
    this.refresh();this.timer=setInterval(()=>{if(['player','movie-detail','settings-container'].some(id=>{const node=document.getElementById(id);return node&&node.children.length;}))return;const signature=JSON.stringify(P.records());if(signature!==this.signature||this.libraryRevision!==H.revision)this.refresh();},3000);
   },
   refresh(){
-   const history=P.records(),pool=H.load();this.signature=JSON.stringify(history);this.libraryRevision=H.revision;this.paint(H.build(pool,history));const generation=this.homeGeneration=(this.homeGeneration||0)+1;
-   require('./streamnest-sync').request(true).then(()=>{if(!this.isDestroyed()&&JSON.stringify(P.records())!==this.signature)this.refresh();});
-   const before=pool.slice();H.enrich(pool,history).then(enriched=>{if((enriched.length!==before.length||enriched.some((row,n)=>row!==before[n]))&&!this.isDestroyed()&&generation===this.homeGeneration){this.libraryRevision=H.revision;this.paint(H.build(enriched,history));}});
+   const history=P.records(),pool=H.load();this.signature=JSON.stringify(history);this.libraryRevision=H.revision;this.paint(shared(pool,history));const generation=this.homeGeneration=(this.homeGeneration||0)+1;
+   require('./streamnest-sync').request(true).then(()=>{if(!this.isDestroyed()&&(JSON.stringify(P.records())!==this.signature||this.libraryRevision!==H.revision))this.refresh();});
+   const before=pool.slice();H.enrich(pool,history).then(enriched=>{if((enriched.length!==before.length||enriched.some((row,n)=>row!==before[n]))&&!this.isDestroyed()&&generation===this.homeGeneration){this.libraryRevision=H.revision;this.paint(shared(enriched,history));}});
   },
   paint(rows){
    const scroll=this.host.scrollTop();this.host.empty();$('<h1>').text('Something for your next watch').appendTo(this.host);$('<p class="sn-home-note">').text('Continue where you left off, or find your next favorite.').appendTo(this.host);
