@@ -35,3 +35,5 @@ test('revision conflict adopts winner without re-ranking for another device; cac
   let reads=0;await S.sync(code,async()=>{reads++;throw Error('offline');},()=>C.create(),history,()=>[]);assert.equal(reads,0);
  }finally{delete global.nw;fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+test('shared generator preserves anime identity over a remembered general-series duplicate',()=>{const home=S.create([title('tt2','animes'),title('tt2','shows')],{});assert.equal(home.titles.tt2.kind,'animes');assert.ok(home.rows.find(r=>r.name==='Anime').ids.includes('tt2'));});

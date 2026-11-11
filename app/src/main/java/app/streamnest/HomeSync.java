@@ -39,7 +39,7 @@ final class HomeSync {
     return rows.length()==0?null:new JSONObject().put("schema",1).put("history",value.getString("history")).put("createdAt",value.getLong("createdAt")).put("rows",rows).put("titles",titles).put("watched",times);
   }
   static List<Catalog.Title> combine(List<Catalog.Title> pool,JSONObject home)throws Exception{
-    Map<String,Catalog.Title> known=new LinkedHashMap<>();for(Catalog.Title t:pool)known.put(t.id,t);
+    Map<String,Catalog.Title> known=new LinkedHashMap<>();for(Catalog.Title t:pool){Catalog.Title old=known.get(t.id);if(old==null||!old.kind.equals("animes")||t.kind.equals("animes"))known.put(t.id,t);}
     if(home!=null){JSONObject titles=home.getJSONObject("titles");for(Iterator<String> it=titles.keys();it.hasNext();){String id=it.next();JSONObject meta=titles.getJSONObject(id),raw=known.containsKey(id)?new JSONObject(known.get(id).raw.toString()):new JSONObject();for(Iterator<String> keys=meta.keys();keys.hasNext();){String k=keys.next();raw.put(k,meta.get(k));}known.put(id,Catalog.parse(raw,meta.getString("kind")));}}
     return new ArrayList<>(known.values());
   }

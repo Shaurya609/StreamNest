@@ -26,7 +26,7 @@ function clean(value){
 }
 function create(pool,history,previous,now=Date.now()){
  history=asHistory(watched(history,previous&&previous.watched));
- const H=require('./streamnest-home'),merged=new Map(pool.map(t=>[H.id(t),t]));for(const t of Object.values(previous&&previous.titles||{}))merged.set(t.imdb,{...merged.get(t.imdb),...t});
+ const H=require('./streamnest-home'),merged=new Map();for(const t of pool){const old=merged.get(H.id(t));if(!old||old.kind!=='animes'||t.kind==='animes')merged.set(H.id(t),t);}for(const t of Object.values(previous&&previous.titles||{}))merged.set(t.imdb,{...merged.get(t.imdb),...t});
  const titles={},rows=H.build([...merged.values()],history,12).slice(1).map(row=>({name:row.name,ids:row.cards.map(c=>{const m=metadata(c.title);if(m)titles[m.imdb]=m;return m&&m.imdb;}).filter(Boolean)}));
  const latest=new Map();for(const [key,p]of Object.entries(C.clean(history))){const id=key.split(':')[1];latest.set(id,Math.max(latest.get(id)||0,p.updatedAt));}
  for(const id of [...latest.keys()].sort((a,b)=>latest.get(b)-latest.get(a)||(a<b?-1:1)).slice(0,50)){const m=metadata(merged.get(id)||{});if(m)titles[id]=m;}

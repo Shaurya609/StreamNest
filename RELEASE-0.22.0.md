@@ -7,4 +7,4 @@ Android / Google TV and standalone Windows: shared Home recommendations for exis
 - Conflict retries, stale-device merging, group-scoped offline caches and daily catalog refresh preserve usable Home behavior. Continue Watching and playback selection retain the existing progress flow.
 - Subtitle credentials, playback sources and downloaded video are not shared. Windows remains an unsigned personal-project preview.
 
-Validation: 105 Node checks; 178 Android unit checks; build/lint; real disposable desktop-to-Android recommendations and native Home UI; Android watch update read back by Windows without re-ranking; actual Windows Home row order and group isolation. Installed Windows and production Android profiles were not replaced during these tests.
+Validation: 106 Node checks; 179 Android unit checks; build/lint; real disposable desktop-to-Android recommendations and native Home UI; Android watch update read back by Windows without re-ranking; actual Windows Home row order and group isolation. Installed Windows and production Android profiles were not replaced during these tests.

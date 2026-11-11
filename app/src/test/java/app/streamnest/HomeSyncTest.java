@@ -7,6 +7,9 @@ import static org.junit.Assert.*;
 public class HomeSyncTest {
   JSONObject vector()throws Exception{try(java.io.InputStream in=getClass().getResourceAsStream("/group-home-vector.json")){return new JSONObject(new String(in.readAllBytes(),StandardCharsets.UTF_8));}}
   Catalog.Title title(String id,String kind)throws Exception{return Catalog.parse(new JSONObject().put("imdb",id).put("title",id).put("genres",new JSONArray().put("action")),kind);}
+  @Test public void sharedGeneratorPreservesAnimeIdentity()throws Exception{
+    JSONObject home=HomeSync.create(Arrays.asList(title("tt2","animes"),title("tt2","shows")),new JSONObject(),null,1000);assertEquals("animes",home.getJSONObject("titles").getJSONObject("tt2").getString("kind"));
+  }
   @Test public void desktopEnvelopeAndNamespaceAreCompatibleButDistinctFromProgress()throws Exception{
     JSONObject v=vector();assertEquals(v.getString("homeCode"),WatchSyncCrypto.homeCode(v.getString("code")));assertNotEquals(WatchSyncCrypto.auth(v.getString("code")),WatchSyncCrypto.auth(v.getString("homeCode")));
     JSONObject snapshot=WatchSyncCrypto.openDocument(v.getString("homeCode"),v.getJSONObject("encrypted"));assertEquals(v.getJSONObject("snapshot").getString("history"),snapshot.getString("history"));assertEquals(snapshot.getString("history"),HomeSync.signature(v.getJSONObject("history")));assertEquals(0,WatchSyncCrypto.open(v.getString("homeCode"),v.getJSONObject("encrypted")).length());
