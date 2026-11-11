@@ -6,8 +6,8 @@ const history={
  'episode:tt1:1:2':{positionMs:0,durationMs:1200000,updatedAt:2,completed:true},
  'movie:tt2':{positionMs:60000,durationMs:1200000,updatedAt:3}
 };
-test('home collapses episodes by latest event, hides completed titles and orders progress',()=>{
- const rows=H.build([title('tt1','shows'),title('tt2','movies')],history);assert.equal(rows[0].cards.length,1);assert.equal(H.id(rows[0].cards[0].title),'tt2');
+test('home collapses episodes by latest event, retains unfinished series and orders progress',()=>{
+ const rows=H.build([title('tt1','shows'),title('tt2','movies')],history);assert.equal(rows[0].cards.length,2);assert.equal(rows[0].cards[1].progress.continueSeries,true);assert.equal(H.id(rows[0].cards[0].title),'tt2');
  const rewind={...history,'episode:tt1:1:1':{positionMs:30000,durationMs:1200000,updatedAt:4}};assert.equal(H.build([title('tt1','shows'),title('tt2','movies')],rewind)[0].cards[0].historyKey,'episode:tt1:1:1');
 });
 test('new user discovery is diverse, bounded and excludes future movies',()=>{
@@ -58,5 +58,5 @@ test('a first-season anime mapping enriches rather than truncates the full serie
 test('completed episode offers the next known episode and completed finale disappears',()=>{
  const t={...title('tt1','animes'),homeEpisodeOrder:['1:1','1:2','2:1']},completed={'episode:tt1:1:2':{positionMs:0,durationMs:1200000,updatedAt:2,completed:true}};
  const cards=H.build([t],completed)[0].cards;assert.equal(cards.length,1);assert.equal(cards[0].historyKey,'episode:tt1:2:1');assert.equal(cards[0].progress.nextEpisode,true);
- assert.equal(H.build([t],{'episode:tt1:2:1':{positionMs:0,durationMs:1200000,updatedAt:3,completed:true}})[0].cards.length,0);
+ assert.equal(H.build([t],{...completed,'episode:tt1:1:1':{...completed['episode:tt1:1:2'],updatedAt:1},'episode:tt1:2:1':{positionMs:0,durationMs:1200000,updatedAt:3,completed:true}})[0].cards.length,0);
 });

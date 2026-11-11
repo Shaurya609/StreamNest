@@ -6,9 +6,9 @@ import static org.junit.Assert.*;
 public class HomeFeedTest {
  Catalog.Title title(String id,String kind,String genre)throws Exception{return Catalog.parse(new JSONObject().put("imdb",id).put("title",id).put("year",2020).put("genres",new JSONArray().put(genre)),kind);}
  JSONObject progress(long time,boolean completed)throws Exception{return new JSONObject().put("positionMs",completed?0:30000).put("durationMs",120000).put("updatedAt",time).put("completed",completed);}
- @Test public void latestCompletedEpisodeHidesEarlierPartialEpisode()throws Exception{
+ @Test public void latestCompletedEpisodeKeepsSeriesWhenOrderUnknown()throws Exception{
   JSONObject history=new JSONObject().put("episode:tt1:1:1",progress(1,false)).put("episode:tt1:1:2",progress(2,true));
-  assertTrue(HomeFeed.build(Arrays.asList(title("tt1","shows","drama")),history,12).get(0).cards.isEmpty());
+  assertTrue(HomeFeed.build(Arrays.asList(title("tt1","shows","drama")),history,12).get(0).cards.get(0).progress.getBoolean("continueSeries"));
   history.put("episode:tt1:1:1",progress(3,false));assertEquals("episode:tt1:1:1",HomeFeed.build(Arrays.asList(title("tt1","shows","drama")),history,12).get(0).cards.get(0).historyKey);
  }
  @Test public void diverseRecommendationsExcludeHistoryAndFavorWatchedGenres()throws Exception{
@@ -34,6 +34,6 @@ public class HomeFeedTest {
  }
  @Test public void completedEpisodeOffersKnownNextAndFinaleDisappears()throws Exception{
  Catalog.Title t=title("tt1","animes","action");t.raw.put("homeEpisodeOrder",new JSONArray().put("1:1").put("1:2").put("2:1"));
- List<HomeFeed.Card> cards=HomeFeed.build(Arrays.asList(t),new JSONObject().put("episode:tt1:1:2",progress(1,true)),12).get(0).cards;assertEquals("episode:tt1:2:1",cards.get(0).historyKey);assertTrue(cards.get(0).progress.getBoolean("nextEpisode"));assertTrue(HomeFeed.build(Arrays.asList(t),new JSONObject().put("episode:tt1:2:1",progress(2,true)),12).get(0).cards.isEmpty());
+ List<HomeFeed.Card> cards=HomeFeed.build(Arrays.asList(t),new JSONObject().put("episode:tt1:1:2",progress(1,true)),12).get(0).cards;assertEquals("episode:tt1:2:1",cards.get(0).historyKey);assertTrue(cards.get(0).progress.getBoolean("nextEpisode"));assertTrue(HomeFeed.build(Arrays.asList(t),new JSONObject().put("episode:tt1:1:1",progress(1,true)).put("episode:tt1:1:2",progress(2,true)).put("episode:tt1:2:1",progress(3,true)),12).get(0).cards.isEmpty());
  }
 }

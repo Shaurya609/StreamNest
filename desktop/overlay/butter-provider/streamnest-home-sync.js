@@ -37,6 +37,7 @@ function create(pool,history,previous,now=Date.now(),manual={}){
 function file(){return path.join(nw.App.dataPath,'streamnest-group-home-v1.json');}
 function cached(code){try{const d=JSON.parse(fs.readFileSync(file(),'utf8'));return d.scope===C.auth(C.homeCode(code))?clean(d.home):null;}catch(e){return null;}}
 function save(code,home){const data=JSON.stringify({scope:C.auth(C.homeCode(code)),home});try{if(fs.readFileSync(file(),'utf8')===data)return;}catch(e){}fs.writeFileSync(file()+'.tmp',data,{mode:0o600});fs.renameSync(file()+'.tmp',file());revision++;}
+function combine(pool,home){const H=require('./streamnest-home'),known=new Map(pool.map(t=>[H.id(t),t]));for(const t of Object.values(home?.titles||{}))known.set(t.imdb,{...t,...known.get(t.imdb)});return [...known.values()];}
 function apply(local,pool,history,home,limit=12,manual={}){
  home=clean(home);if(!home||home.manual!==require('./streamnest-manual-watched').signature(manual))return local;const H=require('./streamnest-home'),known=new Map(pool.map(t=>[H.id(t),t])),watched=new Set(Object.keys(history).map(k=>k.split(':')[1]));
  return [local[0],...home.rows.map(row=>({name:row.name,cards:row.ids.filter(id=>!watched.has(id)&&!(manual[id]&&manual[id].watched)).slice(0,limit).map(id=>({title:{...known.get(id),...home.titles[id]}}))}))];
@@ -48,4 +49,4 @@ async function sync(code,call,current,history,pool){
   const next=create(await pool(),history,home,Date.now(),manual);if(!next)return;const response=await call(derived,C.seal(derived,next),remote.revision);if(current()!==code)return;if(!response.conflict){save(code,next);return next;}
  }throw Error('Home changed; retry shortly');
 }
-module.exports={createGate,watched,asHistory,signature,metadata,clean,create,apply,cached,sync,changed(){revision++;},get revision(){return revision;}};
+module.exports={createGate,watched,asHistory,signature,metadata,clean,create,combine,apply,cached,sync,changed(){revision++;},get revision(){return revision;}};
