@@ -17,6 +17,7 @@ public class MainActivity extends Activity {
   PosterLoader posters;
   boolean activeLite, homeTab = true;
   LinearLayout filtersRow;
+  String homeQuery="";int homeSearchPage=1;List<Catalog.Title> homeSearchPool=new ArrayList<>();boolean homeSearchPending,homeSearchFailed;
   String homeHistorySignature = "";
   long homeLibraryRevision;
   final Runnable homeSyncPulse=new Runnable(){public void run(){if(homeTab&&!isDestroyed()){WatchSync.request(MainActivity.this,false);refreshHomeProgress();}if(!isDestroyed())ui.postDelayed(this,60000);}};
@@ -99,7 +100,7 @@ public class MainActivity extends Activity {
         DeviceProfile.projector(this)
             ? android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             : android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-    homeTab = state==null || state.getBoolean("homeTab",true);
+    homeTab = state==null || state.getBoolean("homeTab",true);homeQuery=state==null?"":state.getString("homeQuery","");
     prefs = getSharedPreferences("library", 0);
     kind = prefs.getString("kind", "movies");
     favoriteTab = prefs.getBoolean("favoriteTab", false);
@@ -145,7 +146,7 @@ public class MainActivity extends Activity {
     bar.addView(brand);
     tabs = new LinearLayout(this);
     bar.addView(tabs);
-    navButton("Home", tabs, () -> { homeTab = true; favoriteTab = false; load(); });
+    navButton("Home", tabs, () -> { homeTab = true; favoriteTab = false; homeQuery="";homeSearchPool.clear();search.setText("");search.setVisibility(View.GONE);load(); });
     navButton("Movies", tabs, () -> tab("movies"));
     navButton("Series", tabs, () -> tab("shows"));
     navButton("Anime", tabs, () -> tab("animes"));
@@ -171,23 +172,21 @@ public class MainActivity extends Activity {
     search = new EditText(this);
     search.setTextColor(-1);
     search.setHintTextColor(0xff9a9a9a);
-    search.setHint("Search titles");
+    search.setHint("Search movies, series and anime");
     search.setSingleLine();
     search.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
-    search.setVisibility(View.GONE);
+    search.setVisibility(homeTab&&!homeQuery.isEmpty()?View.VISIBLE:View.GONE);if(homeTab)search.setText(homeQuery);
     root.addView(search, new LinearLayout.LayoutParams(-1, dp(44)));
     searchButton.setOnClickListener(
         v -> {
-          if(homeTab){new AlertDialog.Builder(this).setTitle("Search in").setItems(new String[]{"Movies","Series","Anime"},(dialog,index)->{
-            genre="All";quality="All";language="all";hindiMode=false;animeFormat="series";query="";search.setText("");tab(new String[]{"movies","shows","animes"}[index]);search.setVisibility(View.VISIBLE);search.requestFocus();((android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).showSoftInput(search,android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
-          }).show();return;}
+          if(homeTab){search.setVisibility(View.VISIBLE);search.requestFocus();((android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).showSoftInput(search,android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);return;}
           search.setVisibility(search.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
           if (search.getVisibility() == View.VISIBLE) search.requestFocus();
         });
     search.setOnEditorActionListener(
         (v, a, e) -> {
-          if(homeTab) { homeTab = false; kind = "movies"; }
-          query = search.getText().toString().trim();
+          if(homeTab){homeQuery=search.getText().toString().trim();if(homeQuery.length()>200)homeQuery=homeQuery.substring(0,200);homeSearchPage=1;homeSearchPool.clear();}
+          else query = search.getText().toString().trim();
           page = 1;
           load();
           ((android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
@@ -270,6 +269,7 @@ public class MainActivity extends Activity {
   }
 
   void tab(String k) {
+    if(homeTab){homeQuery="";homeSearchPool.clear();query="";search.setText("");search.setVisibility(View.GONE);}
     homeTab = false;
     HomeLibrary.clear();
     favoriteTab = false;
@@ -354,10 +354,12 @@ public class MainActivity extends Activity {
   }
 
   void refreshHomeProgress(){
+    if(!homeQuery.isEmpty())return;
     try{String signature=WatchProgress.records(this).toString();if(!signature.equals(homeHistorySignature)||homeLibraryRevision!=HomeLibrary.revision)loadHome();}catch(Exception ignored){}
   }
 
   void loadHome(){
+    if(!homeQuery.isEmpty()){loadHomeSearch();return;}
     if(browseJob!=null)browseJob.cancel(true);
     final int request=++generation; browseAdapter=null; browseList=null; moreControl=null;
     filtersRow.setVisibility(View.GONE);status.setText("Home · Your library, together");
@@ -374,9 +376,30 @@ public class MainActivity extends Activity {
     });
   }
 
+  void loadHomeSearch(){
+    if(browseJob!=null)browseJob.cancel(true);final int request=++generation,p=homeSearchPage,size=DeviceProfile.lite(this)?6:24;final String q=homeQuery;final List<Catalog.Title> previous=new ArrayList<>(homeSearchPool);filtersRow.setVisibility(View.GONE);homeSearchPending=true;homeSearchFailed=false;status.setText("Searching movies, series and anime…");
+    browseJob=work.submit(()->{
+      List<Future<List<Catalog.Title>>> jobs=new ArrayList<>();try{
+        List<Catalog.Title> pool=HomeLibrary.load(this);pool.addAll(previous);publishHomeSearch(request,q,p,size,pool,true,false,false);HomeSearch.worker.purge();
+        CompletionService<List<Catalog.Title>> completion=new ExecutorCompletionService<>(HomeSearch.worker);
+        for(String type:new String[]{"movies","shows","animes"}){String server=prefs.getString("server_"+type,"https://api.apiabcd.com/");jobs.add(completion.submit(()->HomeSearch.fetch(type,p,q,server)));}
+        long end=System.nanoTime()+20000000000L;boolean more=false,failed=false;
+        for(int n=0;n<3;n++){long remaining=end-System.nanoTime();Future<List<Catalog.Title>> done=remaining>0?completion.poll(remaining,TimeUnit.NANOSECONDS):null;if(done==null){failed=true;break;}try{List<Catalog.Title> found=done.get();pool.addAll(found);more|=found.size()>=24;}catch(ExecutionException e){failed=true;}publishHomeSearch(request,q,p,size,pool,n<2,more,failed);}
+        publishHomeSearch(request,q,p,size,pool,false,more,failed);
+      }catch(InterruptedException ignored){Thread.currentThread().interrupt();}catch(Exception e){publishHomeSearch(request,q,p,size,previous,false,false,true);}finally{for(Future<?> job:jobs)if(!job.isDone())job.cancel(true);}
+    });
+  }
+  void publishHomeSearch(int request,String q,int p,int size,List<Catalog.Title> pool,boolean pending,boolean remoteMore,boolean failed){
+    List<Catalog.Title> snapshot=HomeSearch.merge(pool);List<HomeFeed.Row> rows=HomeSearch.rows(snapshot,q,p,size);boolean more=remoteMore||HomeSearch.more(snapshot,q,p,size);
+    ui.post(()->{if(request!=generation||!homeTab||!q.equals(homeQuery)||isDestroyed())return;homeSearchPool=snapshot;homeSearchPending=pending;homeSearchFailed=failed;renderHome(rows);status.setText(pending?"Searching movies, series and anime…":failed?"Some services unavailable · showing available matches":"Search · Movies, Series and Anime");
+      LinearLayout body=(LinearLayout)((ScrollView)content.getChildAt(0)).getChildAt(0);int count=0;for(HomeFeed.Row row:rows)count+=row.cards.size();if(count==0)body.addView(text(pending?"Looking for matches…":failed?"No matches in available catalogs. Try again when connected.":"No matching titles found.",14,0xffb1b7c5));LinearLayout buttons=new LinearLayout(this);body.addView(buttons);
+      if(p>1){Button prev=button("Previous results",buttons,()->{homeSearchPage--;loadHomeSearch();});prev.setEnabled(!pending);}if(more){Button next=button("Next results",buttons,()->{homeSearchPage++;loadHomeSearch();});next.setEnabled(!pending);}button("Clear search",buttons,()->{homeQuery="";homeSearchPool.clear();search.setText("");loadHome();});
+    });
+  }
+
   void renderHome(List<HomeFeed.Row> rows){
     content.removeAllViews();final Map<ImageView,Catalog.Title> homeImages=new LinkedHashMap<>();final Set<ImageView> requested=new HashSet<>();ScrollView scroll=new ScrollView(this);LinearLayout body=new LinearLayout(this);body.setOrientation(LinearLayout.VERTICAL);scroll.addView(body);content.addView(scroll,new LinearLayout.LayoutParams(-1,-1));
-    TextView heading=text("Something for your next watch",25,-1);heading.setPadding(dp(8),dp(14),dp(8),dp(16));body.addView(heading);
+    TextView heading=text(homeQuery.isEmpty()?"Something for your next watch":"Search results for “"+homeQuery+"”",25,-1);heading.setPadding(dp(8),dp(14),dp(8),dp(16));body.addView(heading);
     for(HomeFeed.Row section:rows){
       if(section.cards.isEmpty()&&!section.name.equals("Continue Watching"))continue;
       TextView name=text(section.name,19,-1);name.setPadding(dp(8),dp(14),dp(8),dp(8));body.addView(name);
@@ -1251,7 +1274,7 @@ public class MainActivity extends Activity {
     }
   }
 
-  @Override protected void onSaveInstanceState(Bundle state){state.putBoolean("homeTab",homeTab);super.onSaveInstanceState(state);}
+  @Override protected void onSaveInstanceState(Bundle state){state.putBoolean("homeTab",homeTab);state.putString("homeQuery",homeQuery);super.onSaveInstanceState(state);}
 
   protected void onResume() {
     super.onResume();
@@ -1281,6 +1304,7 @@ public class MainActivity extends Activity {
   }
 
   void exitApp() {
+    if(homeTab&&!homeQuery.isEmpty()){homeQuery="";homeSearchPool.clear();search.setText("");search.setVisibility(View.GONE);loadHome();return;}
     PlaybackCache.exit(this);
     finishAndRemoveTask();
   }

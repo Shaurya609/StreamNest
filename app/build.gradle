@@ -2,7 +2,7 @@ plugins { id 'com.android.application' }
 android {
  namespace 'app.streamnest'
  compileSdk 36
- defaultConfig { applicationId 'app.streamnest'; minSdk 28; testInstrumentationRunner 'app.streamnest.PlaybackRegression'; targetSdk 35; versionCode 32; versionName '0.22.2'; ndk { abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64' } }
+ defaultConfig { applicationId 'app.streamnest'; minSdk 28; testInstrumentationRunner 'app.streamnest.PlaybackRegression'; targetSdk 35; versionCode 33; versionName '0.23.0'; ndk { abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64' } }
  splits { abi { enable true; reset(); include "armeabi-v7a", "arm64-v8a", "x86_64"; universalApk true } }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
  packaging { jniLibs { useLegacyPackaging = true } }

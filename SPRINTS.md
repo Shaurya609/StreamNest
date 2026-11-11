@@ -54,3 +54,7 @@ Fixed Windows renderer-owned styling, navigation clearance and visible/preserved
 ## Artwork and resume progress follow-up — 0.22.2
 
 Home artwork now repairs missing metadata through IMDb and bounded identity-checked fallbacks on Windows/Android. Desktop has an explicit watched-progress fill; Android progress is unchanged. Shared recommendation identities and order are retained. Validation includes real poster decoding and actual desktop fill geometry.
+
+## Unified Home search — 0.23.0
+
+Desktop Home has a persistent search field. Android Home search opens directly without choosing a content category. Both search saved catalogs immediately and query movie/series/anime services independently, with grouped results, bounded result pages, partial-failure status and stale-query guards. Search is local to the device and does not replace shared Home recommendations. The owner confirmed TV universal-APK preload and physical TV/projector Home layout passed.
