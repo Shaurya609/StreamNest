@@ -11,7 +11,7 @@ function build(pool,history={},limit=12,manual={}){
  for(const [n,key]of recent.entries()){const title=titles.get(key);if(title&&n<50)for(const genre of genres(title))affinity.set(genre,(affinity.get(genre)||0)+1);}
  const playbackRecent=[...playback.keys()].sort((a,b)=>playback.get(b).progress.updatedAt-playback.get(a).progress.updatedAt);
  for(const key of playbackRecent){const selection=manual[key];if(selection?.watched&&selection.whole&&selection.updatedAt>playback.get(key).progress.updatedAt)continue;const title=titles.get(key);if(!title)continue;const item=playback.get(key),p=item.progress;
-  if(!p.completed&&p.positionMs>=10000&&(!(p.durationMs>0)||(p.positionMs<p.durationMs-10000&&p.positionMs<p.durationMs*.98))&&resume.length<limit)resume.push(Object.assign({title},item));
+  if(!p.completed&&Number.isFinite(p.positionMs)&&p.positionMs>=0&&p.durationMs>0&&resume.length<limit)resume.push(Object.assign({title},item));
   if(p.completed&&title.kind!=='movies'&&resume.length<limit){const parts=item.historyKey.split(':'),order=(title.homeEpisodeOrder||[]).filter(k=>k.startsWith('0:')===(parts[2]==='0')),at=order.indexOf(parts[2]+':'+parts[3]),unfinished=k=>!history['episode:'+key+':'+k]?.completed,next=order.slice(at+1).find(unfinished)||order.find(unfinished);if(next)resume.push({title,progress:{nextEpisode:true},historyKey:'episode:'+key+':'+next});else if(!order.length||at<0)resume.push({title,progress:{continueSeries:true},historyKey:item.historyKey});}
 
  }
