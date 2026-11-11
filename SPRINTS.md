@@ -34,7 +34,7 @@ Independent EZTV episode discovery supplements the indexed provider for regular 
 
 Physical tablet Home/progress refresh/navigation and native intro/credits/settings-return checks passed in isolated verification apps. Live series and anime timestamp fallback checks passed. New Windows runtime 0.119.2 with matching pinned codecs passed hidden startup/video, Home, subtitle rendering, local fixture preload/cache handover and native updater checks. Precise release runs and validation limits are in VALIDATION.md.
 
-Remaining external dependencies: live Jikan filler-page verification (timed out), and Windows publisher signing (owner has no signing identity; free SignPath application is documented in WINDOWS-SIGNING.md). The Android local HTTP/peer preload harness remains an open verification item; its hash-verified cache/video handover checks passed. These are not re-opened TV/projector or MSI user-reported bugs.
+Remaining external dependencies: live Jikan filler-page verification (timed out). Windows signing was subsequently declined by the owner for this personal project. The Android local HTTP/peer preload harness remains an open verification item; its hash-verified cache/video handover checks passed. These are not re-opened TV/projector or MSI user-reported bugs.
 
 ## Source availability scope
 

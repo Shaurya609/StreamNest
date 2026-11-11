@@ -34,7 +34,7 @@ Automatic series/anime episode selection and cross-device resume are available i
 
 External catalogs and peers determine actual availability. Seed counts are provider reports rather than connected-peer guarantees. Source recovery tries up to six candidates and cannot guarantee every episode will stream.
 
-Windows uses NW.js 0.119.2 with matching pinned codecs and requires Windows 10 or newer. Publisher signing is pending; see [signing options](WINDOWS-SIGNING.md).
+Windows uses NW.js 0.119.2 with matching pinned codecs and requires Windows 10 or newer. This personal-project preview is unsigned; signed auto-update verification remains enabled.
 
 ## Install
 
@@ -78,7 +78,7 @@ Use Back from the catalog or Settings → Exit StreamNest to clear video cache. 
 
 ## Project scope
 
-This repository contains the Android app, a standalone Windows desktop preview and an overlay patch for Windows Popcorn Time 0.5.1. See [desktop installation and verification](desktop/README.md). Desktop runtime account settings, backups and media caches are excluded. Production signing, casting, a background download library and broader device testing remain future work.
+This repository contains the Android app, a standalone Windows desktop preview and an overlay patch for Windows Popcorn Time 0.5.1. See [desktop installation and verification](desktop/README.md). Desktop runtime account settings, backups and media caches are excluded. Casting, a background download library and broader device testing remain future work.
 
 The interface and workflow were informed by Popcorn Time, with an independently implemented Android UI and original StreamNest artwork. This is not an official Popcorn Time release.
 
