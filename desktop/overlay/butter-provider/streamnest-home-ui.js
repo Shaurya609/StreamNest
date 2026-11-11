@@ -3,7 +3,7 @@ function install(App,$){
  // Required Node modules can see NW's background document. Use the renderer owning jQuery nodes.
  const document=$('<div>')[0].ownerDocument;
  const H=require('./streamnest-home'),P=require('./streamnest-progress'),S=require('./streamnest-home-sync'),Art=require('./streamnest-artwork'),Search=require('./streamnest-home-search');
- const shared=(pool,history)=>{const code=require('./streamnest-sync').config().code;return S.apply(H.build(pool,history),pool,history,code?S.cached(code):null);};
+ const shared=(pool,history)=>{const code=require('./streamnest-sync').config().code;return S.apply(H.build(pool,history,12,require('./streamnest-manual-watched').records()),pool,history,code?S.cached(code):null,12,require('./streamnest-manual-watched').records());};
  if(document.getElementById('sn-home-style'))return;
  const style=document.createElement('style');style.id='sn-home-style';style.textContent=`
  .sn-home{position:fixed;top:68px;right:0;bottom:0;left:0;overflow:auto;overflow-x:hidden;background:#14161c;color:#f4f5fa;padding:24px 32px 60px;box-sizing:border-box;}

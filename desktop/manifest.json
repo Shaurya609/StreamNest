@@ -1,5 +1,5 @@
 {
-  "version": "0.23.0",
+  "version": "0.24.0",
   "target": "Popcorn Time 0.5.1",
   "files": [
     {
@@ -8,7 +8,7 @@
     },
     {
       "path": "bootstrap.js",
-      "sha256": "9ca7735068659085f2b4ea4613834812f572a36da2055c13dd3bbab489fedf79"
+      "sha256": "5cb2ed0ac19e636fb85c8d69cedd8b1a8625182fe0283c4d48d7c929c18ae92c"
     },
     {
       "path": "butter-provider/anime-series-v6.json",
@@ -116,15 +116,19 @@
     },
     {
       "path": "butter-provider/streamnest-home-sync.js",
-      "sha256": "59f56179a0825f5dbfa0d70956926fadd46a5f127abd864701c41e2539e18391"
+      "sha256": "814f71a54d015d2501a0c3afd9aea13c798675ce1f554d48d20c2f073163c0a8"
     },
     {
       "path": "butter-provider/streamnest-home-ui.js",
-      "sha256": "3340be3651b42804c8bce4ce6b4813537b52fd09c3215343cf84be43860d3afd"
+      "sha256": "7f62d78c4b8cfb3128608ef7fb105c2d42351dd913acf91959478042b7d90b6e"
     },
     {
       "path": "butter-provider/streamnest-home.js",
-      "sha256": "d1db7dd0eb56d9ac54a362e46659c67ea8b7b7eb6446fd62ac9819e7ed23e3a6"
+      "sha256": "993250f466dcc33cd91212b77d435d7b5d35835c4b3cdbb38fa7b28e4ea9d089"
+    },
+    {
+      "path": "butter-provider/streamnest-manual-watched.js",
+      "sha256": "c22232b87c0e3f3dd7967cb8180daae764910efa23ae3a12260b854f8a8cf106"
     },
     {
       "path": "butter-provider/streamnest-net.js",
@@ -172,11 +176,11 @@
     },
     {
       "path": "butter-provider/streamnest-sync-crypto.js",
-      "sha256": "3bc7c5c2da7080f51a324d9791f57982db4c482b72c18405c46512c9ba897c2e"
+      "sha256": "72261546975f8dcf09bb5645b6e0384249d33183244ada204f9fddb2632ba530"
     },
     {
       "path": "butter-provider/streamnest-sync.js",
-      "sha256": "34e187602b5e4d6081a46e80a0808838c0cb4d3b87056630b4035fc38f139fb0"
+      "sha256": "41372b4bdf22782feda306e49eea6ea658d8d986a0ace69037424a034b106542"
     },
     {
       "path": "butter-provider/tv.js",
@@ -211,6 +215,10 @@
       "sha256": "a37e4c832551ad1cca4ba0766d44616f34fbf58fa7469ee118fadc39c911a3f8"
     },
     {
+      "path": "lib/views/item.js",
+      "sha256": "8193930f8e2b494b96d0a0cd6279b573fe072efb4260f1ef93acc1802c2560bf"
+    },
+    {
       "path": "lib/views/loading.js",
       "sha256": "fdfa740fe431e524d9698ca501cb68a0eb22c004150e591c593512c698bd2009"
     },
@@ -220,7 +228,7 @@
     },
     {
       "path": "lib/views/play_control.js",
-      "sha256": "ff611309d8c0e5d93f60e99ceb60df94af513267ab4d35877d07b39275577a77"
+      "sha256": "50f903bbb4e809686a9e1a5a1070bf9d26759a28f0dbb76788a238ae3971fcb0"
     },
     {
       "path": "lib/views/player.js",
@@ -236,7 +244,7 @@
     },
     {
       "path": "lib/views/show_detail.js",
-      "sha256": "79211c774dd7ba4d99dcef4d4a9c6d1aa775cff27cf4e6eff02e6670b3f33c1f"
+      "sha256": "b9b82c0a9425c250329f529284bd4f6cbc45ba1123b21a5b6d57d971a2a3bd6a"
     },
     {
       "path": "streamer.js",

@@ -18,7 +18,8 @@ final class HomeFeed {
     Set<String> result=new HashSet<>();JSONArray a=t.raw.optJSONArray("genres");if(a==null)a=t.raw.optJSONArray("genre");
     if(a!=null)for(int i=0;i<a.length();i++)result.add(a.optString(i).toLowerCase(Locale.ROOT));return result;
   }
-  static List<Row> build(List<Catalog.Title> pool,JSONObject history,int limit)throws Exception{
+  static List<Row> build(List<Catalog.Title> pool,JSONObject history,int limit)throws Exception{return build(pool,history,limit,new JSONObject());}
+  static List<Row> build(List<Catalog.Title> pool,JSONObject history,int limit,JSONObject manual)throws Exception{
     Map<String,Catalog.Title> titles=new LinkedHashMap<>();for(Catalog.Title t:pool)if(t.id.matches("tt[0-9]+")&&!t.title.isBlank()){
       Catalog.Title old=titles.get(t.id);if(old==null||!old.kind.equals("animes")||t.kind.equals("animes"))titles.put(t.id,t);
     }
@@ -26,11 +27,12 @@ final class HomeFeed {
     for(Iterator<String> it=history.keys();it.hasNext();){String key=it.next();String[] parts=key.split(":");if(parts.length<2||!parts[1].matches("tt[0-9]+")||!(parts[0].equals("movie")||parts[0].equals("episode")))continue;
       JSONObject row=history.optJSONObject(key);if(row!=null&&(latest.get(parts[1])==null||row.optLong("updatedAt")>latest.get(parts[1]).optLong("updatedAt"))){latest.put(parts[1],row);keys.put(parts[1],key);}
     }
+    for(Iterator<String> it=manual.keys();it.hasNext();){String id=it.next();JSONObject r=manual.getJSONObject(id);if(!r.optBoolean("watched"))continue;JSONObject t=r.optJSONObject("title");if(t!=null&&!titles.containsKey(id))titles.put(id,Catalog.parse(t,t.getString("kind")));latest.put(id,new JSONObject().put("updatedAt",r.getLong("updatedAt")).put("completed",true).put("manualWatched",true));keys.put(id,"manual:"+id);}
     List<String> recent=new ArrayList<>(latest.keySet());recent.sort((a,b)->Long.compare(latest.get(b).optLong("updatedAt"),latest.get(a).optLong("updatedAt")));
     List<Card> resume=new ArrayList<>();Map<String,Integer> affinity=new HashMap<>();
     for(String id:recent){Catalog.Title t=titles.get(id);if(t==null)continue;JSONObject progress=latest.get(id);
       if(!progress.optBoolean("completed")&&WatchProgress.resumable(progress.optLong("positionMs"),progress.optLong("durationMs"))>0&&resume.size()<limit)resume.add(new Card(t,progress,keys.get(id)));
-      if(progress.optBoolean("completed")&&!t.kind.equals("movies")&&resume.size()<limit){String key=keys.get(id);String[] parts=key.split(":");JSONArray order=t.raw.optJSONArray("homeEpisodeOrder");if(parts.length==4&&order!=null)for(int n=0;n+1<order.length();n++)if(order.optString(n).equals(parts[2]+":"+parts[3])){String next=order.optString(n+1);if(next.startsWith("0:")==parts[2].equals("0"))resume.add(new Card(t,new JSONObject().put("nextEpisode",true),"episode:"+id+":"+next));break;}}
+      if(progress.optBoolean("completed")&&!progress.optBoolean("manualWatched")&&!t.kind.equals("movies")&&resume.size()<limit){String key=keys.get(id);String[] parts=key.split(":");JSONArray order=t.raw.optJSONArray("homeEpisodeOrder");if(parts.length==4&&order!=null)for(int n=0;n+1<order.length();n++)if(order.optString(n).equals(parts[2]+":"+parts[3])){String next=order.optString(n+1);if(next.startsWith("0:")==parts[2].equals("0"))resume.add(new Card(t,new JSONObject().put("nextEpisode",true),"episode:"+id+":"+next));break;}}
       if(recent.indexOf(id)<50)for(String g:genres(t))affinity.put(g,affinity.getOrDefault(g,0)+1);
     }
     List<Catalog.Title> candidates=new ArrayList<>(titles.values());

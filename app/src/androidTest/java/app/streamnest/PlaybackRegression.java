@@ -14,13 +14,14 @@ import org.videolan.libvlc.Media;
 /** Device-only regression; fixture is supplied locally, never bundled in the app. */
 public class PlaybackRegression extends Instrumentation {
   PlayerActivity activity;
-  boolean preload, discovery, home, fillerLive, groupHome, homeLayout, artwork, homeSearch;
-  String watchSyncCode, shortPairingCode, expectedPairingAuth;
+  boolean preload, discovery, home, fillerLive, groupHome, homeLayout, artwork, homeSearch, watchedStartup;
+  String watchSyncCode, shortPairingCode, expectedPairingAuth,manualSyncCode;
   boolean pairingUiDirect, skipLive, catalog, subtitles, storage, resilience, episodes, appUpdates, watchSyncUi, resumeUi;
 
   @Override
   public void onCreate(Bundle args) {
     super.onCreate(args);
+    manualSyncCode=args==null?null:args.getString("manualSyncCode");
     watchSyncCode = args == null ? null : args.getString("watchSyncCode");
     catalog = args != null && "true".equals(args.getString("catalog"));
     subtitles = args != null && "true".equals(args.getString("subtitles"));
@@ -43,11 +44,13 @@ public class PlaybackRegression extends Instrumentation {
     homeLayout=args!=null&&"true".equals(args.getString("homeLayout"));
     artwork=args!=null&&"true".equals(args.getString("artwork"));
     homeSearch=args!=null&&"true".equals(args.getString("homeSearch"));
+    watchedStartup=args!=null&&"true".equals(args.getString("watchedStartup"));
     start();
   }
 
   @Override
   public void onStart() {
+    if(watchedStartup){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,WatchedStartupRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
     if(homeSearch){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,HomeSearchRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
     if(artwork){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,ArtworkRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
     if(homeLayout){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,HomeLayoutRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}

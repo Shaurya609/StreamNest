@@ -81,6 +81,8 @@ final class WatchSyncCrypto {
     return clean(openDocument(code, doc));
   }
 
+  static String manualCode(String code) throws Exception {return format(Arrays.copyOf(derive(parse(code), "StreamNest manual watched namespace v1"),16));}
+
   static String homeCode(String code) throws Exception {
     return format(Arrays.copyOf(derive(parse(code), "StreamNest home namespace v1"),16));
   }

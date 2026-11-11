@@ -157,6 +157,8 @@
       }
 
       // Seen / Unseen
+      const manual=require('./butter-provider/streamnest-manual-watched').records()[this.model.get('imdb_id')];
+      if(manual)this.model.set('watched',manual.watched);
       if (this.model.get('watched')) {
         this.ui.watchedIcon.addClass('selected');
       }
@@ -317,11 +319,13 @@
     },
 
     toggleWatched: function(e) {
+      const wanted=!this.model.get('watched');
+      require('./butter-provider/streamnest-manual-watched').set({...this.model.attributes,imdb:this.model.get('imdb_id'),title:this.model.get('title'),kind:'movies'},wanted);
       $(
         'li[data-imdb-id="' + this.model.get('imdb_id') + '"] .actions-watched'
       ).click();
       this.ui.watchedIcon.toggleClass('selected');
-      this.model.set('watched', !this.model.get('watched'));
+      this.model.set('watched', wanted);
       this.setTooltips();
     },
 

@@ -125,6 +125,7 @@ final class WatchSync {
               WatchSyncCrypto.seal(pairing, merged),
               remote.getLong("revision"));
       if (!response.optBoolean("conflict")) {
+        try { ManualWatched.sync(c,pairing); } catch(Exception ignored) { /* Independent watched preferences retry. */ }
         try { HomeSync.sync(c,pairing); } catch(Exception ignored) { /* Progress already synced; Home retries. */ }
         return;
       }

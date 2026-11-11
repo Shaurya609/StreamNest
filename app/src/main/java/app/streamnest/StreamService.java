@@ -7,7 +7,8 @@ import java.io.*;
 import java.util.concurrent.*;
 
 public class StreamService extends Service {
-  static volatile TorrentEngine engine,retiring;
+  static volatile TorrentEngine engine,retiring,startupOwner;
+  static boolean startupBlocked(){TorrentEngine owner=startupOwner;return owner!=null&&owner.startup.active;}
   static final ExecutorService worker = Executors.newSingleThreadExecutor();
 
   public IBinder onBind(Intent i) {
@@ -51,6 +52,10 @@ public class StreamService extends Service {
       return START_NOT_STICKY;
     }
     promote();
+    TorrentEngine busy=startupOwner;
+    if(busy!=null&&busy.startup.active){
+      TorrentEngine rejected=new TorrentEngine();configure(rejected,i);rejected.startup.done();rejected.closed=true;rejected.message="Previous torrent operation is still finishing. "+busy.status();busy.closed=true;engine=rejected;return START_NOT_STICKY;
+    }
     TorrentEngine warm=EpisodePreload.claim(this,i);
     TorrentEngine next = warm==null?new TorrentEngine():warm;
     if(warm==null)configure(next,i);
@@ -58,25 +63,34 @@ public class StreamService extends Service {
     if (previous != null) previous.closed = true;
     retiring=previous;
     engine = next;
+    if(warm==null)startupOwner=next;
     worker.execute(
         () -> {
-          if (previous != null) {previous.close();EpisodePreload.released(previous);}
-          if(retiring==previous)retiring=null;
-          if(warm!=null)return;
           try {
+            if(warm==null)next.startup.begin("Stopping previous torrent session",20000);
+            if (previous != null) {previous.close();EpisodePreload.released(previous);}
+            if(retiring==previous)retiring=null;
+            if(warm!=null)return;
+            next.startup.check();
+            if(next.closed||engine!=next)return;
+            next.startup.enter("Checking cache folder",20000);
             File dir = directory(this,i);
             next.root=dir; // Reserve the destination before cancellation cleanup can inspect it.
             next.lite = DeviceProfile.lite(this);
             CacheLocation.writable(CacheLocation.current(this));
             if (next.closed) return;
+            next.startup.enter("Preparing episode cache",20000);
             PlaybackCache.prepareEpisode(this, i.getStringExtra("episodeIdentity"), dir, false);
             PlaybackCache.record(this, CacheLocation.current(this), dir);
             if (!next.closed) next.start(source, dir);
           } catch (Throwable e) {
+            next.closed=true;
             next.message =
                 "Unable to stream: "
                     + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
             android.util.Log.e("StreamNest", "Playback failed", e);
+          } finally {
+            try{if(next.closed||engine!=next){next.startup.begin("Cleaning failed torrent session",20000);next.close();EpisodePreload.released(next);}}finally{if(warm==null){next.startup.done();if(startupOwner==next)startupOwner=null;}}
           }
         });
     return START_NOT_STICKY;

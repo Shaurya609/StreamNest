@@ -15,7 +15,7 @@ final class TitleScreen extends Dialog {
   final boolean series;
   LinearLayout root, qualityRow, episodePanel;
   TextView heading, overview, airdate, health;
-  Button watch, favorite, subtitle;
+  Button watch, favorite, subtitle, watched;
   final Map<String, Button> qualityButtons = new LinkedHashMap<>();
   List<Catalog.Source> sources = new ArrayList<>();
   String selectedQuality = "", subtitleLanguage;
@@ -132,6 +132,7 @@ final class TitleScreen extends Dialog {
             toggles,
             this::toggleFavorite);
     subtitle = control(subtitleLabel(), toggles, this::chooseSubtitles);
+    watched=control(ManualWatched.isWatched(a,title.id)?"✓ Watched":"Mark watched",toggles,()->{try{ManualWatched.set(a,title,!ManualWatched.isWatched(a,title.id));watched.setText(ManualWatched.isWatched(a,title.id)?"✓ Watched":"Mark watched");}catch(Exception e){a.toast(e);}});
     root.addView(toggles);
     if (!series) buildControls(root);
     watch.setEnabled(false);

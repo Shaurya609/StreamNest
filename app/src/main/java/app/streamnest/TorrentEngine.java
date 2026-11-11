@@ -9,6 +9,7 @@ import org.libtorrent4j.alerts.*;
 final class TorrentEngine implements AutoCloseable {
   volatile String message = "Starting torrent engine…", url;
   volatile boolean closed;
+  final EngineStartup startup=new EngineStartup(System::nanoTime,s->android.util.Log.i("StreamNestStartup",s));
   boolean lite, publicMetadataLookup, episodeRequest;
   volatile boolean preloadOnly;
   boolean verifiedComplete;
@@ -26,9 +27,11 @@ final class TorrentEngine implements AutoCloseable {
       new java.util.concurrent.CountDownLatch(1);
 
   void start(String source, File directory) throws Exception {
+    startup.enter("Preparing torrent folder",20000);
     root = directory;
     if (!root.exists() && !root.mkdirs()) throw new IOException("Cannot create download folder");
-    session = new SessionManager();
+    startup.enter("Creating torrent session",30000);
+    session = new SafeTorrentSession();
     session.addListener(
         new AlertListener() {
           public int[] types() {
@@ -68,8 +71,10 @@ final class TorrentEngine implements AutoCloseable {
             .maxPeerlistSize(lite ? 200 : 1000)
             .activeDownloads(1)
             .alertQueueSize(300);
-    session.start();
-    session.applySettings(settings);
+    startup.enter("Starting torrent engine",45000);
+    session.start(new SessionParams(settings));
+    startup.check();
+    startup.done();
     if (closed) return;
     message = "Connecting to peers…";
     boolean magnet = source.startsWith("magnet:?");
@@ -262,7 +267,7 @@ final class TorrentEngine implements AutoCloseable {
   }
 
   String status() {
-    return message;
+    return startup.active?startup.status():message;
   }
 
   String updateStatus() {

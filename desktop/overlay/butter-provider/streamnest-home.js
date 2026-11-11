@@ -2,13 +2,14 @@
 const fs=require('fs'),path=require('path');let revision=0;
 function id(o){return o.imdb||o.imdb_id||o.imdb_code||o.id||'';}
 function genres(t){return [...new Set((Array.isArray(t.genres)?t.genres:Array.isArray(t.genre)?t.genre:[]).map(g=>String(g).toLowerCase()))];}
-function build(pool,history={},limit=12){
+function build(pool,history={},limit=12,manual={}){
  const titles=new Map();for(const title of pool)if(/^tt\d+$/.test(id(title))&&title.title){const old=titles.get(id(title));if(!old||old.kind!=='animes'||title.kind==='animes')titles.set(id(title),title);}
  const latest=new Map();for(const [key,row]of Object.entries(history)){const parts=key.split(':');if(!/^(movie:tt\d+|episode:tt\d+:\d+:\d+)$/.test(key)||!row)continue;const old=latest.get(parts[1]);if(!old||row.updatedAt>old.progress.updatedAt)latest.set(parts[1],{historyKey:key,progress:row});}
+ for(const [id,r]of Object.entries(manual))if(r.watched){if(r.title&&!titles.has(id))titles.set(id,r.title);latest.set(id,{historyKey:'manual:'+id,progress:{updatedAt:r.updatedAt,completed:true,manualWatched:true}});}
  const recent=[...latest.keys()].sort((a,b)=>latest.get(b).progress.updatedAt-latest.get(a).progress.updatedAt),affinity=new Map(),resume=[];
  for(const [n,key]of recent.entries()){const title=titles.get(key);if(!title)continue;const item=latest.get(key),p=item.progress;
   if(!p.completed&&p.positionMs>=10000&&(!(p.durationMs>0)||(p.positionMs<p.durationMs-10000&&p.positionMs<p.durationMs*.98))&&resume.length<limit)resume.push(Object.assign({title},item));
-  if(p.completed&&title.kind!=='movies'&&resume.length<limit&&Array.isArray(title.homeEpisodeOrder)){const parts=item.historyKey.split(':'),at=title.homeEpisodeOrder.indexOf(parts[2]+':'+parts[3]),next=title.homeEpisodeOrder[at+1];if(at>=0&&next&&next.startsWith('0:')===(parts[2]==='0'))resume.push({title,progress:{nextEpisode:true},historyKey:'episode:'+key+':'+next});}
+  if(p.completed&&!p.manualWatched&&title.kind!=='movies'&&resume.length<limit&&Array.isArray(title.homeEpisodeOrder)){const parts=item.historyKey.split(':'),at=title.homeEpisodeOrder.indexOf(parts[2]+':'+parts[3]),next=title.homeEpisodeOrder[at+1];if(at>=0&&next&&next.startsWith('0:')===(parts[2]==='0'))resume.push({title,progress:{nextEpisode:true},historyKey:'episode:'+key+':'+next});}
   if(n<50)for(const genre of genres(title))affinity.set(genre,(affinity.get(genre)||0)+1);
  }
  const scores=new Map([...titles.values()].map(t=>[id(t),genres(t).reduce((s,g)=>s+(affinity.get(g)||0),0)])),score=t=>scores.get(id(t)),candidates=[...titles.values()].filter(t=>!latest.has(id(t))&&!(Number(t.year)>new Date().getFullYear())).sort((a,b)=>score(b)-score(a)||(a.trendRank||100000)-(b.trendRank||100000)||(Number(b.rating)||0)-(Number(a.rating)||0)||id(a).localeCompare(id(b)));

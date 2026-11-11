@@ -24,7 +24,7 @@ async function sync(code){
   if(config().code!==code)return;
   const remote=await call('GET',code),incoming=remote.payload?C.open(code,remote.payload):{};
   if(config().code!==code)return;
-  progress.merge(incoming);const result=await call('PUT',code,C.seal(code,progress.records()),remote.revision);if(!result.conflict){try{await require('./streamnest-home-sync').sync(code,(derived,payload,revision)=>call(payload?'PUT':'GET',derived,payload,revision),()=>config().code,progress.records(),()=>require('./streamnest-home').load());}catch(e){/* Home retries independently; progress already synced. */}return;}
+  progress.merge(incoming);const result=await call('PUT',code,C.seal(code,progress.records()),remote.revision);if(!result.conflict){try{await require('./streamnest-manual-watched').sync(code,(derived,payload,revision)=>call(payload?'PUT':'GET',derived,payload,revision),()=>config().code);}catch(e){/* Independent watched preferences retry on next sync. */}try{await require('./streamnest-home-sync').sync(code,(derived,payload,revision)=>call(payload?'PUT':'GET',derived,payload,revision),()=>config().code,progress.records(),()=>require('./streamnest-home').load());}catch(e){/* Home retries independently; progress already synced. */}return;}
  }throw Error('Another device is syncing; retry shortly');
 }
 async function request(force=false){

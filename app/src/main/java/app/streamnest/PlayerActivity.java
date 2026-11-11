@@ -567,6 +567,8 @@ public class PlayerActivity extends Activity {
   }
 
   void switchSource(boolean automatic) {
+    TorrentEngine starting=StreamService.engine;
+    if(StreamService.startupBlocked()||starting!=null&&starting.startup.active){if(!automatic)Toast.makeText(this,starting==null?"Waiting for engine cleanup":starting.status(),Toast.LENGTH_LONG).show();return;}
     if (changingEpisode) return;
     if (attempt + 1 >= alternatives.size()) {
       if (!automatic)
@@ -882,6 +884,7 @@ public class PlayerActivity extends Activity {
             lastProgressAt = SystemClock.elapsedRealtime();
           }
           if (!playedVideo
+              && !StreamService.startupBlocked()&&!(currentEngine&&e.startup.active)
               && !userPaused
               && alternatives.size() > attempt + 1
               && (!mediaSet || startupRetries >= 2)

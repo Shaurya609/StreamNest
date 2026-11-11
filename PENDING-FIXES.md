@@ -56,3 +56,7 @@ A window launched from Explorer while installation was still extracting files ke
 ## Owner acceptance — 11 November 2026
 
 The owner confirmed next-episode preload working on TV with the universal APK, and the latest Home layout passed on physical TV/projector. Both product verification items are closed. The isolated Android network harness remains a diagnostic limitation, not an open user-reported preload defect.
+
+## Android projector startup follow-up — 0.24.0
+
+Added elapsed stage diagnostics, initial low-memory session settings, busy-start rejection and safe cleanup timeout guidance. A native alert-loop shutdown race was reproduced and guarded narrowly. Tablet native and live encrypted watched-sync checks passed. The owner's specific intermittent projector stall across internal/USB storage has not been reproduced or retested on that projector; a permanently blocked native call still requires app restart. Black Clover diagnosis remains read-only and is not part of this change.

@@ -58,3 +58,7 @@ Home artwork now repairs missing metadata through IMDb and bounded identity-chec
 ## Unified Home search — 0.23.0
 
 Desktop Home has a persistent search field. Android Home search opens directly without choosing a content category. Both search saved catalogs immediately and query movie/series/anime services independently, with grouped results, bounded result pages, partial-failure status and stale-query guards. Search is local to the device and does not replace shared Home recommendations. The owner confirmed TV universal-APK preload and physical TV/projector Home layout passed.
+
+## Manual watched preferences and Android startup resilience — 0.24.0
+
+Manual Watched preferences use their own domain-derived encrypted room with bounded metadata and timestamped undo tombstones. Recommendations consume them separately from playback history; old progress clients cannot erase them. Both Android title toggles and desktop Watched actions publish changes. Native startup now gets low-memory settings before session creation, staged monotonic watchdog status and busy-start suppression. A thread-specific guard handles only the pinned torrent library's known pop_alerts null-session exception during intentional shutdown. The projector-specific symptom is not claimed reproduced on the tablet.

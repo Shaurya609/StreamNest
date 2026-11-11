@@ -61,7 +61,7 @@ final class EpisodePreload {
         synchronized(EpisodePreload.class){if(value.engine.closed||slot!=value)return;value.readyToClaim=true;}
         message="Preloading next episode";
         value.engine.start(best.url,dir);
-      }catch(Throwable error){if(!value.claimed)message="Next episode preload unavailable";else value.engine.message="Unable to stream preloaded episode";}
+      }catch(Throwable error){value.engine.startup.done();if(!value.claimed)message="Next episode preload unavailable";else value.engine.message="Unable to stream preloaded episode";}
       finally {
         if(!value.claimed||value.engine.closed)value.engine.close();
         if(!value.claimed){released(value.engine);synchronized(EpisodePreload.class){if(slot==value)slot=null;}PlaybackCache.discard(c,value.engine.root);}

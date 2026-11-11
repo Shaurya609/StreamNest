@@ -484,6 +484,7 @@
         },
 
         markShowAsWatched: function () {
+            require('./butter-provider/streamnest-manual-watched').set({...this.model.attributes,imdb:this.model.get('imdb_id'),title:this.model.get('title'),kind:this.model.get('animeSeries')?'animes':'shows'},true);
             $('.sha-watched').addClass('selected');
 
             var tvdb_id = _this.model.get('tvdb_id');

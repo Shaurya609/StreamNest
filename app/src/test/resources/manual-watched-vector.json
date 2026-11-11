@@ -1,0 +1,24 @@
+{
+  "code": "0707-0707-0707-0707-0707-0707-0707-0707-D761",
+  "derived": "00EC-4F09-4E32-E537-B388-EA20-6267-8C79-C544",
+  "records": {
+    "tt99003001": {
+      "watched": true,
+      "updatedAt": 100,
+      "title": {
+        "imdb": "tt99003001",
+        "kind": "animes",
+        "title": "Public test fixture",
+        "genres": [
+          "action"
+        ]
+      }
+    }
+  },
+  "signature": "b7fd4d570c84cadb10ff16a0be1d58d5ee925802d2b9e9ee8c015e1919c548d9",
+  "encrypted": {
+    "v": 1,
+    "iv": "TwCeqa23FJJnzCdM",
+    "body": "Gr9uJmr3S6Ogu3HJZyNnUbiKjwp7FH5mmnNi0sJ5p8Xc8bMRUIYHgGFeJvzt/S4zN5QiVVGV8sBtcD05Lwteczk20C3q7aUzOiTd7dTy1t+IlHH5ufRHCb/BIwiHRgWLSgUcDinoh2jhQOqIuHGhQOttVDujNzG2fjVz9RPN76xBEnoDEuiPfbFlQOFwSW8QvvgBmSP/x6/O+8YI8aXVp4WQISFiOfDGXa2N2tCjKUGln9/9bDs="
+  }
+}
