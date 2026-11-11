@@ -1,6 +1,6 @@
 # Pending fixes and verification
 
-Current sprint/release status is in [SPRINTS.md](SPRINTS.md) and [VALIDATION.md](VALIDATION.md). Version 0.22.1 corrects desktop Home styling and validates cross-platform layouts; 0.22.0 added shared recommendations to the existing Home, broader catalogs/independent series lookup and modern Windows runtime. Owner-confirmed MSI sync and TV/projector issues are closed. Remaining external verification/setup: live Jikan filler data (timed out) and the previously documented Android local network preload harness. Public source and language availability remain variable. Windows signing was explicitly declined by the owner for this personal project; it is not a release blocker. Older dated entries below are historical verification notes.
+Current sprint/release status is in [SPRINTS.md](SPRINTS.md) and [VALIDATION.md](VALIDATION.md). Version 0.22.2 adds missing-artwork recovery and explicit desktop resume fill, following 0.22.1 Home layout validation; 0.22.0 added shared recommendations to the existing Home, broader catalogs/independent series lookup and modern Windows runtime. Owner-confirmed MSI sync and TV/projector issues are closed. Remaining external verification/setup: live Jikan filler data (timed out) and the previously documented Android local network preload harness. Public source and language availability remain variable. Windows signing was explicitly declined by the owner for this personal project; it is not a release blocker. Older dated entries below are historical verification notes.
 
 Updated 4 November 2026. Version 0.11.0 implements launch renewal, subtitle archive decoding and completed conversion writes, dynamic loopback subtitle serving, pinned anime pagination and broader independent discovery. Live desktop Percy Jackson S1E1 search/download produced 540 cues and the real video.js subtitle display rendered a downloaded cue in an isolated hidden renderer. Android fresh/expired anonymous access is covered by regression probes; tablet playback survives subtitle settings return.
 
@@ -47,3 +47,8 @@ The owner selected anonymous access only. Personal subtitle-account upgrade-rete
 Timestamp provider scope — owner selected IntroDB and cached timestamps for now. Anime Skip client registration/integration is deferred. Continue validating episode identity and segment boundaries before showing skip controls.
 
 Owner confirmation: Percy Jackson TV playback, projector operation and USB cache storage are fixed. Removed from active device backlog based on that confirmation.
+
+
+## Windows update launch guard — observed 11 November 2026
+
+A window launched from Explorer while installation was still extracting files kept older Home controls in memory, even though the final files/package version were updated. The normal helper completed and attempted restart, but the already-running instance remained. A full quit/reopen after installation completed loaded the corrected controls. Add an installation-in-progress launch guard or clearer wait/restart UX; do not reset the profile to work around this condition.
