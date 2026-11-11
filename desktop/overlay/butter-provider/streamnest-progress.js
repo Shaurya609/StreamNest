@@ -15,6 +15,6 @@ function chooseEpisode(imdb,episodes,history=records(),now=Date.now()){
  let latest=null,record=null;
  for(const e of ordered){const row=history['episode:'+imdb+':'+e.season+':'+e.episode];if(row&&aired(e)&&row.updatedAt>0&&(!record||row.updatedAt>record.updatedAt)){latest=e;record=row;}}
  if(!latest||!record.completed)return latest;
- const next=ordered.slice(ordered.indexOf(latest)+1).find(e=>(e.season===0)===(latest.season===0));return next&&aired(next)?next:latest;
+ const pending=e=>(e.season===0)===(latest.season===0)&&aired(e)&&!history['episode:'+imdb+':'+e.season+':'+e.episode]?.completed;return ordered.slice(ordered.indexOf(latest)+1).find(pending)||ordered.find(pending)||latest;
 }
 module.exports={identity,resumable,read,save,records,merge,chooseEpisode};

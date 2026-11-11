@@ -32,12 +32,7 @@ final class ResumeEpisodeSelection {
       }
     }
     if (latest == null || !record.optBoolean("completed")) return latest;
-    boolean after = false;
-    for (JSONObject e : ordered) {
-      if (after && (e.optInt("season") == 0) == (latest.optInt("season") == 0))
-        return aired(e, now) ? e : latest;
-      if (e == latest) after = true;
-    }
+    for(int pass=0;pass<2;pass++)for(int n=pass==0?ordered.indexOf(latest)+1:0;n<ordered.size();n++){JSONObject e=ordered.get(n),done=history.optJSONObject(WatchProgress.identity(imdb,e.optInt("season"),e.optInt("episode"),""));if((e.optInt("season")==0)==(latest.optInt("season")==0)&&aired(e,now)&&(done==null||!done.optBoolean("completed")))return e;}
     return latest;
   }
 }
