@@ -44,3 +44,8 @@ Remaining external dependencies: live Jikan filler-page verification (timed out)
 ## Shared recommendations follow-up — 0.22.0
 
 Home recommendation rows now belong to the existing sync group. Android/Windows share encrypted ordering and lean metadata with backwards-compatible progress sync. Real disposable cross-platform sync, native Home rendering, Windows Home rendering, watched-title removal and group isolation passed. Low Memory shows the same row prefix. Windows signing is intentionally not planned by owner decision. Publication acceptance is recorded in VALIDATION.md.
+
+
+## Home layout follow-up — 0.22.1
+
+Fixed Windows renderer-owned styling, navigation clearance and visible/preserved keyboard focus. Added real geometry and screenshot checks across desktop themes/sizes. Android phone/tablet/TV-sized/Low Memory layouts and remote navigation passed on a disposable tablet app; physical TV/projector retesting remains distinct. Recommendation data and pairing are unchanged.

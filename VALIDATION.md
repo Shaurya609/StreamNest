@@ -277,3 +277,14 @@ Recommendations are eventually consistent and need 0.22.0 on participating devic
 
 
 Installed Windows follow-up: the existing installation was already 0.22.0, and its normal update-helper log recorded successful installation/restart. Launch initially showed a blank loading window, then completed without profile changes. Accessibility inspection confirmed Home and retained Continue Watching entries. A private boolean-only check confirmed the cached Home belongs to the existing pairing key: seven shared rows, 84 card references. No recovery key, personal group name or watch-history contents were recorded in verification output. The installed profile was not reset or manually replaced.
+
+
+## Home layout correction — 0.22.1
+
+The user screenshot reproduced in an isolated 0.22.0 renderer once computed styles were checked: rail display=block, card width=652px, poster width=500px and heading text black. The prior content/navigation assertions had passed despite missing styles. The required Home module had inserted its stylesheet into NW's background document instead of the visible renderer. It now obtains the renderer document from jQuery-owned nodes. Home is placed below the measured filter bar and observes bar/viewport resizing. Scoped focus styles override legacy theme button rules, and row scroll/focus survive repaint.
+
+The upgraded Windows smoke checks pass row flex layout, card/poster bounds, visible keyboard focus, horizontal/vertical key movement, focus retention during refresh and no navigation overlap. Screenshot matrix: 960x600 dark, 1366x768 light and 1920x1080 dark-orange; cards=148 CSS pixels, posters=138 pixels, no whole-Home horizontal overflow. Visual review also caught and corrected the initial header overlap. Standard Continue Watching, next-episode detail selection, Home navigation and settings smoke pass. The final local development package had its changed Home module copied from tested source after initial assembly; final CI/release assembly must independently verify the clean source package.
+
+Isolated physical-tablet native layout checks: phone width360dp, tablet1333dp, TV-sized1920dp and Low Memory1920dp passed bounded card/poster geometry and D-pad row/horizontal navigation. Standard modes rendered49 fixture cards; Low Memory rendered25. These are display configurations on the connected tablet, not actual TV/projector hardware tests. Fixture poster availability varied with network timing; placeholder geometry stayed bounded. The helper restored the original1200x2000 size and240dpi, removed disposable verification packages and restored/rebuilt the production application ID. No production APK was installed through ADB. Android Home implementation did not require a styling change.
+
+108 Node and 180 Android unit checks, build and lint pass. Existing paired recommendation protocol is unchanged. Publication acceptance follows when completed.

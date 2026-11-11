@@ -14,7 +14,7 @@ import org.videolan.libvlc.Media;
 /** Device-only regression; fixture is supplied locally, never bundled in the app. */
 public class PlaybackRegression extends Instrumentation {
   PlayerActivity activity;
-  boolean preload, discovery, home, fillerLive, groupHome;
+  boolean preload, discovery, home, fillerLive, groupHome, homeLayout;
   String watchSyncCode, shortPairingCode, expectedPairingAuth;
   boolean pairingUiDirect, skipLive, catalog, subtitles, storage, resilience, episodes, appUpdates, watchSyncUi, resumeUi;
 
@@ -40,11 +40,13 @@ public class PlaybackRegression extends Instrumentation {
     home=args!=null&&"true".equals(args.getString("home"));
     discovery=args!=null&&"true".equals(args.getString("discovery"));
     groupHome=args!=null&&"true".equals(args.getString("groupHome"));
+    homeLayout=args!=null&&"true".equals(args.getString("homeLayout"));
     start();
   }
 
   @Override
   public void onStart() {
+    if(homeLayout){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,HomeLayoutRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
     if(groupHome){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,GroupHomeRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
     if(fillerLive){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,HomeRegression.filler());}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
     if(home){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,HomeRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
