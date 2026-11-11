@@ -3,6 +3,8 @@
 const fs=require('fs'),path=require('path'),crypto=require('crypto'),C=require('./streamnest-sync-crypto');
 const NAMES=['Picked for you','Discover something new','Recently added','Movies','Series','Anime','Hindi picks','Korean picks'];
 let revision=0;
+function createGate(){let lastScope='',lastSignature='',lastAt=0;return(scope,signature,now)=>{if(scope===lastScope&&signature===lastSignature&&now-lastAt<60000)return false;lastScope=scope;lastSignature=signature;lastAt=now;return true;};}
+const shouldPoll=createGate();
 function watched(history,previous={}){const result={...previous};for(const [key,p]of Object.entries(C.clean(history))){const id=key.split(':')[1];result[id]=Math.max(result[id]||0,p.updatedAt);}return Object.fromEntries(Object.entries(result).sort((a,b)=>b[1]-a[1]||(a[0]<b[0]?-1:1)).slice(0,500));}
 function asHistory(watched){return Object.fromEntries(Object.entries(watched).map(([id,time])=>['movie:'+id,{positionMs:10000,durationMs:120000,updatedAt:time}]));}
 function signature(history){
@@ -40,10 +42,10 @@ function apply(local,pool,history,home,limit=12){
  return [local[0],...home.rows.map(row=>({name:row.name,cards:row.ids.filter(id=>!watched.has(id)).slice(0,limit).map(id=>({title:{...known.get(id),...home.titles[id]}}))}))];
 }
 async function sync(code,call,current,history,pool){
- const derived=C.homeCode(code);for(let n=0;n<3;n++){
+ const derived=C.homeCode(code),existing=cached(code),wanted=signature(asHistory(watched(history,existing&&existing.watched)));if(!shouldPoll(C.auth(derived),wanted,Date.now()))return existing;for(let n=0;n<3;n++){
   if(current()!==code)return;const remote=await call(derived),home=remote.payload?clean(C.openDocument(derived,remote.payload)):null;if(current()!==code)return;
   if(home&&home.history===signature(asHistory(watched(history,home.watched)))&&Date.now()-home.createdAt<86400000){save(code,home);return home;}
   const next=create(await pool(),history,home);if(!next)return;const response=await call(derived,C.seal(derived,next),remote.revision);if(current()!==code)return;if(!response.conflict){save(code,next);return next;}
  }throw Error('Home changed; retry shortly');
 }
-module.exports={watched,asHistory,signature,metadata,clean,create,apply,cached,sync,changed(){revision++;},get revision(){return revision;}};
+module.exports={createGate,watched,asHistory,signature,metadata,clean,create,apply,cached,sync,changed(){revision++;},get revision(){return revision;}};

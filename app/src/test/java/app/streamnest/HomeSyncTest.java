@@ -7,6 +7,9 @@ import static org.junit.Assert.*;
 public class HomeSyncTest {
   JSONObject vector()throws Exception{try(java.io.InputStream in=getClass().getResourceAsStream("/group-home-vector.json")){return new JSONObject(new String(in.readAllBytes(),StandardCharsets.UTF_8));}}
   Catalog.Title title(String id,String kind)throws Exception{return Catalog.parse(new JSONObject().put("imdb",id).put("title",id).put("genres",new JSONArray().put("action")),kind);}
+  @Test public void pollingBoundsRoutineRequestsButNotNewChoices(){
+    assertTrue(HomeSync.shouldPoll("test-group","first",1000));assertFalse(HomeSync.shouldPoll("test-group","first",2000));assertTrue(HomeSync.shouldPoll("test-group","new",2001));assertFalse(HomeSync.shouldPoll("test-group","new",60000));assertTrue(HomeSync.shouldPoll("test-group","new",62001));assertTrue(HomeSync.shouldPoll("other-group","new",62002));
+  }
   @Test public void sharedGeneratorPreservesAnimeIdentity()throws Exception{
     JSONObject home=HomeSync.create(Arrays.asList(title("tt2","animes"),title("tt2","shows")),new JSONObject(),null,1000);assertEquals("animes",home.getJSONObject("titles").getJSONObject("tt2").getString("kind"));
   }

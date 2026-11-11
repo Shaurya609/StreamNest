@@ -8,6 +8,8 @@ import org.json.*;
 
 /** Group-owned recommendations, separate from the backwards-compatible progress room. */
 final class HomeSync {
+  static String lastScope="",lastSignature="";static long lastCheck;
+  static synchronized boolean shouldPoll(String scope,String signature,long now){if(scope.equals(lastScope)&&signature.equals(lastSignature)&&now-lastCheck<60000)return false;lastScope=scope;lastSignature=signature;lastCheck=now;return true;}
   static final Set<String> NAMES=new HashSet<>(Arrays.asList("Picked for you","Discover something new","Recently added","Movies","Series","Anime","Hindi picks","Korean picks"));
   static Map<String,Long> latest(JSONObject history)throws Exception{
     Map<String,Long> result=new HashMap<>();JSONObject clean=WatchSyncCrypto.clean(history);
@@ -62,6 +64,7 @@ final class HomeSync {
   static List<HomeFeed.Row> build(Context c,List<Catalog.Title> pool,JSONObject history,int limit)throws Exception{return apply(HomeFeed.build(pool,history,limit),pool,history,cached(c),limit);}
   static void sync(Context c,String pairing)throws Exception{
     String code=WatchSyncCrypto.homeCode(pairing),auth=WatchSyncCrypto.auth(code),endpoint=WatchSync.endpoint(c);
+    JSONObject existing=cached(c);if(!shouldPoll(auth,signature(asHistory(union(WatchProgress.records(c),existing==null?null:existing.optJSONObject("watched")))),System.currentTimeMillis()))return;
     for(int n=0;n<3;n++){
       if(!pairing.equals(WatchSync.code(c)))return;JSONObject remote=WatchSync.call(endpoint,"GET",auth,null,0),home=remote.isNull("payload")?null:clean(WatchSyncCrypto.openDocument(code,remote.getJSONObject("payload")));if(!pairing.equals(WatchSync.code(c)))return;
       JSONObject history=WatchProgress.records(c);

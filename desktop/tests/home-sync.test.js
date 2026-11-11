@@ -37,3 +37,5 @@ test('revision conflict adopts winner without re-ranking for another device; cac
 });
 
 test('shared generator preserves anime identity over a remembered general-series duplicate',()=>{const home=S.create([title('tt2','animes'),title('tt2','shows')],{});assert.equal(home.titles.tt2.kind,'animes');assert.ok(home.rows.find(r=>r.name==='Anime').ids.includes('tt2'));});
+
+test('routine Home polling is bounded without delaying a new group or viewing choice',()=>{const poll=S.createGate();assert.ok(poll('group','first',1000));assert.equal(poll('group','first',2000),false);assert.ok(poll('group','new-choice',2001));assert.equal(poll('group','new-choice',60000),false);assert.ok(poll('group','new-choice',62001));assert.ok(poll('other-group','new-choice',62002));});
