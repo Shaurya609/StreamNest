@@ -34,7 +34,7 @@ final class EpisodeQueue {
             "episode",
             "absolute",
             "skipMalId",
-            "animeMapped",
+            "animeMapped", "animeTitle",
             "kitsuId",
             "kitsuEpisode",
             "title",

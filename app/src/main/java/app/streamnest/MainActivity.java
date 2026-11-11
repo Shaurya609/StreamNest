@@ -15,7 +15,12 @@ import org.json.*;
 public class MainActivity extends Activity {
   final ExecutorService work = Executors.newFixedThreadPool(2);
   PosterLoader posters;
-  boolean activeLite;
+  boolean activeLite, homeTab = true;
+  LinearLayout filtersRow;
+  String homeHistorySignature = "";
+  long homeLibraryRevision;
+  final Runnable homeRefresh=()->{if(homeTab&&!isDestroyed())refreshHomeProgress();};
+  final android.content.SharedPreferences.OnSharedPreferenceChangeListener homeProgressListener=(p,key)->{if(homeTab){MainActivity.this.ui.removeCallbacks(homeRefresh);MainActivity.this.ui.postDelayed(homeRefresh,250);}};
   Button sortControl, genreControl, qualityControl, languageControl;
   String language = "all", animeFormat = "series";
   int order = -1;
@@ -93,6 +98,7 @@ public class MainActivity extends Activity {
         DeviceProfile.projector(this)
             ? android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             : android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+    homeTab = state==null || state.getBoolean("homeTab",true);
     prefs = getSharedPreferences("library", 0);
     kind = prefs.getString("kind", "movies");
     favoriteTab = prefs.getBoolean("favoriteTab", false);
@@ -138,6 +144,7 @@ public class MainActivity extends Activity {
     bar.addView(brand);
     tabs = new LinearLayout(this);
     bar.addView(tabs);
+    navButton("Home", tabs, () -> { homeTab = true; favoriteTab = false; load(); });
     navButton("Movies", tabs, () -> tab("movies"));
     navButton("Series", tabs, () -> tab("shows"));
     navButton("Anime", tabs, () -> tab("animes"));
@@ -145,6 +152,7 @@ public class MainActivity extends Activity {
         "Favorites",
         tabs,
         () -> {
+          homeTab = false;
           favoriteTab = true;
           load();
         });
@@ -169,11 +177,15 @@ public class MainActivity extends Activity {
     root.addView(search, new LinearLayout.LayoutParams(-1, dp(44)));
     searchButton.setOnClickListener(
         v -> {
+          if(homeTab){new AlertDialog.Builder(this).setTitle("Search in").setItems(new String[]{"Movies","Series","Anime"},(dialog,index)->{
+            genre="All";quality="All";language="all";hindiMode=false;animeFormat="series";query="";search.setText("");tab(new String[]{"movies","shows","animes"}[index]);search.setVisibility(View.VISIBLE);search.requestFocus();((android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).showSoftInput(search,android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+          }).show();return;}
           search.setVisibility(search.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
           if (search.getVisibility() == View.VISIBLE) search.requestFocus();
         });
     search.setOnEditorActionListener(
         (v, a, e) -> {
+          if(homeTab) { homeTab = false; kind = "movies"; }
           query = search.getText().toString().trim();
           page = 1;
           load();
@@ -181,7 +193,7 @@ public class MainActivity extends Activity {
               .hideSoftInputFromWindow(search.getWindowToken(), 0);
           return true;
         });
-    LinearLayout filtersRow = new LinearLayout(this);
+    filtersRow = new LinearLayout(this);
     root.addView(filtersRow);
     qualityControl = button("Quality", filtersRow, this::qualityMenu);
     genreControl = button("Genre", filtersRow, this::genreMenu);
@@ -257,6 +269,8 @@ public class MainActivity extends Activity {
   }
 
   void tab(String k) {
+    homeTab = false;
+    HomeLibrary.clear();
     favoriteTab = false;
     kind = k;
     if (k.equals("movies") && !Arrays.asList("All", "1080p", "2160p").contains(quality))
@@ -277,6 +291,8 @@ public class MainActivity extends Activity {
   }
 
   void load() {
+    if(homeTab){loadHome();return;}
+    filtersRow.setVisibility(View.VISIBLE);
     prefs.edit().putString("kind", kind).putBoolean("favoriteTab", favoriteTab).apply();
     prefs
         .edit()
@@ -334,6 +350,50 @@ public class MainActivity extends Activity {
     content.removeAllViews();
     status.setText(favoriteTab ? "Saved titles" : "Loading " + kind + "…");
     requestPage(1, generation);
+  }
+
+  void refreshHomeProgress(){
+    try{String signature=WatchProgress.records(this).toString();if(!signature.equals(homeHistorySignature)||homeLibraryRevision!=HomeLibrary.revision)loadHome();}catch(Exception ignored){}
+  }
+
+  void loadHome(){
+    if(browseJob!=null)browseJob.cancel(true);
+    final int request=++generation; browseAdapter=null; browseList=null; moreControl=null;
+    filtersRow.setVisibility(View.GONE);status.setText("Home · Your library, together");
+    for(int i=0;i<tabs.getChildCount();i++)tabs.getChildAt(i).setSelected(((Button)tabs.getChildAt(i)).getText().toString().equals("Home"));
+    content.removeAllViews();content.addView(text("Loading your home…",16,0xffaaaaaa));
+    browseJob=work.submit(()->{
+      try{
+        JSONObject history=WatchProgress.records(this);List<Catalog.Title> pool=HomeLibrary.load(this);
+        List<HomeFeed.Row> rows=HomeFeed.build(pool,history,DeviceProfile.lite(this)?6:12);
+        ui.post(()->{if(request==generation&&homeTab&&!isDestroyed()){homeHistorySignature=history.toString();homeLibraryRevision=HomeLibrary.revision;renderHome(rows);}});
+        List<Catalog.Title> before=new ArrayList<>(pool);pool=HomeLibrary.enrich(this,pool,history);if(pool.equals(before))return;List<HomeFeed.Row> enriched=HomeFeed.build(pool,history,DeviceProfile.lite(this)?6:12);
+        ui.post(()->{if(request==generation&&homeTab&&!isDestroyed()){homeLibraryRevision=HomeLibrary.revision;renderHome(enriched);}});
+      }catch(Exception e){ui.post(()->{if(request==generation&&homeTab&&!isDestroyed()){content.removeAllViews();content.addView(text("Home unavailable. Open Movies, Series or Anime, or tap above to retry.",16,0xffaaaaaa));}});}
+    });
+  }
+
+  void renderHome(List<HomeFeed.Row> rows){
+    content.removeAllViews();final Map<ImageView,String> homeImages=new LinkedHashMap<>();final Set<ImageView> requested=new HashSet<>();ScrollView scroll=new ScrollView(this);LinearLayout body=new LinearLayout(this);body.setOrientation(LinearLayout.VERTICAL);scroll.addView(body);content.addView(scroll,new LinearLayout.LayoutParams(-1,-1));
+    TextView heading=text("Something for your next watch",25,-1);heading.setPadding(dp(8),dp(14),dp(8),dp(16));body.addView(heading);
+    for(HomeFeed.Row section:rows){
+      if(section.cards.isEmpty()&&!section.name.equals("Continue Watching"))continue;
+      TextView name=text(section.name,19,-1);name.setPadding(dp(8),dp(14),dp(8),dp(8));body.addView(name);
+      if(section.cards.isEmpty()){TextView empty=text("Start watching a title. Your place will appear here automatically.",13,0xffa3a7af);empty.setPadding(dp(8),0,dp(8),dp(12));body.addView(empty);continue;}
+      HorizontalScrollView rail=new HorizontalScrollView(this);rail.setHorizontalScrollBarEnabled(false);LinearLayout cards=new LinearLayout(this);rail.addView(cards);body.addView(rail);
+      for(HomeFeed.Card entry:section.cards){Catalog.Title title=entry.title;LinearLayout card=new LinearLayout(this);card.setOrientation(LinearLayout.VERTICAL);card.setPadding(dp(7),dp(6),dp(7),dp(10));card.setFocusable(true);card.setFocusableInTouchMode(true);card.setClickable(true);card.setBackground(focusBackground());
+        int width=DeviceProfile.lite(this)?112:138;cards.addView(card,new LinearLayout.LayoutParams(dp(width),-2));ImageView poster=new ImageView(this);poster.setScaleType(ImageView.ScaleType.CENTER_CROP);poster.setBackgroundColor(0xff25262b);card.addView(poster,new LinearLayout.LayoutParams(-1,dp((width-14)*3/2)));homeImages.put(poster,title.poster);
+        TextView label=text(title.title,13,-1);label.setMaxLines(2);label.setEllipsize(android.text.TextUtils.TruncateAt.END);label.setPadding(0,dp(6),0,0);card.addView(label);
+        String caption=title.kind.equals("movies")?"Movie":title.kind.equals("animes")?"Anime":"Series";
+        if(entry.progress!=null){String[] parts=entry.historyKey.split(":");if(parts.length==4)caption="S"+parts[2]+" · E"+parts[3];if(entry.progress.optBoolean("nextEpisode"))caption="Up next · "+caption;else {long seconds=entry.progress.optLong("positionMs")/1000;caption+=" · Resume at "+(seconds/60)+":"+String.format(java.util.Locale.ROOT,"%02d",seconds%60);}
+          ProgressBar progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.setMax(1000);long duration=entry.progress.optLong("durationMs");progress.setProgress(duration>0?(int)Math.min(1000,entry.progress.optLong("positionMs")*1000/duration):0);card.addView(progress,new LinearLayout.LayoutParams(-1,dp(4)));
+        }
+        TextView meta=text(caption,11,0xffa3a7af);meta.setMaxLines(2);card.addView(meta);card.setContentDescription(title.title+" · "+caption);card.setOnClickListener(v->details(title));
+      }
+    }
+    Runnable visiblePosters=()->{android.graphics.Rect rect=new android.graphics.Rect();for(Map.Entry<ImageView,String> image:homeImages.entrySet())if(image.getKey().getGlobalVisibleRect(rect)){if(image.getKey().getDrawable()==null&&requested.add(image.getKey()))posters.load(image.getValue(),image.getKey());}else requested.remove(image.getKey());};
+    scroll.getViewTreeObserver().addOnScrollChangedListener(visiblePosters::run);
+    scroll.getViewTreeObserver().addOnGlobalLayoutListener(visiblePosters::run);scroll.post(visiblePosters);
   }
 
   void loadMore() {
@@ -735,6 +795,7 @@ public class MainActivity extends Activity {
   }
 
   void details(Catalog.Title t) {
+    HomeLibrary.remember(this,t);
     new TitleScreen(this, t).show();
   }
 
@@ -1129,6 +1190,7 @@ public class MainActivity extends Activity {
       path -> ui.post(() -> updatedCatalog(path));
 
   void updatedCatalog(String path) {
+    if(homeTab){HomeLibrary.clear();if(!isFinishing()&&!isDestroyed())loadHome();return;}
     if (!isFinishing()
         && !isDestroyed()
         && !favoriteTab
@@ -1188,9 +1250,13 @@ public class MainActivity extends Activity {
     }
   }
 
+  @Override protected void onSaveInstanceState(Bundle state){state.putBoolean("homeTab",homeTab);super.onSaveInstanceState(state);}
+
   protected void onResume() {
     super.onResume();
     CatalogUpdates.add(catalogUpdated);
+    getSharedPreferences(WatchProgress.preferenceName,0).registerOnSharedPreferenceChangeListener(homeProgressListener);
+    if(homeTab && content!=null) refreshHomeProgress();
     if (posters != null && activeLite != DeviceProfile.lite(this)) {
       recreate();
     }
@@ -1199,11 +1265,13 @@ public class MainActivity extends Activity {
   @Override
   protected void onPause() {
     CatalogUpdates.remove(catalogUpdated);
+    getSharedPreferences(WatchProgress.preferenceName,0).unregisterOnSharedPreferenceChangeListener(homeProgressListener);
     super.onPause();
   }
 
   public void onTrimMemory(int level) {
     super.onTrimMemory(level);
+    HomeLibrary.clear();
     if (posters != null) posters.trim();
   }
 

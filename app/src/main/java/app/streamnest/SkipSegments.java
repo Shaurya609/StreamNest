@@ -39,7 +39,7 @@ final class SkipSegments {
         || doc.optBoolean("is_movie")) return out;
     for (String type : new String[] {"intro", "outro"}) {
       JSONObject row = doc.optJSONObject(type);
-      if (row == null
+      if (doc.optBoolean("no_"+type) || row == null
           || row.optDouble("confidence", 0) < 0.75
           || row.optInt("submission_count") < 1) continue;
       Segment s =
@@ -93,49 +93,46 @@ final class SkipSegments {
     return out;
   }
 
-  static List<Segment> load(String imdb, int season, int episode, int mal, long length) {
+  interface Fetch {JSONObject get(String url)throws Exception;}
+  static List<Segment> load(String imdb,int season,int episode,int mal,long length){return load(imdb,season,episode,mal,length,url->CatalogHttp.object(url,null));}
+  static List<Segment> load(String imdb, int season, int episode, int mal, long length,Fetch fetch) {
     List<Segment> out = new ArrayList<>();
     if (!imdb.matches("tt[0-9]+") || episode <= 0 || length <= 0) return out;
+    Set<String> absent=new HashSet<>();
     try {
+      JSONObject primary=fetch.get("https://api.introdb.app/segments?imdb_id="+imdb+"&season="+season+"&episode="+episode);
+      if(imdb.equals(primary.optString("imdb_id"))&&primary.optInt("season",-1)==season&&primary.optInt("episode",-1)==episode&&!primary.optBoolean("is_movie"))for(String type:new String[]{"intro","outro"})if(primary.optBoolean("no_"+type))absent.add(type);
       out.addAll(
           introdb(
-              CatalogHttp.object(
-                  "https://api.introdb.app/segments?imdb_id="
-                      + imdb
-                      + "&season="
-                      + season
-                      + "&episode="
-                      + episode,
-                  null),
+              primary,
               imdb,
               season,
               episode,
               length));
     } catch (Exception ignored) {
     }
-    if (out.size() < 2) try {
-      JSONObject doc = CatalogHttp.object("https://api.skipdb.tv/api/segments?imdb_id="
+    if (out.size()+absent.size() < 2) try {
+      JSONObject doc = fetch.get("https://api.skipdb.tv/api/segments?imdb_id="
           + imdb + "&season=" + season + "&episode=" + episode
-          + "&duration=" + (length / 1000.0) + "&adjust=none", null);
+          + "&duration=" + (length / 1000.0) + "&adjust=none");
       for (Segment segment : skipdb(doc, imdb, season, episode, length))
-        if (out.stream().noneMatch(s -> s.type.equals(segment.type))) out.add(segment);
+        if (!absent.contains(segment.type)&&out.stream().noneMatch(s -> s.type.equals(segment.type))) out.add(segment);
     } catch (Exception ignored) {}
     // A root MAL ID is valid only for the explicitly mapped first season; never guess later-season
     // offsets.
-    if (mal > 0 && season == 1 && out.size() < 2)
+    if (mal > 0 && season == 1 && out.size()+absent.size() < 2)
       try {
         for (Segment segment :
             aniskip(
-                CatalogHttp.object(
+                fetch.get(
                     "https://api.aniskip.com/v2/skip-times/"
                         + mal
                         + "/"
                         + episode
                         + "?types[]=op&types[]=ed&episodeLength="
-                        + (length / 1000.0),
-                    null),
+                        + (length / 1000.0)),
                 length))
-          if (out.stream().noneMatch(s -> s.type.equals(segment.type))) out.add(segment);
+          if (!absent.contains(segment.type)&&out.stream().noneMatch(s -> s.type.equals(segment.type))) out.add(segment);
       } catch (Exception ignored) {
       }
     return out;

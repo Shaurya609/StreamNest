@@ -5,7 +5,7 @@ Native Android app for browsing movies, series and anime, with torrent-based pla
 | Download | Package |
 | --- | --- |
 | [Android / Google TV / projector](https://github.com/Shaurya609/StreamNest/releases/latest) | Universal APK — includes ARM32 and ARM64 |
-| [Windows desktop — standalone preview](https://github.com/Shaurya609/StreamNest/releases/tag/desktop-v0.20.0) | Installer or portable ZIP; Popcorn Time is not required |
+| [Windows desktop — standalone preview](https://github.com/Shaurya609/StreamNest/releases/tag/desktop-v0.21.0) | Installer or portable ZIP; Popcorn Time is not required |
 
 [All releases](https://github.com/Shaurya609/StreamNest/releases) · [Desktop setup](desktop/STANDALONE.md) · [Sprint status](SPRINTS.md) · [Pending verification](PENDING-FIXES.md)
 
@@ -15,12 +15,14 @@ Automatic series/anime episode selection and cross-device resume are available i
 
 ## Features
 
+- Home with synced Continue Watching, local genre-based recommendations, recently added titles and movie/series/anime/Hindi/Korean rows.
+
 - Signed application-update checks on launch, background downloads and manual update checks.
 - Movie, series and anime catalogs with search, continuous pagination, English/Hindi filters and sorting.
 - Persistent saved catalogs/search, bounded failover and signed background snapshot updates.
 - Posters, descriptions, seasons and canonical episode details; inline quality selection and direct Watch Now.
 - Movies in 1080p/2160p. Episodes default to Auto with 720p/SD fallback and explicit manual choices.
-- Additional episode source discovery, exact season-pack member selection and bounded startup source recovery.
+- Independent regular-series and trusted anime episode discovery, exact season-pack member selection and bounded startup source recovery.
 - Previous/next episode icons and automatic next episode on natural playback completion, including season boundaries.
 - Optional next-episode preload after the current download completes, with previous-cache cleanup after displayed video starts. Disabled by default; see [sprint status](SPRINTS.md).
 - Intro/credits skip controls when community timestamps match the episode; credits skipping preserves later scenes.
@@ -31,6 +33,8 @@ Automatic series/anime episode selection and cross-device resume are available i
 - TV launcher support and Low Memory mode.
 
 External catalogs and peers determine actual availability. Seed counts are provider reports rather than connected-peer guarantees. Source recovery tries up to six candidates and cannot guarantee every episode will stream.
+
+Windows uses NW.js 0.119.2 with matching pinned codecs and requires Windows 10 or newer. Publisher signing is pending; see [signing options](WINDOWS-SIGNING.md).
 
 ## Install
 
@@ -44,7 +48,7 @@ Open [Releases](https://github.com/Shaurya609/StreamNest/releases/latest) and do
 
 Android 9 or later is required. The APKs are debug-signed development builds. Enter subtitle credentials inside the app; no account credentials or API keys are supplied in this repository.
 
-**Device status:** tablet playback has been tested on Android 14. Installation and operation on the Croma 55-inch Google TV were confirmed by the user. Basic operation on the 1 GB Android 14 projector was also confirmed by the user; longer performance and external-storage tests remain pending. See [projector setup](PROJECTOR-SETUP.md) and [validation](VALIDATION.md).
+**Device status:** tablet playback has been tested on Android 14. Installation and operation on the Croma 55-inch Google TV were confirmed by the user. Operation on the 1 GB Android 14 projector was also confirmed by the user. See [projector setup](PROJECTOR-SETUP.md) and [validation](VALIDATION.md).
 
 ## Build
 

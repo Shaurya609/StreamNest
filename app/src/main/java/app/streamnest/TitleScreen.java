@@ -428,6 +428,7 @@ final class TitleScreen extends Dialog {
                 () -> {
                   if (!isShowing() || a.isDestroyed()) return;
                   episodes = result;
+                  HomeLibrary.rememberEpisodes(a,title,result);
                   loaded = true;
                   populateSeasons();
                 });
@@ -445,6 +446,13 @@ final class TitleScreen extends Dialog {
                 });
           }
         });
+  }
+
+  void refreshFiller(){
+    if(!isShowing()||a.isDestroyed())return;FillerMetadata.apply(episodes);
+    if(episodeAdapter!=null)episodeAdapter.notifyDataSetChanged();
+    if(selected!=null)heading.setText(selected.optString("title","Episode")+(selected.optBoolean("filler")?" · Filler":"")+(selected.optBoolean("recap")?" · Recap":""));
+    FillerMetadata.request(episodes,()->a.ui.post(this::refreshFiller));
   }
 
   void populateSeasons() {
@@ -599,6 +607,7 @@ final class TitleScreen extends Dialog {
   public void dismiss() {
     if (alternateJob != null) alternateJob.cancel(true);
     super.dismiss();
+    a.ui.post(()->{if(a.homeTab&&!a.isDestroyed()&&a.hasWindowFocus())a.refreshHomeProgress();});
   }
 
   void watch() {

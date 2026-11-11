@@ -13,7 +13,7 @@ async function resolve(attrs,direction,lookup=E.alternatives){
 }
 function completed(position,length,played,paused){return played&&!paused&&Number.isFinite(length)&&length>10&&position>=length-5;}
 function range(type,start,end,length){const max=type==='intro'?300:900;if(!Number.isFinite(start)||!Number.isFinite(end)||!Number.isFinite(length)||length<=0||start<0||end-start<5||end-start>max||end>length+1||(type==='intro'?start>=length/2:start<=length/2))return null;return {type,start,end:Math.min(end,length)};}
-function introdb(doc,attrs,length){if(doc.imdb_id!==attrs.imdb_id||Number(doc.season)!==Number(attrs.season)||Number(doc.episode)!==Number(attrs.episode)||doc.is_movie)return [];return ['intro','outro'].map(type=>{const row=doc[type];return row&&row.confidence>=0.75&&row.submission_count>=1?range(type,row.start_ms/1000,row.end_ms/1000,length):null;}).filter(Boolean);}
+function introdb(doc,attrs,length){if(doc.imdb_id!==attrs.imdb_id||Number(doc.season)!==Number(attrs.season)||Number(doc.episode)!==Number(attrs.episode)||doc.is_movie)return [];return ['intro','outro'].map(type=>{const row=doc[type];return !doc['no_'+type]&&row&&row.confidence>=0.75&&row.submission_count>=1?range(type,row.start_ms/1000,row.end_ms/1000,length):null;}).filter(Boolean);}
 function aniskip(doc,length){if(!doc.found||!Array.isArray(doc.results))return [];return doc.results.map(row=>{if(!['op','ed'].includes(row.skipType)||Math.abs(row.episodeLength-length)>5||!row.interval)return null;return range(row.skipType==='op'?'intro':'outro',row.interval.startTime,row.interval.endTime,length);}).filter(Boolean);}
 function skipdb(doc,attrs,length){
  if(doc.imdb_id!==attrs.imdb_id||Number(doc.season)!==Number(attrs.season)||Number(doc.episode)!==Number(attrs.episode)||!doc.segments)return [];
@@ -22,13 +22,13 @@ function skipdb(doc,attrs,length){
   return row&&row.match==='exact'&&row.confidence>=0.75?range(type,row.start_ms/1000,row.end_ms/1000,length):null;
  }).filter(Boolean);
 }
-async function segments(attrs,length,fetch){const get=fetch||(url=>require('./streamnest-resilience').metadata(url,v=>v&&typeof v==='object'&&!v.error));let rows=[];if(!/^tt\d+$/.test(attrs.imdb_id||'')||!(Number(attrs.episode)>0)||!(length>0))return rows;
- try{rows=introdb(await get('https://api.introdb.app/segments?imdb_id='+attrs.imdb_id+'&season='+Number(attrs.season)+'&episode='+Number(attrs.episode)),attrs,length);}catch(e){}
- if(rows.length<2)try{
+async function segments(attrs,length,fetch){const get=fetch||(url=>require('./streamnest-resilience').metadata(url,v=>v&&typeof v==='object'&&!v.error));let rows=[],absent=new Set();if(!/^tt\d+$/.test(attrs.imdb_id||'')||!(Number(attrs.episode)>0)||!(length>0))return rows;
+ try{const doc=await get('https://api.introdb.app/segments?imdb_id='+attrs.imdb_id+'&season='+Number(attrs.season)+'&episode='+Number(attrs.episode));rows=introdb(doc,attrs,length);if(doc.imdb_id===attrs.imdb_id&&Number(doc.season)===Number(attrs.season)&&Number(doc.episode)===Number(attrs.episode)&&!doc.is_movie)for(const type of ['intro','outro'])if(doc['no_'+type])absent.add(type);}catch(e){}
+ if(rows.length+absent.size<2)try{
   const doc=await get('https://api.skipdb.tv/api/segments?imdb_id='+attrs.imdb_id+'&season='+Number(attrs.season)+'&episode='+Number(attrs.episode)+'&duration='+length.toFixed(3)+'&adjust=none');
-  for(const row of skipdb(doc,attrs,length))if(!rows.some(s=>s.type===row.type))rows.push(row);
+  for(const row of skipdb(doc,attrs,length))if(!absent.has(row.type)&&!rows.some(s=>s.type===row.type))rows.push(row);
  }catch(error){}
- if(attrs.malId>0&&Number(attrs.season)===1&&rows.length<2)try{for(const row of aniskip(await get('https://api.aniskip.com/v2/skip-times/'+attrs.malId+'/'+Number(attrs.episode)+'?types[]=op&types[]=ed&episodeLength='+length.toFixed(3)),length))if(!rows.some(s=>s.type===row.type))rows.push(row);}catch(e){}
+ if(attrs.malId>0&&Number(attrs.season)===1&&rows.length+absent.size<2)try{for(const row of aniskip(await get('https://api.aniskip.com/v2/skip-times/'+attrs.malId+'/'+Number(attrs.episode)+'?types[]=op&types[]=ed&episodeLength='+length.toFixed(3)),length))if(!absent.has(row.type)&&!rows.some(s=>s.type===row.type))rows.push(row);}catch(e){}
  return rows;
 }
 function active(rows,position){return rows.find(s=>position>=s.start&&position<s.end-1)||null;}

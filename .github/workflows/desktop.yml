@@ -45,6 +45,8 @@ jobs:
         run: python desktop/packaging/verify.py --app "reference/standalone-build/$env:SN_DESKTOP_VERSION/StreamNest"
       - name: Hidden clean-profile renderer check
         run: python desktop/packaging/smoke.py --app "reference/standalone-build/$env:SN_DESKTOP_VERSION/StreamNest"
+      - name: Home, synced progress and existing title flow
+        run: python desktop/packaging/smoke.py --app "reference/standalone-build/$env:SN_DESKTOP_VERSION/StreamNest" --home
       - name: Native update helper and restart
         run: python desktop/packaging/handoff_smoke.py --app "reference/standalone-build/$env:SN_DESKTOP_VERSION/StreamNest"
       - name: Settings sync dialog and disposable live pairing

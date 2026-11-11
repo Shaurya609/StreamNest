@@ -10,15 +10,16 @@ public class DiscoveryTest {
   for(String name:new String[]{"Black Clover 2nd Season - 01 [1080p]","Black Clover Movie - 01 [1080p]","Mugyutto! Black Clover - 01 [1080p]","Black Clover - 02 [1080p]"})assertEquals(name,0,NyaaEpisodeSources.match(name,"Black Clover",1,1,1));
  }
  @Test public void independentFallbackSurvivesIndexOutage()throws Exception{
-  EpisodeDiscovery.Index index=EpisodeDiscovery.index;EpisodeDiscovery.Anime anime=EpisodeDiscovery.anime;
+  EpisodeDiscovery.Index index=EpisodeDiscovery.index,series=EpisodeDiscovery.series;EpisodeDiscovery.Anime anime=EpisodeDiscovery.anime;
   try{
+   EpisodeDiscovery.series=(id,s,e,d)->Collections.emptyList();
    EpisodeDiscovery.index=(id,s,e,d)->{throw new java.io.IOException("offline");};
    EpisodeDiscovery.anime=(title,row,d)->Collections.singletonList(new Catalog.Source("1080p · Nyaa","https://nyaa.si/download/1.torrent",10));
    JSONObject row=new JSONObject().put("season",1).put("episode",1).put("absolute",1).put("animeMapped",true);
    assertEquals(1,EpisodeDiscovery.find("tt7441658",row,"Black Clover").size());
    row.put("animeMapped",false);
    try{EpisodeDiscovery.find("tt7441658",row,"Black Clover");fail();}catch(java.io.IOException expected){assertTrue(expected.getMessage().contains("incomplete"));}
-  }finally{EpisodeDiscovery.index=index;EpisodeDiscovery.anime=anime;}
+  }finally{EpisodeDiscovery.series=series;EpisodeDiscovery.index=index;EpisodeDiscovery.anime=anime;}
  }
  @Test public void malformedIndexIsNotAnEmptyResult()throws Exception{
   try{AlternateEpisodes.parse(new JSONObject());fail();}catch(java.io.IOException expected){}

@@ -28,6 +28,14 @@ final class CanonicalEpisodes {
     return new JSONArray(rows);
   }
 
+  static boolean trustedReverseMapping(JSONObject doc,String imdb,String title){
+    JSONObject mappings=doc.optJSONObject("mappings"),titles=doc.optJSONObject("titles");
+    if(mappings==null||titles==null||!imdb.equals(mappings.optString("imdb_id"))||!Arrays.asList("TV","ONA").contains(mappings.optString("type")))return false;
+    String expected=normalized(title.replaceAll("(?i)\\s*\\((?:TV Series|TV Mini Series).*", ""));
+    if(expected.isEmpty())return false;
+    for(Iterator<String> keys=titles.keys();keys.hasNext();)if(expected.equals(normalized(titles.optString(keys.next()))))return true;return false;
+  }
+
   static JSONArray fromMappings(JSONObject doc, String imdb) throws Exception {
     JSONObject mappings = doc.getJSONObject("mappings");
     if (!imdb.equals(mappings.optString("imdb_id")))
@@ -50,6 +58,7 @@ final class CanonicalEpisodes {
               .put("summary", e.optString("overview", ""))
               .put("airdate", e.optString("airDate", e.optString("airdate", "")));
       row.put("animeMapped",mappings.optInt("mal_id")>0);
+      JSONObject aliases=doc.optJSONObject("titles");if(aliases!=null)row.put("animeTitle",aliases.optString("en",aliases.optString("x-jat","")));
       if(mappingKey.matches("[1-9][0-9]*")&&mappings.optInt("kitsu_id")>0)
         row.put("kitsuId",mappings.getInt("kitsu_id")).put("kitsuEpisode",Integer.parseInt(mappingKey));
       if (e.optInt("absoluteEpisodeNumber") > 0)
@@ -64,6 +73,18 @@ final class CanonicalEpisodes {
         Comparator.comparingInt((JSONObject e) -> e.optInt("season"))
             .thenComparingInt(e -> e.optInt("number")));
     return new JSONArray(rows);
+  }
+
+  static boolean sameEpisode(JSONObject a,JSONObject b){
+    String ad=a.optString("airdate"),bd=b.optString("airdate"),an=normalized(a.optString("name")),bn=normalized(b.optString("name"));
+    return ad.length()>=10&&bd.length()>=10&&ad.substring(0,10).equals(bd.substring(0,10))||!an.isEmpty()&&!an.matches("episode[0-9]*")&&an.equals(bn);
+  }
+  static JSONArray augmentMappings(JSONArray mapped,JSONArray canonical,boolean preferCanonical)throws Exception{
+    Map<String,JSONObject> byKey=new HashMap<>(),base=new HashMap<>();int count=0,full=0;
+    for(int i=0;i<canonical.length();i++){JSONObject row=canonical.getJSONObject(i);base.put(row.optInt("season")+":"+row.optInt("number"),row);if(row.optInt("season")>0)full++;}
+    boolean aligned=true;for(int i=0;i<mapped.length();i++){JSONObject row=mapped.getJSONObject(i);String key=row.optInt("season")+":"+row.optInt("number");byKey.put(key,row);if(row.optInt("season")>0){count++;JSONObject other=base.get(key);if(other==null||!sameEpisode(row,other))aligned=false;}}
+    if(canonical.length()==0||!preferCanonical&&(!aligned||full<=count))return mapped;
+    JSONArray out=new JSONArray();for(int i=0;i<canonical.length();i++){JSONObject row=new JSONObject(canonical.getJSONObject(i).toString()),m=byKey.get(row.optInt("season")+":"+row.optInt("number"));if(m!=null&&sameEpisode(m,row))for(String field:new String[]{"absolute","skipMalId","kitsuId","kitsuEpisode","animeMapped","animeTitle"})if(m.has(field))row.put(field,m.get(field));out.put(row);}return out;
   }
 
   static String normalized(String name) {

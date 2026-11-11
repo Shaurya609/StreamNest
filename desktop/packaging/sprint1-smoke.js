@@ -57,7 +57,10 @@
       assert(getComputedStyle(next).backgroundColor==='rgba(0, 0, 0, 0)','Navigation has a floating button background');
     }
     player.el().classList.remove('vjs-fullscreen');player.dimensions(960,540);player.el().style.width='960px';player.el().style.height='540px';
-    player.userActive(false);await wait(1200);assert(getComputedStyle(bar).visibility==='hidden','Controls do not hide together');player.userActive(true);
+    // Native hidden Chromium suspends CSS transitions. Check the actual inactive target
+    // without claiming a foreground animation-timing measurement.
+    bar.style.setProperty('transition','none','important');
+    player.userActive(false);await wait(1200);result.hiddenControls={visibility:getComputedStyle(bar).visibility,opacity:getComputedStyle(bar).opacity,classes:player.el().className,paused:player.paused(),active:player.userActive(),inline:bar.getAttribute("style"),rules:[]};for(const sheet of document.styleSheets)try{for(const rule of sheet.cssRules||[])if(rule.selectorText&&bar.matches(rule.selectorText)&&(rule.style.visibility||rule.style.opacity))result.hiddenControls.rules.push({selector:rule.selectorText,visibility:rule.style.visibility,opacity:rule.style.opacity});}catch(e){}assert(getComputedStyle(bar).visibility==='hidden','Controls do not hide together');player.userActive(true);
     result.navigation={singleToolbar:true,iconsOnly:true,besidePause:true,noSeekOverlap:true,windowedAndFullscreen:true,autoHide:true};
     Settings.streamnestAutoSkip=false;
     await wait(5000);
@@ -68,6 +71,10 @@
     await wait(6500);
     assert(player.currentTime()>=18,'Automatic skip failed');
     result.autoSkipPosition=player.currentTime();
+    player.pause();const creditsStart=player.duration()*.55,creditsEnd=Math.min(player.duration()-5,creditsStart+15);
+    view._streamnestSegments=[{type:'outro',start:creditsStart,end:creditsEnd}];view._skipKey='';player.currentTime(creditsStart+.2);player.play();await wait(1000);
+    assert(view._streamnestSkip.text().startsWith('Skip Credits'),'Credits label missing');await wait(5200);
+    assert(player.currentTime()>=creditsEnd-.5&&player.currentTime()<player.duration()-1,'Credits auto-skip did not preserve following content');result.autoCreditsPosition=player.currentTime();
     const video=player.el().querySelector('video');
     assert(video.videoWidth>0,'Decoded video missing');
     result.decodedVideo=true;

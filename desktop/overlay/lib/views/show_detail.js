@@ -189,7 +189,13 @@
             this.getRegion('torrentList').show(torrentList);
         },
 
+        refreshFiller: function(){
+            if(this.isDestroyed())return;const F=require('./butter-provider/streamnest-filler'),rows=this.model.get('episodes')||[];F.apply(rows);
+            for(const row of rows){const label=this.$('.tab-episode[data-season="'+row.season+'"][data-episode="'+row.episode+'"] .episodeData > div');label.text(this.localizeEpisode(row).listTitle+(row.filler?' · Filler':'')+(row.recap?' · Recap':''));}
+            F.request(rows);
+        },
         onAttach: function () {
+            if(!this._fillerListener){this._fillerListener=this.refreshFiller.bind(this);require('./butter-provider/streamnest-filler').events.on('updated',this._fillerListener);}this.refreshFiller();
             this._manualResumeChoice=false;this._resumeGeneration=(this._resumeGeneration||0)+1;
             win.info('Show series details (' + this.model.get('imdb_id') + ')');
 
@@ -560,7 +566,7 @@
                         torrents: value.torrents,
                         streamnestSources: value.streamnestSources || [],
                         absolute: value.absolute || 0,
-                        animeMapped:value.animeMapped===true,kitsuId:value.kitsuId||0,kitsuEpisode:value.kitsuEpisode||0,streamnestSeriesTitle:that.model.get('title'),
+                        animeMapped:value.animeMapped===true,animeTitle:value.animeTitle,kitsuId:value.kitsuId||0,kitsuEpisode:value.kitsuEpisode||0,streamnestSeriesTitle:that.model.get('title'),
                         malId: value.skipMalId || 0,
                         first_aired: value.first_aired || 0,
                         airdate: value.airdate || '',
@@ -614,7 +620,7 @@
                 fileIndex: Number($(e.currentTarget).attr('data-fileindex')),
                 absolute: (that.model.get('selectedEpisode')||{}).absolute || 0,
                 malId: (that.model.get('selectedEpisode')||{}).skipMalId || 0,
-                animeMapped:(that.model.get('selectedEpisode')||{}).animeMapped===true,kitsuId:(that.model.get('selectedEpisode')||{}).kitsuId||0,kitsuEpisode:(that.model.get('selectedEpisode')||{}).kitsuEpisode||0,streamnestSeriesTitle:that.model.get('title'),
+                animeMapped:(that.model.get('selectedEpisode')||{}).animeMapped===true,animeTitle:(that.model.get('selectedEpisode')||{}).animeTitle,kitsuId:(that.model.get('selectedEpisode')||{}).kitsuId||0,kitsuEpisode:(that.model.get('selectedEpisode')||{}).kitsuEpisode||0,streamnestSeriesTitle:that.model.get('title'),
                 streamnestQuality: that.model.get('streamnestQuality') || 'Auto',
                 streamnestSources: (that.model.get('selectedEpisode')||{}).streamnestSources || [],
                 auto_play: auto_play,
@@ -936,7 +942,7 @@
             this.icons.getLink(showProvider, provider)
                 .then((icon) => providerIcon = icon || '/src/app/images/icons/' + provider + '.png')
                 .catch((error) => { !providerIcon ? providerIcon = '/src/app/images/icons/' + provider + '.png' : null; })
-                .then(() => $('.source-icon').html(`<img src="${providerIcon}" onerror="this.onerror=null; this.style.display='none'; this.parentElement.style.top='0'; this.parentElement.classList.add('fas', 'fa-link')" onload="this.onerror=null; this.onload=null;">`));
+                .then(() => $('.source-icon').html(`<img src="${providerIcon}" onerror="this.onerror=null; this.style.display='none'; if(this.parentElement){this.parentElement.style.top='0';this.parentElement.classList.add('fas','fa-link');}" onload="this.onerror=null; this.onload=null;">`));
             if (sourceURL) {
                 $('.source-icon').attr('data-original-title', sourceURL.split('//').pop().split('/')[0]).css('cursor', 'pointer');
             } else {
@@ -970,6 +976,7 @@
         },
 
         onBeforeDestroy: function () {
+            if(this._fillerListener)require('./butter-provider/streamnest-filler').events.removeListener('updated',this._fillerListener);
             this.unbindKeyboardShortcuts();
             App.vent.off('update:torrents');
             App.vent.off('audio:lang');

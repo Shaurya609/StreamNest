@@ -65,7 +65,7 @@ jobs:
           expected[checksum.name]=hashlib.sha256(checksum.read_bytes()).hexdigest()
           assert {f.name for f in root.iterdir()}==set(expected)
           notes=Path('desktop-release-notes.md')
-          notes.write_text('Standalone Windows x64 preview. Popcorn Time is not required. Download Setup.exe or portable.zip below.\n\nAndroid / Google TV: https://github.com/'+os.environ['GH_REPO']+'/releases/latest'+'\n\n'+Path('RELEASE-'+version+'.md').read_text()+'\nBuild source commit: '+os.environ['SOURCE_SHA']+'\n\nUnsigned preview retaining NW.js 0.44.5. Matching complete application source and checksums are included.\n')
+          notes.write_text('Standalone Windows x64 preview. Popcorn Time is not required. Download Setup.exe or portable.zip below.\n\nAndroid / Google TV: https://github.com/'+os.environ['GH_REPO']+'/releases/latest'+'\n\n'+Path('RELEASE-'+version+'.md').read_text()+'\nBuild source commit: '+os.environ['SOURCE_SHA']+'\n\nUnsigned preview using NW.js 0.119.2 with pinned matching codecs. Matching complete application source and checksums are included.\n')
           subprocess.run(['gh','release','create',tag,*[str(root/n) for n in sorted(expected)],'--target',os.environ['SOURCE_SHA'],'--title','StreamNest Desktop '+version+' — standalone Windows preview','--notes-file',str(notes),'--draft','--prerelease'],check=True)
           releases=json.loads(subprocess.check_output(['gh','api','repos/'+os.environ['GH_REPO']+'/releases?per_page=30']))
           release=next(r for r in releases if r['tag_name']==tag)

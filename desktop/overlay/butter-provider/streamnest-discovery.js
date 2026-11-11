@@ -23,6 +23,7 @@ function indexed(candidate,parsed,row){
 function key(s){const hash=String(s.url||'').match(/(?:xt=urn:btih:)([a-f0-9]{40})/i);return (hash?hash[1].toLowerCase():s.url)+'|'+s.fileIndex;}
 function create(options={}){
  const get=options.get||net,text=options.text||((url,deadline)=>net.text(url,0,deadline)),bytes=options.bytes||net.bytes;
+ const series=options.series||require('./streamnest-eztv').find;
  const parseXML=options.parseXML||(xml=>new Promise((yes,no)=>require('xml2js').parseString(xml,{explicitArray:false,trim:true},(e,v)=>e?no(e):yes(v))));
  const parseTorrent=options.parseTorrent||(b=>require('parse-torrent')(b)),cache=new Map(),pending=new Map();
  async function anime(title,row,deadline){
@@ -39,7 +40,8 @@ function create(options={}){
   const deadline=Date.now()+18000,all=[];let failure;
   try{const doc=await get('https://torrentio.strem.fun/stream/series/'+id+':'+season+':'+episode+'.json',Math.min(deadline,Date.now()+6000));if(!Array.isArray(doc.streams))throw Error('Invalid index response');all.push(...require('./streamnest-episodes').parseStreams(doc));}catch(e){failure=e;}
   if(!all.length&&context.kitsuId>0&&context.kitsuEpisode>0)try{const doc=await get('https://torrentio.strem.fun/stream/series/kitsu:'+context.kitsuId+':'+context.kitsuEpisode+'.json',Math.min(deadline,Date.now()+4000));if(!Array.isArray(doc.streams))throw Error('Invalid index response');all.push(...require('./streamnest-episodes').parseStreams(doc));}catch(e){failure=e;}
-  if(context.animeMapped===true&&season>0&&context.absolute>0&&context.streamnestSeriesTitle)try{all.push(...await anime(context.streamnestSeriesTitle,Object.assign({},context,{season,episode}),deadline));}catch(e){failure=e;}
+  if(context.animeMapped===true&&season>0&&context.absolute>0&&context.streamnestSeriesTitle)try{all.push(...await anime(context.animeTitle||context.streamnestSeriesTitle,Object.assign({},context,{season,episode}),deadline));}catch(e){failure=e;}
+  if(context.animeMapped!==true)try{all.push(...await series(id,season,episode,Math.min(deadline,Date.now()+6000)));}catch(e){failure=e;}
   const unique=new Map();for(const s of all)if(!unique.has(key(s)))unique.set(key(s),s);
   if(!unique.size&&failure)throw Error('Source lookup incomplete. A provider is unavailable; retry source lookup.');
   return [...unique.values()];
@@ -52,6 +54,6 @@ function create(options={}){
   if(pending.size>=4)throw Error('Source lookup busy. Please retry shortly.');
   const task=search(id,Number(season),Number(episode),context).then(rows=>{cache.set(idKey,{time:Date.now(),rows});while(cache.size>24)cache.delete(cache.keys().next().value);return rows.slice();}).finally(()=>pending.delete(idKey));pending.set(idKey,task);return task;
  }
- return {find,invalidate(){cache.clear();},anime};
+ return {find,invalidate(){cache.clear();require('./streamnest-eztv').retry();},anime};
 }
 module.exports=Object.assign(create(),{create,match,candidates,indexed,key});

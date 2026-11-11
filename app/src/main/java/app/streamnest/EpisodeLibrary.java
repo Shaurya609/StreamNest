@@ -33,7 +33,7 @@ final class EpisodeLibrary {
                   .put("synopsis", m.optString("summary", "").replaceAll("<[^>]+>", " "))
                   .put("airdate", m.optString("airdate", ""));
       if (m.has("skipMalId")) e.put("skipMalId", m.getInt("skipMalId"));
-      for(String field:new String[]{"kitsuId","kitsuEpisode","animeMapped"})if(m.has(field))e.put(field,m.get(field));
+      for(String field:new String[]{"kitsuId","kitsuEpisode","animeMapped","animeTitle"})if(m.has(field))e.put(field,m.get(field));
       if (m.has("absolute")) e.put("absolute", m.getInt("absolute"));
       String key = key(e);
       if (!seen.add(key)) continue;
@@ -83,6 +83,7 @@ final class EpisodeLibrary {
         JSONArray rows = saved.getJSONArray("rows");
         for (int i = 0; i < rows.length(); i++)
           result.add(new JSONObject(rows.getJSONObject(i).toString()));
+        FillerMetadata.apply(result);
         return result;
       }
     }
@@ -108,12 +109,17 @@ final class EpisodeLibrary {
       } catch (Exception ignored) {
       }
 
-    if (metadata.length() == 0 && id.matches("tt[0-9]+"))
+    if(metadata.length()==0&&identityMal==0&&title.kind.equals("animes")&&id.matches("tt[0-9]+"))try{
+      JSONObject mapped=CatalogHttp.object("https://api.ani.zip/mappings?imdb_id="+id,null);
+      if(CanonicalEpisodes.trustedReverseMapping(mapped,id,title.title))metadata=CanonicalEpisodes.fromMappings(mapped,id);
+    }catch(Exception ignored){}
+    if (id.matches("tt[0-9]+"))
       try {
         JSONObject meta =
             CatalogHttp.object("https://v3-cinemeta.strem.io/meta/series/" + id + ".json", null)
                 .getJSONObject("meta");
-        metadata = CanonicalEpisodes.fromCinemeta(meta, id);
+        JSONArray canonical=CanonicalEpisodes.fromCinemeta(meta,id);
+        metadata=metadata.length()==0?canonical:CanonicalEpisodes.augmentMappings(metadata,canonical,identityMal==0);
       } catch (Exception ignored) {
       }
     if (metadata.length() == 0 && id.matches("tt[0-9]+"))
@@ -139,24 +145,7 @@ final class EpisodeLibrary {
         CanonicalEpisodes.attachLive(rows, releases, title.title);
       } catch (Exception ignored) {
       }
-    // Only rows with an explicit MAL episode mapping may receive Jikan flags.
-    Set<Integer> mappedAnime = new LinkedHashSet<>();
-    for (JSONObject row : rows) if (row.optInt("skipMalId") > 0)
-      mappedAnime.add(row.optInt("skipMalId"));
-    for (int mal : mappedAnime) {
-      Set<Integer> pages = fillerPages(rows, mal);
-      for (int page : pages) try {
-      Thread.sleep(400);
-      JSONObject response = CatalogHttp.object(
-          "https://api.jikan.moe/v4/anime/" + mal + "/episodes?page=" + page, null);
-      JSONArray data = response.optJSONArray("data");
-      if (data == null) continue;
-      attachFiller(rows, mal, data);
-      } catch (InterruptedException interrupted) {
-        Thread.currentThread().interrupt();
-        throw interrupted;
-      } catch (Exception ignored) {}
-    }
+    FillerMetadata.apply(rows);
     if (rows.isEmpty() && sourceError != null) throw sourceError;
     synchronized (EpisodeLibrary.class) {
       cache.put(id, new JSONObject().put("rows", new JSONArray(rows)));

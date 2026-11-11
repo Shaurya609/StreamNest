@@ -62,6 +62,7 @@
         },
 
         onAttach: function () {
+
             that = this;
             this.render();
 
@@ -101,6 +102,8 @@
         },
 
         onRender: function () {
+            const start=this.$('select[name=start_screen]');if(!start.find('option[value="Home"]').length)start.prepend($('<option>').val('Home').text('Home'));start.val(AdvSettings.get('startScreen'));
+
             if (App.settings.showAdvancedSettings) {
                 $('.advanced').css('display', 'flex');
             }

@@ -25,17 +25,17 @@ test('single-file wrong episode cannot bypass matching',()=>{
 });
 test('independent fallback survives primary outage and reuses bounded result cache',async()=>{
  let calls=0;
- const d=D.create({get:async()=>{calls++;throw Error('offline');},text:async()=>'<rss/>',parseXML:async()=>({rss:{channel:{item}}}),bytes:async()=>Buffer.from('fixture'),parseTorrent:()=>({infoHash:hash,files:[{path:'Black Clover - 01.mkv',length:123}]})});
+ const d=D.create({series:async()=>[],get:async()=>{calls++;throw Error('offline');},text:async()=>'<rss/>',parseXML:async()=>({rss:{channel:{item}}}),bytes:async()=>Buffer.from('fixture'),parseTorrent:()=>({infoHash:hash,files:[{path:'Black Clover - 01.mkv',length:123}]})});
  assert.equal((await d.find('tt7441658',1,1,row))[0].provider,'Nyaa');
  await d.find('tt7441658',1,1,row);assert.equal(calls,1);
  d.invalidate();await d.find('tt7441658',1,1,row);assert.equal(calls,2);
 });
 test('provider errors remain retryable rather than cached as empty',async()=>{
- let calls=0;const d=D.create({get:async()=>{calls++;return {};}});
+ let calls=0;const d=D.create({series:async()=>[],get:async()=>{calls++;return {};}});
  await assert.rejects(d.find('tt123',1,1),/incomplete/);await assert.rejects(d.find('tt123',1,1),/incomplete/);assert.equal(calls,2);
 });
 test('safe empty responses are cached and unsafe RSS is rejected',async()=>{
- let calls=0;const d=D.create({get:async()=>{calls++;return {streams:[]};},text:async()=>'<!DOCTYPE rss><rss/>'});
+ let calls=0;const d=D.create({series:async()=>[],get:async()=>{calls++;return {streams:[]};},text:async()=>'<!DOCTYPE rss><rss/>'});
  assert.deepEqual(await d.find('tt123',1,1),[]);await d.find('tt123',1,1);assert.equal(calls,1);
  await assert.rejects(d.find('tt7441658',1,1,row),/incomplete/);
 });

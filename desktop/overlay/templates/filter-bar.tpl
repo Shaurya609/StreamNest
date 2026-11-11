@@ -1,4 +1,5 @@
 <ul class="nav nav-hor left">
+    <li id="filterbar-home" class="source" tabindex="0" role="button">Home</li>
     <% _.each (App.Config.getTabTypes(), function (tab) { %>
     <% var providerURL = App.Config.getProviderForType(tab.type)[0].apiURL ? App.Config.getProviderForType(tab.type)[0].apiURL.slice(0) : [];
         providerURL.forEach(function(e, index) {

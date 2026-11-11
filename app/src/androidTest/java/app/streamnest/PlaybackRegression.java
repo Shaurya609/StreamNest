@@ -14,7 +14,7 @@ import org.videolan.libvlc.Media;
 /** Device-only regression; fixture is supplied locally, never bundled in the app. */
 public class PlaybackRegression extends Instrumentation {
   PlayerActivity activity;
-  boolean preload, discovery;
+  boolean preload, discovery, home, fillerLive;
   String watchSyncCode, shortPairingCode, expectedPairingAuth;
   boolean pairingUiDirect, skipLive, catalog, subtitles, storage, resilience, episodes, appUpdates, watchSyncUi, resumeUi;
 
@@ -34,13 +34,18 @@ public class PlaybackRegression extends Instrumentation {
     shortPairingCode = args == null ? null : args.getString("shortPairingCode");
     expectedPairingAuth = args == null ? null : args.getString("expectedPairingAuth");
     pairingUiDirect = args != null && "true".equals(args.getString("pairingUiDirect"));
+    PreloadRegression.networkOnly=args!=null&&"true".equals(args.getString("preloadNetwork"));
     preload=args!=null&&"true".equals(args.getString("preload"));
+    fillerLive=args!=null&&"true".equals(args.getString("fillerLive"));
+    home=args!=null&&"true".equals(args.getString("home"));
     discovery=args!=null&&"true".equals(args.getString("discovery"));
     start();
   }
 
   @Override
   public void onStart() {
+    if(fillerLive){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,HomeRegression.filler());}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
+    if(home){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,HomeRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
     if(discovery){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,DiscoveryRegression.run());}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
     if(preload){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,PreloadRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
     if (shortPairingCode != null) {
@@ -282,9 +287,18 @@ public class PlaybackRegression extends Instrumentation {
       if (activity.player.getTime() < 17000)
         throw new AssertionError("Five-second auto-skip did not seek");
       assertFrame("automatic skip");
+      final long creditStart=(long)(activity.player.getLength()*.55),creditEnd=Math.min(activity.player.getLength()-5000,creditStart+15000);
+      main(()->{activity.player.pause();activity.player.setTime(creditStart+200);activity.segments=new ArrayList<>();activity.segments.add(new SkipSegments.Segment("outro",creditStart,creditEnd));activity.skipKey="";activity.player.play();activity.updateSegment(creditStart+200);});
+      SystemClock.sleep(1000);
+      if(!activity.skipSegment.getText().toString().startsWith("Skip Credits"))throw new AssertionError("Credits label missing");
+      SystemClock.sleep(5400);
+      if(activity.player.getTime()<creditEnd-1000||activity.player.getTime()>=activity.player.getLength()-1000)throw new AssertionError("Credits auto-skip did not preserve following content");
+      assertFrame("automatic credits skip");
+
       main(() -> {
         activity.segments.clear();
-        activity.updateSegment(activity.player.getTime());
+        activity.player.pause();activity.player.setTime(6000);activity.player.play();
+        activity.updateSegment(6000);
       });
 
       main(() -> activity.subtitleMenu());

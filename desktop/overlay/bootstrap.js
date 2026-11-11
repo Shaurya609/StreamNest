@@ -8,6 +8,7 @@
         if (AdvSettings.get('opensubtitlesAnonymous') || !AdvSettings.get('opensubtitlesAuthenticated') || !AdvSettings.get('opensubtitlesUsername'))
           require('./butter-provider/streamnest-org').login(true).then(function(){AdvSettings.set('opensubtitlesAnonymous',true);AdvSettings.set('opensubtitlesAuthenticated',true);}).catch(function(error){win.warn('Anonymous subtitle session will retry when requested: '+error.message);});
       });
+  require('./butter-provider/streamnest-home-ui').install(App,$);
   App.start();
 
   /* load all the things ! */

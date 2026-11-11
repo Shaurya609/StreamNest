@@ -43,7 +43,7 @@ The application-source ZIP contains the original upstream application/build sour
 
 ## Preview limits and validation
 
-This preview retains NW.js 0.44.5 for compatibility with the existing codec libraries; runtime modernization is pending. It is unsigned. It is a development preview, not a claim of support for every Windows installation, codec, casting device or long binge session.
+Version 0.21.0 uses NW.js 0.119.2 and a matching, SHA-256-pinned codec library. Windows 10 or newer is required. It is unsigned. It is a development preview, not a claim of support for every Windows installation, codec, casting device or long binge session.
 
 Trakt synchronization is not configured: no upstream application's shared Trakt/TMDB/Fanart/TVDB keys are reused in the runnable package. The local library and catalog metadata continue to work. Additional external-account metadata features need a StreamNest application registration before enabling them.
 

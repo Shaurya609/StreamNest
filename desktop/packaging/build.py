@@ -71,12 +71,15 @@ def assemble(skip_install=False):
     runtime_dir = BUILD / 'runtime'
     safe_extract(download('runtime'), runtime_dir)
     runtime = next(p.parent for p in runtime_dir.rglob('nw.exe'))
-    allowed = {'.dll', '.pak', '.bin', '.dat', '.nexe'}
+    allowed = {'.dll', '.pak', '.bin', '.dat', '.nexe', '.json'}
     for file in runtime.iterdir():
-        if file.is_file() and (file.suffix in allowed or file.name == 'nw.exe'):
+        if file.is_file() and (file.suffix in allowed or file.name in ('nw.exe','notification_helper.exe')):
             shutil.copyfile(file, app / ('StreamNest.exe' if file.name == 'nw.exe' else file.name))
         elif file.is_dir() and file.name in ('locales', 'swiftshader', 'pnacl'):
             shutil.copytree(file, app / file.name)
+    codec_dir=BUILD/'codecs'
+    safe_extract(download('codecs'),codec_dir)
+    shutil.copyfile(next(codec_dir.rglob('ffmpeg.dll')),app/'ffmpeg.dll')
     shutil.copytree(UPSTREAM / 'src', app / 'src', ignore=shutil.ignore_patterns('styl', '.jshintrc'))
     for file in ('LICENSE.txt', 'CHANGELOG.md'): shutil.copyfile(UPSTREAM / file, app / file)
     inventory = json.loads((DESKTOP / 'manifest.json').read_text(encoding='utf8'))
@@ -162,8 +165,8 @@ def assemble(skip_install=False):
             if data.get('name'): packages.append({key:data[key] for key in ('name','version','license','repository') if key in data})
         except (ValueError, UnicodeError): pass
     (notices / 'npm-inventory.json').write_text(json.dumps(packages, indent=2)+'\n', encoding='utf8')
-    (app / 'BUILD-INFO.json').write_text(json.dumps({'version':VERSION,'upstream':LOCK['upstream'],'overlayVersion':inventory['version'],'runtimeArchiveSha256':LOCK['assets']['runtime']['sha256']},indent=2)+'\n',encoding='utf8')
-    (app / 'README.txt').write_text('StreamNest Desktop '+VERSION+' preview\n\nRun StreamNest.exe. No Popcorn Time installation is required.\nSettings and video cache are separate under %LOCALAPPDATA%\\StreamNest.\nNo accounts or saved settings are imported. Updates are checked automatically at launch. Use Check for updates to download a verified update, then Install and restart to apply it.\nThis build retains the legacy NW.js 0.44.5 runtime for codec compatibility. Runtime modernization and broader device testing remain pending.\nThe preview is unsigned.\nApplication sources and build provenance are provided separately. See desktop/STANDALONE.md.\n',encoding='utf8')
+    (app / 'BUILD-INFO.json').write_text(json.dumps({'version':VERSION,'upstream':LOCK['upstream'],'overlayVersion':inventory['version'],'runtimeArchiveSha256':LOCK['assets']['runtime']['sha256'],'runtimeVersion':LOCK['runtimeVersion'],'codecArchiveSha256':LOCK['assets']['codecs']['sha256']},indent=2)+'\n',encoding='utf8')
+    (app / 'README.txt').write_text('StreamNest Desktop '+VERSION+' preview\n\nRun StreamNest.exe. No Popcorn Time installation is required.\nSettings and video cache are separate under %LOCALAPPDATA%\\StreamNest.\nNo accounts or saved settings are imported. Updates are checked automatically at launch. Use Check for updates to download a verified update, then Install and restart to apply it.\nThis build uses NW.js 0.119.2 with pinned matching codec libraries. Windows 10 or newer is required.\nThe preview is unsigned.\nApplication sources and build provenance are provided separately. See desktop/STANDALONE.md.\n',encoding='utf8')
     return app
 
 def source_archive(app):

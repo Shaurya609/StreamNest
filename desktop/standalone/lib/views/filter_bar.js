@@ -28,6 +28,8 @@
       'click .ratings .dropdown-menu a': 'changeRating',
       'click #filterbar-settings': 'settings',
       'click #filterbar-tempf': 'tempf',
+      'click #filterbar-home': 'homeTabShow',
+      'keydown #filterbar-home': 'homeKey',
       'click .movieTabShow': 'movieTabShow',
       'click .tvshowTabShow': 'tvshowTabShow',
       'click .animeTabShow': 'animeTabShow',
@@ -40,7 +42,7 @@
     },
 
     initialize: function(e) {
-      App.vent.on('filter-bar:render', () => {
+      this.listenTo(App.vent,'filter-bar:render', () => {
         this.render();
         this.setActive(App.currentview);
       });
@@ -65,6 +67,9 @@
         .find('.active')
         .removeClass('active');
       switch (set) {
+        case 'Home':
+        case 'home':
+          rightSearch.hide();navFilters.hide();$('#filterbar-home').addClass('active');break;
         case 'TV Series':
         case 'shows':
           $('.source.tvshowTabShow').addClass('active');
@@ -163,6 +168,7 @@
 
       if (typeof App.currentview === 'undefined') {
         switch (activetab) {
+          case 'Home': App.currentview='home';break;
           case 'TV Series':
             App.currentview = 'shows';
             break;
@@ -424,6 +430,8 @@
       this.setActive('Anime');
     },
 
+    homeTabShow:function(e){e.preventDefault();App.vent.trigger('home:list');},
+    homeKey:function(e){if(e.key==='Enter'||e.key===' ')this.homeTabShow(e);},
     movieTabShow: function(e) {
       e.preventDefault();
       App.currentview = 'movies';

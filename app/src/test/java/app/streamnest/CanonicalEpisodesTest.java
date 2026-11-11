@@ -86,4 +86,14 @@ public class CanonicalEpisodesTest {
   public void mismatchedMetadataIdentityIsRejected() throws Exception {
     CanonicalEpisodes.fromCinemeta(new JSONObject().put("id", "tt2"), "tt1");
   }
+ @Test public void reverseMappingRejectsRelatedOvaAndWrongTitle()throws Exception{
+ JSONObject doc=new JSONObject().put("mappings",new JSONObject().put("imdb_id","tt123").put("type","TV")).put("titles",new JSONObject().put("en","My Hero Academia"));
+ assertTrue(CanonicalEpisodes.trustedReverseMapping(doc,"tt123","My Hero Academia (TV Series 2016–)"));
+ assertFalse(CanonicalEpisodes.trustedReverseMapping(doc,"tt123","Another anime"));doc.getJSONObject("mappings").put("type","OVA");assertFalse(CanonicalEpisodes.trustedReverseMapping(doc,"tt123","My Hero Academia"));
+ }
+ @Test public void mappedFirstSeasonDoesNotTruncateCanonicalLaterSeasons()throws Exception{
+ JSONObject mapped=new JSONObject().put("season",1).put("number",1).put("name","Origin").put("skipMalId",1),next=new JSONObject().put("season",2).put("number",1).put("name","Next");
+ JSONArray rows=CanonicalEpisodes.augmentMappings(new JSONArray().put(mapped),new JSONArray().put(new JSONObject().put("season",1).put("number",1).put("name","Origin")).put(next),true);
+ assertEquals(2,rows.length());
+ }
 }

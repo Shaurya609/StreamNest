@@ -130,8 +130,8 @@ final class AlternateEpisodes {
       remaining.remove(next);
       if (seen.add(next.url + ":" + next.fileIndex)) out.add(next);
     }
-    if(out.size()==6&&out.stream().noneMatch(s->s.label.contains(" · Nyaa"))){
-      List<Catalog.Source> fallback=new ArrayList<>();for(Catalog.Source s:sources)if(s.label.contains(" · Nyaa"))fallback.add(s);
+    if(out.size()==6&&out.stream().noneMatch(s->(s.label.contains(" · Nyaa")||s.label.contains(" · EZTV")))){
+      List<Catalog.Source> fallback=new ArrayList<>();for(Catalog.Source s:sources)if((s.label.contains(" · Nyaa")||s.label.contains(" · EZTV")))fallback.add(s);
       Catalog.Source extra=PlaybackPlan.episodeBest(fallback,quality,lite);if(extra!=null)out.set(out.size()-1,extra);
     }
     return out;
