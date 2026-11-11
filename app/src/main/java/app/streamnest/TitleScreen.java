@@ -15,7 +15,7 @@ final class TitleScreen extends Dialog {
   final boolean series;
   LinearLayout root, qualityRow, episodePanel;
   TextView heading, overview, airdate, health;
-  Button watch, favorite, subtitle, watched;
+  Button watch, favorite, subtitle, watched, trailer;
   final Map<String, Button> qualityButtons = new LinkedHashMap<>();
   List<Catalog.Source> sources = new ArrayList<>();
   String selectedQuality = "", subtitleLanguage;
@@ -31,7 +31,8 @@ final class TitleScreen extends Dialog {
   boolean manualEpisodeSelection;
   String sourceLookupError;
   Spinner episodeQualityPicker;
-  java.util.concurrent.Future<?> alternateJob;
+  java.util.concurrent.Future<?> alternateJob,trailerJob;
+  Trailers.Result trailerResult;
 
   boolean episodeMode() {
     return series || title.raw.optBoolean("animeRelease");
@@ -134,6 +135,9 @@ final class TitleScreen extends Dialog {
     subtitle = control(subtitleLabel(), toggles, this::chooseSubtitles);
     watched=control(ManualWatched.isWatched(a,title.id)?"✓ Watched":"Mark watched",toggles,()->{try{ManualWatched.set(a,title,!ManualWatched.isWatched(a,title.id));watched.setText(ManualWatched.isWatched(a,title.id)?"✓ Watched":"Mark watched");}catch(Exception e){a.toast(e);}});
     root.addView(toggles);
+    trailer=control("▶ Trailer",toggles,()->{if(trailerResult==null)return;try{a.startActivity(new Intent(Intent.ACTION_VIEW,android.net.Uri.parse(trailerResult.url)));}catch(ActivityNotFoundException e){a.toast(new Exception("Install YouTube or a browser to watch this trailer"));}});trailer.setContentDescription("Watch trailer on YouTube");trailer.setTooltipText("Opens in YouTube or your browser");trailer.setVisibility(View.GONE);
+    try{Trailers.worker.purge();trailerJob=Trailers.worker.submit(()->{try{Trailers.Result result=Trailers.resolve(title);a.ui.post(()->{if(isShowing()&&!a.isDestroyed()&&result!=null){trailerResult=result;trailer.setVisibility(View.VISIBLE);}});}catch(Exception ignored){}});}catch(java.util.concurrent.RejectedExecutionException ignored){}
+
     if (!series) buildControls(root);
     watch.setEnabled(false);
     health.setText(series ? "Loading seasons and episodes…" : "Loading available qualities…");
@@ -571,6 +575,7 @@ final class TitleScreen extends Dialog {
     updateControls();
     episodeAdapter.notifyDataSetChanged();
     if (alternateJob != null) alternateJob.cancel(true);
+    if (trailerJob != null) trailerJob.cancel(true);
     lookingForAlternatives = true;
     health.setOnClickListener(v -> {EpisodeDiscovery.invalidate(title.id,selected.optInt("season"),selected.optInt("episode"));selectEpisode(selected);});
     updateControls();

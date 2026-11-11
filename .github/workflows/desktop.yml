@@ -47,6 +47,8 @@ jobs:
         run: python desktop/packaging/smoke.py --app "reference/standalone-build/$env:SN_DESKTOP_VERSION/StreamNest"
       - name: Home, synced progress and existing title flow
         run: python desktop/packaging/smoke.py --app "reference/standalone-build/$env:SN_DESKTOP_VERSION/StreamNest" --home
+      - name: Trailer controls and external handoff
+        run: python desktop/packaging/smoke.py --app "reference/standalone-build/$env:SN_DESKTOP_VERSION/StreamNest" --trailers
       - name: Native update helper and restart
         run: python desktop/packaging/handoff_smoke.py --app "reference/standalone-build/$env:SN_DESKTOP_VERSION/StreamNest"
       - name: Settings sync dialog and disposable live pairing

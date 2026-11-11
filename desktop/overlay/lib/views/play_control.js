@@ -66,6 +66,7 @@
 
     onAttach: function() {
       this.hideUnused();
+      require('./butter-provider/streamnest-trailers').attach(this,this.$('#watch-trailer'));
 
       this.loadComponents();
       this.setUiStates();
@@ -294,17 +295,7 @@
     },
 
     playTrailer: function() {
-      var trailer = new Backbone.Model({
-        src: this.model.get('trailer'),
-        type: 'video/youtube',
-        subtitle: null,
-        quality: false,
-        title: this.model.get('title')
-      });
-      var tmpPlayer = App.Device.Collection.selected.attributes.id;
-      App.Device.Collection.setDevice('local');
-      App.vent.trigger('stream:ready', trailer);
-      App.Device.Collection.setDevice(tmpPlayer);
+      require('./butter-provider/streamnest-trailers').open(this._streamnestTrailer||this.model.get('trailer'));
     },
 
     toggleFavourite: function(e) {

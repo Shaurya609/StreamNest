@@ -195,6 +195,8 @@
             F.request(rows);
         },
         onAttach: function () {
+            let trailer=this.$('.sn-trailer-action');if(!trailer.length)trailer=$('<button type="button" class="sn-trailer-action">').css({background:'#303b4c',color:'#fff',border:'1px solid #65738c',borderRadius:'5px',padding:'8px 12px',marginLeft:'12px',font:'inherit',cursor:'pointer'}).appendTo(this.$('.sh-actions .flex-left'));require('./butter-provider/streamnest-trailers').attach(this,trailer);
+
             if(!this._fillerListener){this._fillerListener=this.refreshFiller.bind(this);require('./butter-provider/streamnest-filler').events.on('updated',this._fillerListener);}this.refreshFiller();
             this._manualResumeChoice=false;this._resumeGeneration=(this._resumeGeneration||0)+1;
             win.info('Show series details (' + this.model.get('imdb_id') + ')');

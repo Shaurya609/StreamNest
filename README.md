@@ -101,3 +101,7 @@ Autoplay starts the next episode after a natural end near the media runtime, rat
 Skip icons appear only inside validated intro/outro ranges from [IntroDB](https://introdb.app/docs/api) or [AniSkip](https://api.aniskip.com/api-docs). Lookup is read-only and needs no account key. IntroDB uses exact IMDb/season/episode identity; AniSkip requires an explicit MAL ID, first-season mapping and a matching reported runtime. Later-season MAL offsets are not guessed. Unsupported episodes or provider outages keep normal controls. Release edits can still shift community timings, so skipping is manual. Credits skip to the end of the marked segment, not directly to the next episode. Disable these icons in playback settings if preferred.
 
 Skip timestamp attribution: SkipDB (https://skipdb.tv) data is licensed under ODbL 1.0 and its service-provider reciprocity term (https://skipdb.tv/license). Read-only episode lookups are cached locally for playback.
+
+### Trailers
+
+On a movie, series or anime details screen, select **▶ Trailer** when available. It opens YouTube or your browser; return to StreamNest to continue browsing. A YouTube app or browser must be installed. Trailer availability depends on title metadata and YouTube availability. Trailers do not start torrent downloads or change Continue Watching, Watched preferences or synced playback positions.
