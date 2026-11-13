@@ -66,7 +66,7 @@ final class WatchSync {
             sync(app, pairing);
             if (pairing.equals(code(app))) {status = "Synced"; SyncGroup.refresh(app);}
           } catch (Exception e) {
-            Diagnostics.event("sync.failed");
+            Diagnostics.failure("sync.failed","sync","fetch",e);
             status = "Offline — progress stays on this device";
           } finally {
             synchronized (WatchSync.class) {

@@ -31,4 +31,4 @@ async function read(source) {
   req.on('end',()=>{clearTimeout(deadline);try{resolve(unpack(Buffer.concat(chunks)));}catch(error){reject(error);}});
  });
 }
-module.exports={read,unpack};
+module.exports={read:async(...args)=>{try{return await read(...args);}catch(error){require("./streamnest-diagnostics").failure("subtitle.failed","subtitles","download",error);throw error;}},unpack};

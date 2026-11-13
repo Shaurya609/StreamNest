@@ -59,6 +59,7 @@ final class CatalogHttp {
         if (Thread.currentThread().isInterrupted())
           throw new InterruptedException("Catalog request replaced");
         failure = e;
+        Diagnostics.failure("catalog.failed","catalog","fetch",e);
         if (!String.valueOf(e.getMessage()).matches(".*HTTP\\s*(400|404|410|422)\\b.*"))
           health.failed(uri.getHost());
       }

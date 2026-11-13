@@ -10,7 +10,7 @@ function text(url,redirects=0,deadline=Date.now()+14000){return new Promise((res
  let value='';res.setEncoding('utf8');res.on('data',c=>{value+=c;if(value.length>16000000)req.destroy(Error('Response too large'));});res.on('end',()=>resolve(value));res.on('error',reject);
  });const timer=setTimeout(()=>req.destroy(Error('Metadata deadline')),Math.max(1,deadline-Date.now()));req.on('close',()=>clearTimeout(timer));req.setTimeout(Math.min(8000,Math.max(1,deadline-Date.now())),()=>req.destroy(Error('Metadata timeout')));req.on('error',reject);
 });}
-module.exports=async (url,deadline)=>JSON.parse(await text(url,0,deadline));module.exports.text=text;
+module.exports=async (url,deadline)=>{try{return JSON.parse(await text(url,0,deadline));}catch(error){require('./streamnest-diagnostics').failure('catalog.failed','catalog','fetch',error);throw error;}};module.exports.text=(...args)=>text(...args).catch(error=>{require('./streamnest-diagnostics').failure('catalog.failed','catalog','fetch',error);throw error;});
 
 module.exports.bytes=(url,deadline=Date.now()+8000,limit=4000000)=>new Promise((resolve,reject)=>{
  if(new URL(url).protocol!=='https:'||Date.now()>=deadline)return reject(Error('Metadata deadline'));

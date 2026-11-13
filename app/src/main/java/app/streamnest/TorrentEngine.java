@@ -21,6 +21,8 @@ final class TorrentEngine implements AutoCloseable {
   File root, video;
   long size, offset;
   volatile long receivedBytes;
+  volatile int diagnosticPeers,diagnosticKbps,diagnosticPercent,diagnosticError;
+  long diagnosticSampleAt;
   int pieceLength;
   NanoHTTPD server;
   final java.util.concurrent.CountDownLatch resumeSaved =
@@ -275,6 +277,7 @@ final class TorrentEngine implements AutoCloseable {
       if (handle != null && handle.isValid()) {
         TorrentStatus s = handle.status(true);
         receivedBytes = s.totalWantedDone();
+        diagnosticPeers=Math.max(0,s.numPeers());diagnosticKbps=Math.max(0,s.downloadRate()/1024);diagnosticPercent=Math.max(0,Math.min(100,Math.round(s.progress()*100)));diagnosticError=s.errorCode().getValue();
         if (s.errorCode().getValue() != 0) return "Torrent error: " + s.errorCode().getMessage();
         return String.format(
             Locale.ROOT,

@@ -85,7 +85,7 @@ public class StreamService extends Service {
             PlaybackCache.record(this, CacheLocation.current(this), dir);
             if (!next.closed) next.start(source, dir);
           } catch (Throwable e) {
-            Diagnostics.event("torrent.failed");
+            Diagnostics.failure("torrent.failed","torrent","startup",e);
             next.closed=true;
             next.message =
                 "Unable to stream: "

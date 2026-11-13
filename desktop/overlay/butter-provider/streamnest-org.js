@@ -72,3 +72,5 @@ async function download(url) {
  return zlib.gunzipSync(Buffer.from(row.data,'base64'),{maxOutputLength:8000000});
 }
 module.exports={login,search,download,encode,decode,sessionRpc};
+
+for(const name of ["login","search","download"]){const original=module.exports[name];module.exports[name]=async(...args)=>{try{return await original(...args);}catch(error){require("./streamnest-diagnostics").failure("subtitle.failed","subtitles",name==="download"?"download":"fetch",error);throw error;}};}

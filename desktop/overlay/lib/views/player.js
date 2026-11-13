@@ -570,15 +570,7 @@
                 });
             });
 
-            const diagnostic=require('./butter-provider/streamnest-diagnostics');
-            diagnostic.event('player.open');
-            let diagnosticWaiting=false,diagnosticReady=false;
-            this.player.on('waiting',()=>{if(!diagnosticWaiting){diagnosticWaiting=true;diagnostic.event('player.buffering');}});
-            this.player.on('playing',()=>{diagnosticWaiting=false;diagnostic.event('player.resumed');});
-            this.player.on('pause',()=>diagnostic.event('player.paused'));
-            this.player.on('error',()=>diagnostic.event('player.error',{},'error'));
-            this.player.on('ended',()=>diagnostic.event('player.ended'));
-            this.player.on('timeupdate',()=>{if(!diagnosticReady&&this.player.currentTime()>1&&this.player.videoWidth()>0){diagnosticReady=true;diagnostic.event('player.video_ready',{width:this.player.videoWidth(),height:this.player.videoHeight()});}});
+            require('./butter-provider/streamnest-diagnostics').attachPlayer(this.player,this.el,this.model);
             this.player.on('ended', this.onPlayerEnded.bind(this));
             this.player.one('play', this.onPlayerFirstPlay.bind(this));
             this.player.on('loadeddata', this.onPlayerReady.bind(this));

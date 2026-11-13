@@ -127,6 +127,8 @@ public class AppUpdateActivity extends Activity {
         metadata = android;
         ready = target;
         message = "StreamNest " + android.getString("version") + " is ready to install.";
+      } catch(Exception error) {
+        Diagnostics.failure("update.failed","update","download",error);throw error;
       } finally {
         busy = false;
       }
@@ -215,6 +217,7 @@ public class AppUpdateActivity extends Activity {
       verifyApk(this, file, data.getLong("versionCode"));
       startActivity(installerIntent(this, file));
     } catch (Exception error) {
+                  Diagnostics.failure("update.failed","update","install",error);
       message = "Cannot install: " + error.getMessage();
     }
   }

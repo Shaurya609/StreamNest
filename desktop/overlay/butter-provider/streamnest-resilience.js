@@ -17,7 +17,7 @@ class Catalogs {
  }
  catalog(kind){const disk=this.root&&read(path.join(this.root,kind+'.json')),bundle=this.bundles[kind],field=kind==='movies'?'movies':kind==='latest'?'releases':'series';return disk&&Array.isArray(disk[field])&&(kind==='latest'||disk[field].length)&&(!bundle||disk.saved>=bundle.saved)?disk:bundle;}
  candidates(hosts,preferred){const now=this.clock(),ready=hosts.filter(h=>!this.health.has(h)||this.health.get(h).retryAt<=now);if(ready.includes(preferred)){ready.splice(ready.indexOf(preferred),1);ready.unshift(preferred);}return ready;}
- failed(host,error){if(/HTTP\s*(400|404|410|422)\b/.test(String(error&&error.message)))return;const old=this.health.get(host)||{count:0};const count=Math.min(5,old.count+1);this.health.set(host,{count,retryAt:this.clock()+Math.min(300000,15000*Math.pow(2,count))});}
+ failed(host,error){require('./streamnest-diagnostics').failure('catalog.failed','catalog','fetch',error);if(/HTTP\s*(400|404|410|422)\b/.test(String(error&&error.message)))return;const old=this.health.get(host)||{count:0};const count=Math.min(5,old.count+1);this.health.set(host,{count,retryAt:this.clock()+Math.min(300000,15000*Math.pow(2,count))});}
  succeeded(host){this.health.delete(host);}
  notice(saved){this.saved=this.saved||saved;if(typeof document!=='undefined'){const badge=document.getElementById('streamnest-catalog-status');if(badge){badge.textContent=this.saved?'Saved catalog':'';badge.style.display=this.saved?'inline':'none';}}}
  begin(){this.saved=false;this.notice(false);}
@@ -73,7 +73,7 @@ class Catalogs {
    const docs={};for(const kind of ['movies','shows','animes','latest']){const entry=manifest.files[kind];if(!new RegExp('^catalogs/v1/data/'+kind+'-[0-9a-f]{16}\\.json$').test(entry.path))throw Error('Unsafe snapshot path');for(const base of mirrors)try{const bytes=Buffer.from(await net.text(base+entry.path),'utf8');docs[kind]=check(kind,entry,bytes);break;}catch(e){}if(!docs[kind])throw Error('Snapshot refresh retained until every file is verified');}
    for(const kind of Object.keys(docs)){const old=this.catalog(kind);if(manifest.rollback||!old||docs[kind].saved>old.saved)atomic(path.join(this.root,kind+'.json'),docs[kind]);}
    for(const m of docs.movies.movies){const old=this.known.get(m.imdb_code);if(!old||Number(m.catalogVerifiedAt||0)>=Number(old.catalogVerifiedAt||0))this.known.set(m.imdb_code,m);}this.persist();atomic(acceptedFile,envelope);
-  }finally{this.syncing=false;}
+  }catch(error){require('./streamnest-diagnostics').failure('catalog.failed','catalog','verify',error);throw error;}finally{this.syncing=false;}
  }
 }
 const root=typeof nw!=='undefined'?path.join(nw.App.dataPath,'streamnest-catalogs'):null;

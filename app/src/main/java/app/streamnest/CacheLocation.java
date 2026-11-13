@@ -113,7 +113,7 @@ final class CacheLocation {
     if (StreamService.engine != null && !StreamService.engine.closed)
       throw new IOException("Stop playback before changing the cache folder");
     File valid;
-    try{valid=writable(f);}catch(IOException e){Diagnostics.event("cache.failed");throw e;}
+    try{valid=writable(f);}catch(IOException e){Diagnostics.failure("cache.failed","storage","cache",e);throw e;}
     Diagnostics.event("cache.changed");
     c.getSharedPreferences("storage", 0).edit().putString("torrentRoot", valid.getPath()).apply();
   }

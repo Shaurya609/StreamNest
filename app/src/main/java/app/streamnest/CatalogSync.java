@@ -40,6 +40,7 @@ final class CatalogSync {
                 bundle();
                 sync();
               } catch (Exception e) {
+                Diagnostics.failure("catalog.failed","catalog","verify",e);
                 android.util.Log.w(
                     "StreamNest", "Catalog refresh retained last working data: " + e.getMessage());
               } finally {

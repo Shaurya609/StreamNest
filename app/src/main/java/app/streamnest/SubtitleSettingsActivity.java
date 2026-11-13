@@ -83,6 +83,7 @@ public class SubtitleSettingsActivity extends Activity {
                         }
                       });
                 } catch (Exception e) {
+            Diagnostics.failure("subtitle.failed","subtitles","fetch",e);
                   ui.post(
                       () -> {
                         if (!isDestroyed()) {
@@ -141,6 +142,7 @@ public class SubtitleSettingsActivity extends Activity {
                         }
                       });
                 } catch (Exception e) {
+            Diagnostics.failure("subtitle.failed","subtitles","fetch",e);
                   ui.post(
                       () -> {
                         if (!isDestroyed()) {
@@ -258,6 +260,7 @@ public class SubtitleSettingsActivity extends Activity {
                   }
                 });
           } catch (Exception e) {
+            Diagnostics.failure("subtitle.failed","subtitles","fetch",e);
             ui.post(
                 () -> {
                   if (!isDestroyed()) {

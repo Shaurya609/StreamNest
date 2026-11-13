@@ -138,3 +138,12 @@ test('diagnostics expiry, bounded batches and unknown events',async()=>{
   await worker.scheduled({},env);assert.equal(env.database.prepare('SELECT count(*) AS n FROM diagnostic_events').get().n,0);assert.equal(env.database.prepare('SELECT count(*) AS n FROM diagnostic_devices').get().n,0);
  }finally{env.database.close();}
 });
+
+
+test('extended diagnostic samples and safe failure locations survive server sanitization',async()=>{
+ const {cleanData,cleanConfig,cleanEvent}=await import('./diagnostics.mjs');
+ const data=cleanData({service:'player',operation:'playback',audioChannels:6,bufferedMs:10000,videoCodec:'hevc',audioState:'muted',playState:'buffering',frames:['js.streamnest-net:42','app.streamnest.CatalogHttp.get:18','C:/secret.js:4'],causeClass:'IOException',positionMs:123,title:'private',url:'https://private'});
+ assert.deepEqual(data.frames,['js.streamnest-net:42','app.streamnest.CatalogHttp.get:18']);assert.equal(data.bufferedMs,10000);assert(!('positionMs' in data));assert(!JSON.stringify(data).includes('private'));assert(!JSON.stringify(data).includes('secret'));
+ assert.deepEqual(cleanConfig({hardwareH264:true,hardwareHevc:false,hardwareAv1:true}),{hardwareH264:true,hardwareHevc:false,hardwareAv1:true});
+ assert(cleanEvent({id:'a'.repeat(32),session:'b'.repeat(32),type:'player.sample',level:'info',at:Date.now(),data}));
+});

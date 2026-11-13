@@ -62,6 +62,9 @@ public class PlayerActivity extends Activity {
   boolean softwareDecoder;
   int videoOutputs;
   boolean diagnosticBuffering;
+  long diagnosticSampleAt;
+  int diagnosticAudioOnlyVersion=-1;
+  float diagnosticBufferPercent;
   ImageButton nextSource;
 
   public void onCreate(Bundle state) {
@@ -219,6 +222,7 @@ public class PlayerActivity extends Activity {
               || e.type == MediaPlayer.Event.EncounteredError)
             android.util.Log.d("StreamNest", "VLC event " + e.type);
           if (e.type == MediaPlayer.Event.Buffering) {
+            diagnosticBufferPercent=e.getBuffering();
             boolean waiting=e.getBuffering()<100;
             if(waiting&&!diagnosticBuffering)Diagnostics.event("player.buffering");
             diagnosticBuffering=waiting;
@@ -578,7 +582,6 @@ public class PlayerActivity extends Activity {
   }
 
   void switchSource(boolean automatic) {
-    Diagnostics.event("source.changed");
     TorrentEngine starting=StreamService.engine;
     if(StreamService.startupBlocked()||starting!=null&&starting.startup.active){if(!automatic)Toast.makeText(this,starting==null?"Waiting for engine cleanup":starting.status(),Toast.LENGTH_LONG).show();return;}
     if (changingEpisode) return;
@@ -596,6 +599,7 @@ public class PlayerActivity extends Activity {
     if (old != null) old.closed = true;
     player.stop();
     Catalog.Source next = alternatives.get(++attempt);
+    Diagnostics.event("source.changed","attempt",attempt+1);
     source = next.url;
     key = positionKey();
     getIntent()
@@ -810,7 +814,7 @@ public class PlayerActivity extends Activity {
                   }
                 });
           } catch (Exception e) {
-            Diagnostics.event("subtitle.failed");
+            Diagnostics.failure("subtitle.failed","subtitles","download",e);
             ui.post(
                 () -> {
                   subtitleBusy = false;
@@ -850,7 +854,7 @@ public class PlayerActivity extends Activity {
                   }
                 });
           } catch (Exception e) {
-            Diagnostics.event("subtitle.failed");
+            Diagnostics.failure("subtitle.failed","subtitles","download",e);
             ui.post(
                 () -> {
                   if (!isDestroyed()
@@ -877,6 +881,8 @@ public class PlayerActivity extends Activity {
             EpisodePreload.consider(PlayerActivity.this,e,episodeQueue,neighbour(1));
           }
           long now = SystemClock.elapsedRealtime();
+          if(mediaSet&&player.isPlaying()&&player.getTime()>1500&&videoOutputs==0&&diagnosticAudioOnlyVersion!=playbackVersion){diagnosticAudioOnlyVersion=playbackVersion;try{Diagnostics.event("player.audio_only",new org.json.JSONObject().put("attempt",attempt).put("decoder",softwareDecoder?"software":"auto"));}catch(Exception ignored){}}
+          if(mediaSet&&now-diagnosticSampleAt>=30000){diagnosticSampleAt=now;DiagnosticPlayback.sample(PlayerActivity.this,player,currentEngine?e:null,softwareDecoder,diagnosticBufferPercent);}
           if (mediaSet
               && mediaOpenedAt > 0
               && !playedVideo

@@ -64,7 +64,7 @@
     },100);
    });
    worker.unref();nw.App.quit();
-  }catch(error){show('Update not installed: '+error.message,false);}
+  }catch(error){require('./butter-provider/streamnest-diagnostics').failure('update.failed','update','install',error);show('Update not installed: '+error.message,false);}
   finally{applying=false;}
  }
  async function check(manual){
@@ -79,7 +79,7 @@
    const file=await downloads.download(item.artifact,root,(done,total)=>{if(panel)show('Downloading update - '+Math.floor(done*100/total)+'%',false);});
    ready={file,item:item.artifact};
    if(!playing())show('StreamNest '+version+' is ready. Install and restart when convenient.',true);
-  }catch(error){if(manual)show('Could not update: '+error.message,false);}
+  }catch(error){require('./butter-provider/streamnest-diagnostics').failure('update.failed','update','download',error);if(manual)show('Could not update: '+error.message,false);}
   finally{running=false;}
  }
  App.Updater={onlyNotification:event=>check(!!event),check:()=>check(true),updateDHT:()=>Promise.resolve(),updateDHTOld:()=>Promise.resolve(),updateDHTSettings:()=>Promise.resolve()};
