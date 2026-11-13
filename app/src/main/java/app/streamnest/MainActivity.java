@@ -77,6 +77,7 @@ public class MainActivity extends Activity {
 
   public void onCreate(Bundle state) {
     super.onCreate(state);
+    Diagnostics.install(this);
     PlaybackCache.enter(this);
     WatchSync.request(this,true);
     ui.postDelayed(() -> AppUpdateActivity.launchCheck(this), 4000);
@@ -522,6 +523,7 @@ public class MainActivity extends Activity {
                       updatePaging();
                     });
               } catch (Exception e) {
+                Diagnostics.event("catalog.failed");
                 ui.post(
                     () -> {
                       if (request != generation || isDestroyed()) return;

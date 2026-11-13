@@ -1,7 +1,7 @@
 {
   "name": "streamnest-desktop-build",
   "private": true,
-  "version": "0.25.1",
+  "version": "0.26.0",
   "dependencies": {
     "@resvg/resvg-js": "2.6.2",
     "qrcode-generator": "1.4.4",

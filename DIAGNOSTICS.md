@@ -1,0 +1,13 @@
+# Optional device diagnostics
+
+Diagnostics are off by default. Connect the device to a sync group, then enable **Share device diagnostics** in Android Playback & storage, or **Device diagnostics** in Windows Settings. Consent belongs to this installation and this group; switching groups or disconnecting disables sharing. The owner cannot remotely enable it.
+
+The private [owner dashboard](https://streamnest-watch-sync.streamnest-shaurya609.workers.dev/admin) uses the existing owner access key. Select a device's Diagnostics button to see device details, session timelines, warning/error filters, JSON export and deletion. The owner can read and export shared reports. Watch progress remains separately encrypted.
+
+Reports include app/OS/CPU architecture and model, RAM/process-memory snapshots, graphics API when available, technical playback transitions, torrent startup stages/timings, stalls, sync failures and Android subtitle/cache failures. GPU hardware is shown as unavailable when it cannot be identified reliably. Memory describes this process, not every Windows subprocess. Events deliberately exclude content titles, episode identifiers, media positions, passwords, pairing keys, torrent magnets, full URLs, raw exception messages and personal paths. These are structured events, not a copy of device system logs.
+
+Each installation keeps at most 250 local events in app-private storage. Uploads run separately from playback, at most 25 events per minute, with bounded network timeouts. Offline reports retry automatically on a later launch. The backend validates fields again, permits only registered group devices, retains events for seven days, and caps storage at 500 events per device / 10,000 globally. An owner export is a separate local copy and does not expire automatically.
+
+Turning sharing off clears the local journal and requests server deletion. If offline, server reports expire within seven days. Deleting reports from the dashboard does not disable sharing: a consenting device can send new events later. Android OS exit reasons may explain an earlier crash or low-memory kill on the next launch. A frozen native process cannot upload while frozen; its last persisted startup stage may be the final available evidence. Hard crashes can lose the newest queued events. No diagnostics promise captures every failure.
+
+Deployment: apply the additive `sync/diagnostics-schema.sql` migration before deploying the worker. Existing encrypted sync schema and payloads are unchanged. No owner key is bundled in either application.

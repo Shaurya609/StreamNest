@@ -1,3 +1,4 @@
+import {eraseDevice} from './diagnostics.mjs';
 // Group/device names are administrative metadata; watch history remains encrypted.
 const json=(body,status=200)=>Response.json(body,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 export async function groups(request,env,id) {
@@ -14,7 +15,7 @@ export async function groups(request,env,id) {
  for(;;){const part=await reader.read();if(part.done)break;size+=part.value.length;if(size>4096){await reader.cancel();return json({error:'Metadata too large'},413);}text+=decoder.decode(part.value,{stream:true});}
  let body;try{body=JSON.parse(text+decoder.decode());}catch(e){return json({error:'Invalid metadata'},400);}
  if(!/^[a-f0-9-]{32,36}$/.test(body.deviceId||''))return json({error:'Invalid device'},400);
- if(request.method==='DELETE') {await env.DB.prepare('DELETE FROM sync_devices WHERE room_id=? AND id=?').bind(id,body.deviceId).run();return json({disconnected:true});}
+ if(request.method==='DELETE') {await eraseDevice(env,id,body.deviceId);await env.DB.prepare('DELETE FROM sync_devices WHERE room_id=? AND id=?').bind(id,body.deviceId).run();return json({disconnected:true});}
  const valid=s=>typeof s==='string'&&s.trim().length>0&&s.trim().length<=64&&!/[\x00-\x1f\x7f]/.test(s);
  if(!valid(body.deviceName)||(body.groupName!==undefined&&!valid(body.groupName)))return json({error:'Use names of 1–64 characters'},400);
  const existing=await env.DB.prepare('SELECT name FROM sync_groups WHERE id=?').bind(id).first();
@@ -29,7 +30,7 @@ export async function groups(request,env,id) {
 }
 export async function admin(request,env) {
  if(!env.ADMIN_TOKEN||env.ADMIN_TOKEN.length<32||request.headers.get('Authorization')!=='Bearer '+env.ADMIN_TOKEN)return json({error:'Owner authorization required'},401);
- const result=await env.DB.prepare('SELECT g.id AS group_id,g.name,g.created_at,g.updated_at,d.name AS device_name,d.seen_at FROM sync_groups g LEFT JOIN sync_devices d ON d.room_id=g.id AND d.seen_at>? ORDER BY g.id,d.seen_at DESC').bind(Date.now()-90*86400000).all();
+ const result=await env.DB.prepare('SELECT g.id AS group_id,g.name,g.created_at,g.updated_at,d.id AS device_id,d.name AS device_name,d.seen_at FROM sync_groups g LEFT JOIN sync_devices d ON d.room_id=g.id AND d.seen_at>? ORDER BY g.id,d.seen_at DESC').bind(Date.now()-90*86400000).all();
  // No recovery keys, authentication hashes or playback records are returned.
  return json({groups:result.results});
 }

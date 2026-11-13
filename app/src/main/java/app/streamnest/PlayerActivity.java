@@ -61,10 +61,12 @@ public class PlayerActivity extends Activity {
   long mediaOpenedAt, startupPosition;
   boolean softwareDecoder;
   int videoOutputs;
+  boolean diagnosticBuffering;
   ImageButton nextSource;
 
   public void onCreate(Bundle state) {
     super.onCreate(state);
+    Diagnostics.install(this);Diagnostics.event("player.open");
     if (DeviceProfile.lite(this)) {
       synchronized (SeriesIndex.class) {
         SeriesIndex.sessions.clear();
@@ -216,7 +218,16 @@ public class PlayerActivity extends Activity {
               || e.type == MediaPlayer.Event.Playing
               || e.type == MediaPlayer.Event.EncounteredError)
             android.util.Log.d("StreamNest", "VLC event " + e.type);
-          if (e.type == MediaPlayer.Event.Vout) videoOutputs = e.getVoutCount();
+          if (e.type == MediaPlayer.Event.Buffering) {
+            boolean waiting=e.getBuffering()<100;
+            if(waiting&&!diagnosticBuffering)Diagnostics.event("player.buffering");
+            diagnosticBuffering=waiting;
+          }
+          if (e.type == MediaPlayer.Event.Playing) Diagnostics.event("player.resumed");
+          if (e.type == MediaPlayer.Event.Paused) Diagnostics.event("player.paused");
+          if (e.type == MediaPlayer.Event.EndReached) Diagnostics.event("player.ended");
+          if (e.type == MediaPlayer.Event.EncounteredError) Diagnostics.event("player.error");
+          if (e.type == MediaPlayer.Event.Vout) { videoOutputs = e.getVoutCount();  }
           if (e.type == MediaPlayer.Event.EncounteredError) {
             if (mediaSet) sourceFailed = true;
             setControlsVisible(true);
@@ -567,6 +578,7 @@ public class PlayerActivity extends Activity {
   }
 
   void switchSource(boolean automatic) {
+    Diagnostics.event("source.changed");
     TorrentEngine starting=StreamService.engine;
     if(StreamService.startupBlocked()||starting!=null&&starting.startup.active){if(!automatic)Toast.makeText(this,starting==null?"Waiting for engine cleanup":starting.status(),Toast.LENGTH_LONG).show();return;}
     if (changingEpisode) return;
@@ -798,6 +810,7 @@ public class PlayerActivity extends Activity {
                   }
                 });
           } catch (Exception e) {
+            Diagnostics.event("subtitle.failed");
             ui.post(
                 () -> {
                   subtitleBusy = false;
@@ -837,6 +850,7 @@ public class PlayerActivity extends Activity {
                   }
                 });
           } catch (Exception e) {
+            Diagnostics.event("subtitle.failed");
             ui.post(
                 () -> {
                   if (!isDestroyed()
@@ -854,8 +868,10 @@ public class PlayerActivity extends Activity {
           if (isFinishing()) return;
           TorrentEngine e = StreamService.engine;
           boolean currentEngine=e!=null&&source.equals(e.sourceUrl)&&java.util.Objects.equals(e.episodeIdentity,getIntent().getStringExtra("episodeIdentity"));
-          if (mediaSet && videoOutputs > 0 && player.isPlaying() && player.getTime() > 1000)
+          if (mediaSet && videoOutputs > 0 && player.isPlaying() && player.getTime() > 1000) {
+            if(!playedVideo)Diagnostics.event("player.video_ready");
             playedVideo = true;
+          }
           if(playedVideo&&currentEngine&&!e.closed){
             if(cacheCommitted!=e&&StreamService.retiring==null&&hasRenderedVideo()){cacheCommitted=e;StreamService.playing(getApplicationContext(),e,getIntent().getStringExtra("episodeIdentity"));}
             EpisodePreload.consider(PlayerActivity.this,e,episodeQueue,neighbour(1));
@@ -1042,6 +1058,7 @@ public class PlayerActivity extends Activity {
   }
 
   protected void onDestroy() {
+    Diagnostics.event("player.closed");
     TorrentEngine activeEngine = StreamService.engine;
     if (activeEngine != null) activeEngine.closed = true;
     stopService(new Intent(this, StreamService.class));

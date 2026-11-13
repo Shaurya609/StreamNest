@@ -1,5 +1,5 @@
 {
-  "version": "0.25.1",
+  "version": "0.26.0",
   "target": "Popcorn Time 0.5.1",
   "files": [
     {
@@ -8,7 +8,7 @@
     },
     {
       "path": "bootstrap.js",
-      "sha256": "5cb2ed0ac19e636fb85c8d69cedd8b1a8625182fe0283c4d48d7c929c18ae92c"
+      "sha256": "8aafe9c1ed75c1070bb2c4fd9ea90825562215bb3f24486424a24377c22d9805"
     },
     {
       "path": "butter-provider/anime-series-v6.json",
@@ -180,7 +180,7 @@
     },
     {
       "path": "butter-provider/streamnest-sync.js",
-      "sha256": "41372b4bdf22782feda306e49eea6ea658d8d986a0ace69037424a034b106542"
+      "sha256": "09d82d68d1f962868107acf62e9f194096d129b98ac3b41258e6074ae3abe795"
     },
     {
       "path": "butter-provider/streamnest-trailers.js",
@@ -236,7 +236,7 @@
     },
     {
       "path": "lib/views/player.js",
-      "sha256": "1dcc9236b6aa931da59bb1524476e97ba1a7b9b9ea343c95f2f6932580d28619"
+      "sha256": "eab6f604ccd9590a27e4336fa6ff491065b546c7aa6cf7ebf6e8174f22c2ea73"
     },
     {
       "path": "lib/views/quality_selector.js",
@@ -244,7 +244,7 @@
     },
     {
       "path": "lib/views/settings_container.js",
-      "sha256": "48d3482f6945aea3e674d80b5bf4878798154087563a5d721fabd20b5fabb598"
+      "sha256": "535e4263fcfed06d10f19d6fc3a7f56dcc63ede9ecaf7bad62383c87376e19aa"
     },
     {
       "path": "lib/views/show_detail.js",
@@ -260,7 +260,7 @@
     },
     {
       "path": "templates/settings-container.tpl",
-      "sha256": "3af0ee59f07209b4860717a575a9d5086c28260a5bcdc136b52ceeab8ca52975"
+      "sha256": "1d192ffff8f2019cc41294eb0c88c2779388aaf5772b00b2d6de1ff87c18b857"
     },
     {
       "path": "templates/show-detail.tpl",
@@ -269,6 +269,10 @@
     {
       "path": "vendor/videojshooks.js",
       "sha256": "7e1711ad4e429833989858df07ab1bfd95a2004706644af130a6ceefb4ca5b18"
+    },
+    {
+      "path": "butter-provider/streamnest-diagnostics.js",
+      "sha256": "c6e9c7dd40742212e771612a4f55e086b391b971eb951547feb6cb39b01100ed"
     }
   ]
 }

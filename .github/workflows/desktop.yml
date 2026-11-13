@@ -49,6 +49,10 @@ jobs:
         run: python desktop/packaging/smoke.py --app "reference/standalone-build/$env:SN_DESKTOP_VERSION/StreamNest" --home
       - name: Trailer controls and external handoff
         run: python desktop/packaging/smoke.py --app "reference/standalone-build/$env:SN_DESKTOP_VERSION/StreamNest" --trailers
+      - name: Private diagnostic dashboard
+        run: python desktop/packaging/smoke.py --app "reference/standalone-build/$env:SN_DESKTOP_VERSION/StreamNest" --dashboard
+      - name: Optional diagnostics consent and live uploads
+        run: python desktop/packaging/smoke.py --app "reference/standalone-build/$env:SN_DESKTOP_VERSION/StreamNest" --diagnostics
       - name: Native update helper and restart
         run: python desktop/packaging/handoff_smoke.py --app "reference/standalone-build/$env:SN_DESKTOP_VERSION/StreamNest"
       - name: Settings sync dialog and disposable live pairing

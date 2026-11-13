@@ -9,7 +9,7 @@ import org.libtorrent4j.alerts.*;
 final class TorrentEngine implements AutoCloseable {
   volatile String message = "Starting torrent engine…", url;
   volatile boolean closed;
-  final EngineStartup startup=new EngineStartup(System::nanoTime,s->android.util.Log.i("StreamNestStartup",s));
+  final EngineStartup startup=new EngineStartup(System::nanoTime,s->{android.util.Log.i("StreamNestStartup",s);Diagnostics.startup(s);});
   boolean lite, publicMetadataLookup, episodeRequest;
   volatile boolean preloadOnly;
   boolean verifiedComplete;

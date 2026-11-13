@@ -17,6 +17,7 @@ public class StreamService extends Service {
 
   public void onCreate() {
     super.onCreate();
+    Diagnostics.install(this);
     getSystemService(NotificationManager.class)
         .createNotificationChannel(
             new NotificationChannel(
@@ -84,6 +85,7 @@ public class StreamService extends Service {
             PlaybackCache.record(this, CacheLocation.current(this), dir);
             if (!next.closed) next.start(source, dir);
           } catch (Throwable e) {
+            Diagnostics.event("torrent.failed");
             next.closed=true;
             next.message =
                 "Unable to stream: "

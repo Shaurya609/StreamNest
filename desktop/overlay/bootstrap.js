@@ -10,6 +10,7 @@
       });
   require('./butter-provider/streamnest-manual-watched').install(App);
   require('./butter-provider/streamnest-home-ui').install(App,$);
+  require('./butter-provider/streamnest-diagnostics').install(App,window);
   App.start();
 
   /* load all the things ! */

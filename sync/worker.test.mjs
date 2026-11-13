@@ -102,3 +102,39 @@ test('disconnect and expiry remove device metadata without confusing it with onl
   assert.equal(env.database.prepare('SELECT COUNT(*) AS total FROM sync_groups').get().total,0);
  }finally{env.database.close();}
 });
+
+
+test('diagnostic consent, isolation, privacy, owner authorization and deletion',async()=>{
+ const env=environment(),code=C.create(),other=C.create();env.ADMIN_TOKEN='x'.repeat(40);
+ const endpoint=(method,body,c=code)=>new Request('https://sync.example/v1/diagnostics',{method,headers:{Authorization:'Bearer '+C.auth(c)},body:JSON.stringify(body)});
+ const event={id:'b'.repeat(32),session:'c'.repeat(32),type:'player.video_ready',level:'info',at:Date.now(),data:{elapsedMs:1400,title:'Private title',password:'secret',path:'C:/private',magnet:'magnet:foo'}};
+ const body={schema:1,consent:true,deviceId:device.deviceId,config:{platform:'Windows',model:'Laptop',password:'secret',gpu:'https://private',totalRamMb:8192},events:[event]};
+ try{
+  assert.equal((await worker.fetch(endpoint('POST',body),env)).status,403);
+  await worker.fetch(groupRequest(code,'PUT',device),env);
+  assert.equal((await worker.fetch(endpoint('POST',{...body,consent:false}),env)).status,400);
+  assert.equal((await worker.fetch(endpoint('POST',body,other),env)).status,403);
+  assert.equal((await worker.fetch(endpoint('POST',body),env)).status,200);
+  const stored=env.database.prepare('SELECT * FROM diagnostic_events').get(),group=stored.room_id;
+  const url='https://sync.example/admin/diagnostics?group='+group+'&device='+device.deviceId;
+  assert.equal((await worker.fetch(new Request(url),env)).status,401);
+  const req=method=>new Request(url,{method,headers:{Authorization:'Bearer '+env.ADMIN_TOKEN}});
+  const report=await(await worker.fetch(req('GET'),env)).json();
+  assert.deepEqual(report.config,{platform:'Windows',model:'Laptop',totalRamMb:8192});assert.deepEqual(report.events[0].data,{elapsedMs:1400});
+  assert.equal((await worker.fetch(endpoint('POST',body),env)).status,429);
+  assert.equal((await worker.fetch(req('DELETE'),env)).status,200);
+  assert.equal(env.database.prepare('SELECT count(*) AS n FROM diagnostic_events').get().n,0);
+  await worker.fetch(endpoint('POST',body),env);
+  await worker.fetch(groupRequest(code,'DELETE',device),env);
+  assert.equal(env.database.prepare('SELECT count(*) AS n FROM diagnostic_events').get().n,0);
+ }finally{env.database.close();}
+});
+test('diagnostics expiry, bounded batches and unknown events',async()=>{
+ const env=environment(),code=C.create();try{
+  await worker.fetch(groupRequest(code,'PUT',device),env);
+  const send=events=>worker.fetch(new Request('https://sync.example/v1/diagnostics',{method:'POST',headers:{Authorization:'Bearer '+C.auth(code)},body:JSON.stringify({schema:1,consent:true,deviceId:device.deviceId,events})}),env),event={id:'b'.repeat(32),session:'c'.repeat(32),type:'app.start',level:'info',at:Date.now()};
+  assert.equal((await send(Array(26).fill(event))).status,400);assert.equal((await send([{...event,type:'private.title'}])).status,400);assert.equal((await send([event])).status,200);
+  env.database.prepare('UPDATE diagnostic_events SET received_at=1').run();env.database.prepare('UPDATE diagnostic_devices SET updated_at=1').run();
+  await worker.scheduled({},env);assert.equal(env.database.prepare('SELECT count(*) AS n FROM diagnostic_events').get().n,0);assert.equal(env.database.prepare('SELECT count(*) AS n FROM diagnostic_devices').get().n,0);
+ }finally{env.database.close();}
+});

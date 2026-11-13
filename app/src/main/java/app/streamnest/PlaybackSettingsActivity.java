@@ -12,6 +12,7 @@ import java.util.*;
 public class PlaybackSettingsActivity extends Activity {
 
   TextView path, mode;
+  boolean diagnosticsConnected(){try{return !WatchSync.code(this).isEmpty();}catch(Exception e){return false;}}
 
   protected void onCreate(Bundle state) {
     super.onCreate(state);
@@ -23,6 +24,17 @@ public class PlaybackSettingsActivity extends Activity {
     scroll.addView(box);
     setContentView(scroll);
     label(box, "Playback & storage", 25);
+    CheckBox diagnostics = new CheckBox(this);
+    diagnostics.setText("Share device diagnostics with StreamNest owner");
+    diagnostics.setTextColor(Color.WHITE);
+    diagnostics.setChecked(Diagnostics.enabled(this));
+    diagnostics.setOnCheckedChangeListener((v,on)->{
+      if(on&&!diagnosticsConnected()) { diagnostics.setChecked(false);Toast.makeText(this,"Connect to a sync group first",Toast.LENGTH_LONG).show();return; }
+      Diagnostics.setEnabled(this,on);
+    });
+    box.addView(diagnostics);
+    label(box,"Optional, off by default. Shares device specifications and technical playback/error events. No titles, media positions, credentials, pairing keys or file paths. The owner can read and export reports. Limited to 250 local events; server reports expire after seven days. Turning off clears local reports and requests server deletion when online.",14);
+
     Switch autoNext = new Switch(this);
     autoNext.setText("Play next episode automatically");
     autoNext.setTextColor(Color.WHITE);

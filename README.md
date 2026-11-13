@@ -31,6 +31,7 @@ Automatic series/anime episode selection and cross-device resume are available i
 - Embedded/local subtitles, automatically renewed anonymous OpenSubtitles.org access and OpenSubtitles.com integration; API key and account details are entered inside the app.
 - Storage and folder picker for the video cache, episode-by-episode cleanup and cleanup on app exit.
 - TV launcher support and Low Memory mode.
+- Optional device diagnostics and private owner dashboard for technical reports; off by default. [Privacy and usage](DIAGNOSTICS.md).
 
 External catalogs and peers determine actual availability. Seed counts are provider reports rather than connected-peer guarantees. Source recovery tries up to six candidates and cannot guarantee every episode will stream.
 
