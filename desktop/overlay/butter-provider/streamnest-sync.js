@@ -69,4 +69,4 @@ function show(win){
  if(config().code)groupUpdate().catch(()=>{});
  input.focus();
 }
-module.exports={groupUpdate,get group(){return group;},request,beforeSelection,connect,disconnect,show,config,get status(){return status;}};
+module.exports={device,groupUpdate,get group(){return group;},request,beforeSelection,connect,disconnect,show,config,get status(){return status;}};
