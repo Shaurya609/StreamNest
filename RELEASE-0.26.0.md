@@ -2,7 +2,7 @@
 
 Optional device diagnostics for Android / Google TV / projector and standalone Windows.
 
-- Default-off sharing switch in Settings. Connect the device to a sync group first; consent is per device and resets when changing groups or disconnecting.
+- Default-on sharing switch in Settings. Reports upload after the device joins a sync group; sharing is per device; an explicit off choice survives group changes and restarts.
 - Technical playback and startup events, stalls and failures, with CPU/OS/app/RAM details. Reports exclude content titles, media positions, credentials, pairing keys and personal paths.
 - Private owner dashboard: select a device, inspect its session timeline, filter warnings/errors, export JSON or delete reports. The existing owner access key is required.
 - Bounded local reports and background uploads, with offline retry. Seven-day server retention. Turning sharing off clears local reports and requests server deletion.

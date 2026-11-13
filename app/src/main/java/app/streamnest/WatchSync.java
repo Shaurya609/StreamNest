@@ -35,6 +35,7 @@ final class WatchSync {
     String normalized = WatchSyncCrypto.format(WatchSyncCrypto.parse(code));
     if(!normalized.equals(code(c)))Diagnostics.reset(c);
     new SecretStore(c).put("watchSyncCode", normalized);
+    Diagnostics.connected(c);
     HomeLibrary.revision++;
     status = "Connecting…";
     request(c, true);

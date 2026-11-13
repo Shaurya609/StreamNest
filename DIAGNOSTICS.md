@@ -1,6 +1,6 @@
 # Optional device diagnostics
 
-Diagnostics are off by default. Connect the device to a sync group, then enable **Share device diagnostics** in Android Playback & storage, or **Device diagnostics** in Windows Settings. Consent belongs to this installation and this group; switching groups or disconnecting disables sharing. The owner cannot remotely enable it.
+Diagnostics are on by default. Reports upload after the device joins a sync group. Use **Share device diagnostics** in Android Playback & storage, or **Device diagnostics** in Windows Settings to turn sharing off or back on. Your sharing choice belongs to this installation. An explicit off choice survives restarts and group changes. Reports are uploaded only while connected to a sync group. The owner cannot remotely enable it.
 
 The private [owner dashboard](https://streamnest-watch-sync.streamnest-shaurya609.workers.dev/admin) uses the existing owner access key. Select a device's Diagnostics button to see device details, session timelines, warning/error filters, JSON export and deletion. The owner can read and export shared reports. Watch progress remains separately encrypted.
 

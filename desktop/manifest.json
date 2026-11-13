@@ -180,7 +180,7 @@
     },
     {
       "path": "butter-provider/streamnest-sync.js",
-      "sha256": "09d82d68d1f962868107acf62e9f194096d129b98ac3b41258e6074ae3abe795"
+      "sha256": "b1c65d4ca4c46cad0b0e727c4e1ded78167bfdb7e510b296a6f9157e26fc18a4"
     },
     {
       "path": "butter-provider/streamnest-trailers.js",
@@ -260,7 +260,7 @@
     },
     {
       "path": "templates/settings-container.tpl",
-      "sha256": "1d192ffff8f2019cc41294eb0c88c2779388aaf5772b00b2d6de1ff87c18b857"
+      "sha256": "c55f559d8bd1fb371bf3bb5e485992ea7896df2ab6686fab9dcfb93793819155"
     },
     {
       "path": "templates/show-detail.tpl",
@@ -272,7 +272,7 @@
     },
     {
       "path": "butter-provider/streamnest-diagnostics.js",
-      "sha256": "c6e9c7dd40742212e771612a4f55e086b391b971eb951547feb6cb39b01100ed"
+      "sha256": "8ffddfc1c7c27f32d6cdbd926ff19f69dbfaaa3b6f4590526ff07e5c3b15826c"
     }
   ]
 }
