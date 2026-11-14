@@ -1,0 +1,3 @@
+catalogs/v1/data/** -text
+catalogs/v1/manifest.json -text
+catalogs/public-key.pem text eol=lf
