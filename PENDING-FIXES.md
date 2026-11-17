@@ -3,6 +3,10 @@
 Owner group deletion and separate current watching activity are implemented for 0.28.0. See WATCH-SYNC.md for privacy, freshness and deletion scope. Release acceptance is recorded in VALIDATION.md.
 
 
+## Mobile status-bar overlap — reported 17 November 2026
+
+Backlog only; the owner explicitly requested no implementation yet. The supplied screenshot shows the StreamNest logo, title and top navigation overlapping Android's notification/status bar in the mobile Home screen. Investigate system-bar/display-cutout insets and reserve safe space for app navigation on phones, including landscape and Android edge-to-edge layouts. Preserve intentional fullscreen video playback. Verify on a physical phone when this item is scheduled.
+
 ## Planned additions — requested 12 November 2026
 
 Status is recorded per item below.
