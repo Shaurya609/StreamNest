@@ -148,7 +148,7 @@
     },
     {
       "path": "butter-provider/streamnest-playback.js",
-      "sha256": "5e49058b9a8ca179d80ffd00841143be1ff2c9ea7c306f33f38a1f50aae51647"
+      "sha256": "bb17c9eb110a3049d6b16be0ebd99d2588c2682957bff63b86a104fc4683179d"
     },
     {
       "path": "butter-provider/streamnest-preload.js",
