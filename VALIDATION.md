@@ -385,3 +385,7 @@ Keyboard isolation follow-up: desktop trailer Enter/Space activation now stops p
 ## Owner dashboard deletion form fix — 17 November 2026
 
 Replaced browser prompt with an in-page exact-name confirmation, disabled destructive submit until matched, Cancel and inline progress/error handling. Hidden dashboard regression passes opening/cancelling, wrong-name blocking and successful synthetic deletion. All 16 backend tests pass. Deployed Worker 0d867f06-2a29-4530-9e5c-19e262b16105. Verified the live in-app browser opens the form with disabled submit and Cancel restores the button; no existing group deleted. Dashboard-only change; no application update required.
+
+## Android safe-area layout — 0.28.1
+
+Shared safe-area handling applied to Home/browse, playback settings, subtitle settings, sync, cache-folder and update screens. Handles system bars, display cutouts and IME using their union, with fixed baseline padding; fullscreen PlayerActivity is unchanged. Android unit tests and lint pass. Disposable tablet instrumentation passes on all six screens, checking actual system insets, repeated synthetic status/navigation/cutout changes, keyboard union and zero-inset restoration. An initial locked-device black screenshot was rejected; rerun after unlock passed and its screenshot shows the header below the visible status bar. Original physical phone/Android 15+ remains untested directly. Verification clone removed and production package rebuilt without installing it. Publication/feed acceptance pending.

@@ -28,6 +28,7 @@ public class SubtitleSettingsActivity extends Activity {
     ScrollView scroll = new ScrollView(this);
     scroll.addView(root);
     setContentView(scroll);
+    SafeArea.apply(this);
     TextView title = label("OpenSubtitles");
     title.setTextSize(26);
     root.addView(title);

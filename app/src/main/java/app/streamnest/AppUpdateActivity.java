@@ -164,6 +164,7 @@ public class AppUpdateActivity extends Activity {
     root.setOrientation(LinearLayout.VERTICAL);
     root.setPadding(32, 32, 32, 32);
     setContentView(root);
+    SafeArea.apply(this);
     status = new TextView(this);
     root.addView(status);
     install = new Button(this);

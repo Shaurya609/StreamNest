@@ -22,6 +22,7 @@ public class PlaybackSettingsActivity extends Activity {
     ScrollView scroll = new ScrollView(this);
     scroll.addView(box);
     setContentView(scroll);
+    SafeArea.apply(this);
     label(box, "Playback & storage", 25);
     CheckBox diagnostics = new CheckBox(this);
     diagnostics.setText("Share device diagnostics with StreamNest owner");

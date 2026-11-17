@@ -5,7 +5,7 @@ Owner group deletion and separate current watching activity are implemented for 
 
 ## Mobile status-bar overlap — reported 17 November 2026
 
-Backlog only; the owner explicitly requested no implementation yet. The supplied screenshot shows the StreamNest logo, title and top navigation overlapping Android's notification/status bar in the mobile Home screen. Investigate system-bar/display-cutout insets and reserve safe space for app navigation on phones, including landscape and Android edge-to-edge layouts. Preserve intentional fullscreen video playback. Verify on a physical phone when this item is scheduled.
+Implemented for Android 0.28.1 after the owner requested the fix. The supplied screenshot showed the StreamNest logo, title and top navigation overlapping Android's notification/status bar in the mobile Home screen. Shared browsing/settings safe-area handling now reserves system-bar, display-cutout and keyboard space. Fullscreen player remains separate. Tablet and synthetic-inset acceptance is tracked in VALIDATION.md; the original physical phone is not connected for exact-device confirmation.
 
 ## Planned additions — requested 12 November 2026
 

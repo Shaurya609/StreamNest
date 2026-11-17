@@ -41,6 +41,7 @@ public class CacheFolderActivity extends Activity {
     ScrollView scroll = new ScrollView(this);
     scroll.addView(box);
     setContentView(scroll);
+    SafeArea.apply(this);
     text(box, title, 24);
     return box;
   }

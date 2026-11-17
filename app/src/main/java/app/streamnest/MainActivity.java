@@ -133,6 +133,7 @@ public class MainActivity extends Activity {
     root.setBackgroundColor(0xff17181b);
     root.setPadding(dp(10), dp(4), dp(10), 0);
     setContentView(root);
+    SafeArea.apply(this);
     HorizontalScrollView barScroll = new HorizontalScrollView(this);
     barScroll.setHorizontalScrollBarEnabled(false);
     root.addView(barScroll);

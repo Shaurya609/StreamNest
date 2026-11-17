@@ -47,6 +47,7 @@ public class WatchSyncActivity extends Activity {
     root.setPadding(dp(20), dp(20), dp(20), dp(20));
     scroll.addView(root);
     setContentView(scroll);
+    SafeArea.apply(this);
     TextView title = new TextView(this);
     groupHeading = title;
     title.setText("Resume across devices");
