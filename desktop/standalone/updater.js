@@ -50,7 +50,7 @@
     // Explorer may have launched the previous build while extraction was in progress.
     '$late=@(Get-CimInstance Win32_Process -Filter '+quote("name='StreamNest.exe'")+' | Where-Object {$_.ExecutablePath -eq '+quote(exe)+'})\n'+
     'foreach($entry in $late){$p=Get-Process -Id $entry.ProcessId -ErrorAction SilentlyContinue;if($p -and $p.MainWindowHandle -ne 0){[void]$p.CloseMainWindow()}}\n'+
-    '$until=(Get-Date).AddSeconds(30)\nwhile(Get-CimInstance Win32_Process -Filter '+quote("name='StreamNest.exe'")+' | Where-Object {$_.ExecutablePath -eq '+quote(exe)+'}){if((Get-Date) -gt $until){throw "StreamNest was opened during installation. Close and reopen it to finish updating."};Start-Sleep -Milliseconds 300}\n'+
+    '$until=(Get-Date).AddSeconds(30)\nwhile(Get-CimInstance Win32_Process -Filter '+quote("name='StreamNest.exe'")+' | Where-Object {$_.ExecutablePath -eq '+quote(exe)+'}){foreach($entry in @(Get-CimInstance Win32_Process -Filter '+quote("name='StreamNest.exe'")+' | Where-Object {$_.ExecutablePath -eq '+quote(exe)+'})){ $p=Get-Process -Id $entry.ProcessId -ErrorAction SilentlyContinue;if($p -and $p.MainWindowHandle -ne 0){[void]$p.CloseMainWindow()}};if((Get-Date) -gt $until){throw "StreamNest was opened during installation. Close and reopen it to finish updating."};Start-Sleep -Milliseconds 300}\n'+
     'Add-Content -LiteralPath '+quote(log)+' -Value ((Get-Date -Format o)+" Installation completed; restarting")\n'+
     '$restarted=Start-Process -FilePath '+quote(exe)+' -WorkingDirectory $destination'+restartArgs+' -WindowStyle Hidden -PassThru\n'+
     'if($restarted.WaitForExit(5000)){throw "StreamNest exited immediately after restart. Open it again from the Start menu."}\n'+

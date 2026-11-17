@@ -18,6 +18,7 @@ SetCompressor /SOLID lzma
 !define MUI_ICON "${APPDIR}\src\app\images\streamnest.ico"
 !define MUI_UNICON "${APPDIR}\src\app\images\streamnest.ico"
 !define MUI_ABORTWARNING
+!define MUI_CUSTOMFUNCTION_ABORT StreamNestAbortCleanup
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE "${APPDIR}\LICENSE.txt"
 !insertmacro MUI_PAGE_DIRECTORY
@@ -121,7 +122,7 @@ SectionEnd
 Function .onInstFailed
   Delete "$InstallMarker"
 FunctionEnd
-Function .onUserAbort
+Function StreamNestAbortCleanup
   Delete "$InstallMarker"
 FunctionEnd
 Section "Uninstall"
