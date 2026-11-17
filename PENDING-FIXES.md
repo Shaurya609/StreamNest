@@ -9,6 +9,10 @@ Owner group deletion and separate current watching activity are implemented for 
 
 Implemented for Android 0.28.1 after the owner requested the fix. The supplied screenshot showed the StreamNest logo, title and top navigation overlapping Android's notification/status bar in the mobile Home screen. Shared browsing/settings safe-area handling now reserves system-bar, display-cutout and keyboard space. Fullscreen player remains separate. Tablet and synthetic-inset acceptance is tracked in VALIDATION.md; the original physical phone is not connected for exact-device confirmation.
 
+## Cross-platform app optimization — backlog
+
+Requested 18 November 2026. Backlog only; do not begin implementation from this request. Make Android/mobile, TV/projector and Windows lighter and faster without removing functionality. Measure launch/catalog responsiveness, peak and steady-state RAM, CPU/background work and network requests before and after changes, with particular attention to the 1 GB projector. Review duplicate requests, bounded metadata/poster caches, image decoding, player/torrent resource lifetimes and optional episode preloading. Preserve playback, subtitles, sync, resume, recommendations, cache cleanup and auto-update behavior. Existing targeted Low Memory improvements do not close this broader optimization pass.
+
 ## Planned additions — requested 12 November 2026
 
 Status is recorded per item below.
