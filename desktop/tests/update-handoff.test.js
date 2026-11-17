@@ -11,7 +11,7 @@ test('Windows updater defers playback, generates installer handoff and quits onl
   await App.Updater.check();let install=buttons.find(b=>b.textContent==='Install and restart');assert(install);
   playing=true;await install.onclick();assert.equal(spawned,0);assert.equal(quit,0);
   playing=false;await install.onclick();assert.equal(spawned,1);assert.equal(quit,0);assert.equal(diagnosticFailures.length,1);assert.deepEqual(diagnosticFailures[0].slice(0,3),['update.failed','update','install']);failStart=false;await install.onclick();assert.equal(spawned,2);assert.equal(quit,1);
-  const script=fs.readFileSync(path.join(profile,'Updates/install-update.ps1'),'utf8');assert(script.includes('/S /UPDATE /D='));assert(script.includes('while(Get-Process'));assert(script.includes("update''s test-"));
+  const script=fs.readFileSync(path.join(profile,'Updates/install-update.ps1'),'utf8');assert(script.includes('/S /UPDATE /D='));assert(script.includes('while(Get-Process'));assert(script.includes('CloseMainWindow'));assert(script.includes('WaitForExit(5000)'));assert(!script.includes('Stop-Process'));assert(script.includes('Restart confirmed'));assert(script.includes("update''s test-"));
   if(process.platform==='win32'){
    const result=require('child_process').spawnSync('powershell.exe',['-NoProfile','-Command',"$parseErrors=$null;$tokens=$null;[void][System.Management.Automation.Language.Parser]::ParseFile('"+path.join(profile,'Updates/install-update.ps1').replace(/'/g,"''")+"',[ref]$tokens,[ref]$parseErrors);if($parseErrors.Count){$parseErrors|Out-String|Write-Output;exit 1}"],{encoding:'utf8',windowsHide:true});assert.equal(result.status,0,result.stdout+result.stderr);
   }

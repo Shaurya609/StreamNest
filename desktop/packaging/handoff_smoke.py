@@ -18,7 +18,7 @@ config=json.loads(original);config['main']='handoff-regression.html';config['win
 settings={'probe':str(probe),'flag':str(flag),'result':str(result),'stub':str(stub),'source':str(app/'src/app/updater.js')}
 script='const cfg='+json.dumps(settings)+';'+r'''
 const fs=require('fs'),path=require('path');
-if(fs.existsSync(cfg.flag)){fs.writeFileSync(cfg.result,JSON.stringify({ok:true,nativeRuntime:process.versions.node,helperAcknowledged:true,installerArguments:fs.readFileSync(cfg.flag,'utf8').trim().split(/\r?\n/),applicationRestarted:true}));nw.App.quit();}
+if(fs.existsSync(cfg.flag)){setTimeout(()=>{fs.writeFileSync(cfg.result,JSON.stringify({ok:true,nativeRuntime:process.versions.node,helperAcknowledged:true,installerArguments:fs.readFileSync(cfg.flag,'utf8').trim().split(/\r?\n/),applicationRestarted:true}));nw.App.quit();},7000);}
 else {(async()=>{try{
 window.App={};let trace={};const cp=require('child_process'),child={spawn:(...args)=>{const p=cp.spawn(...args);trace={command:args[0],args:args[1],pid:p.pid};fs.writeFileSync(path.join(cfg.probe,'spawn.json'),JSON.stringify(trace));p.on('exit',(code,signal)=>{trace.exit={code,signal};fs.writeFileSync(path.join(cfg.probe,'spawn.json'),JSON.stringify(trace));});p.on('error',e=>{trace.error=String(e);fs.writeFileSync(path.join(cfg.probe,'spawn.json'),JSON.stringify(trace));});return p;}};const doc={generatedAt:Date.now(),windows:{version:'99.0.0',artifact:{sha256:'a'.repeat(64)}}};
 const localRequire=n=>n==='child_process'?child:n==='./update-download'?{manifest:async()=>doc,download:async()=>cfg.stub}:n==='./update-policy'?{newer:()=>true,artifact:()=>{}}:n.includes('streamnest-standalone')?{profileRoot:()=>path.join(cfg.probe,'Profile')}:require(n);
@@ -38,6 +38,7 @@ try:
   time.sleep(.2)
  if not result.exists():raise RuntimeError('Handoff timed out: '+str(probe))
  report=json.loads(result.read_text());assert report['ok'],report
+ assert 'Restart confirmed' in (probe/'Profile/Updates/install-update.log').read_text(), 'Helper did not verify restart survival'
  assert report['installerArguments']==['/S','/UPDATE','/D='+str(app)],report
  print(json.dumps(report,indent=2));process.wait(timeout=10)
 finally:

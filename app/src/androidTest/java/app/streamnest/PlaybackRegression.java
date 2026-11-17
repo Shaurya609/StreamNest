@@ -14,7 +14,7 @@ import org.videolan.libvlc.Media;
 /** Device-only regression; fixture is supplied locally, never bundled in the app. */
 public class PlaybackRegression extends Instrumentation {
   PlayerActivity activity;
-  boolean animePlayback, safeArea, watchingActivity, preload, discovery, home, fillerLive, groupHome, homeLayout, artwork, homeSearch, watchedStartup, trailers, diagnostics;
+  boolean contentVerification, posters, animePlayback, safeArea, watchingActivity, preload, discovery, home, fillerLive, groupHome, homeLayout, artwork, homeSearch, watchedStartup, trailers, diagnostics;
   String watchSyncCode, shortPairingCode, expectedPairingAuth,manualSyncCode;
   boolean pairingUiDirect, skipLive, catalog, subtitles, storage, resilience, episodes, appUpdates, watchSyncUi, resumeUi;
 
@@ -49,12 +49,16 @@ public class PlaybackRegression extends Instrumentation {
     diagnostics=args!=null&&"true".equals(args.getString("diagnostics"));
     watchingActivity=args!=null&&"true".equals(args.getString("watchingActivity"));
     safeArea=args!=null&&"true".equals(args.getString("safeArea"));
+    contentVerification=args!=null&&"true".equals(args.getString("contentVerification"));
+    posters=args!=null&&"true".equals(args.getString("posters"));
     animePlayback=args!=null&&"true".equals(args.getString("animePlayback"));
     start();
   }
 
   @Override
   public void onStart() {
+    if(contentVerification){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,ContentRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
+    if(posters){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,PosterRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
     if(animePlayback){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,AnimePlaybackRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
     if(safeArea){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,SafeAreaRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
     if(watchingActivity){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,WatchingRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}

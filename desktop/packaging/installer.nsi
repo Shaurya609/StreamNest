@@ -7,6 +7,9 @@ Var UpdateParameters
 Var UpdateMode
 Var ShortcutChoice
 Var ShortcutCheckbox
+Var InstallMarker
+Var InstallPid
+Var InstallMutex
 Name "StreamNest"
 OutFile "${OUTPUT}"
 InstallDir "$LOCALAPPDATA\Programs\StreamNest"
@@ -24,10 +27,10 @@ Page custom ShortcutOptions ShortcutOptionsLeave
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_LANGUAGE "English"
-VIProductVersion "0.17.0.0"
+VIProductVersion "${VERSION}.0"
 VIAddVersionKey /LANG=1033 "ProductName" "StreamNest"
 VIAddVersionKey /LANG=1033 "FileDescription" "StreamNest per-user installer"
-VIAddVersionKey /LANG=1033 "FileVersion" "0.17.0"
+VIAddVersionKey /LANG=1033 "FileVersion" "${VERSION}"
 VIAddVersionKey /LANG=1033 "LegalCopyright" "StreamNest contributors; Popcorn Time and Butter Project contributors"
 Function ShortcutOptions
   !insertmacro MUI_HEADER_TEXT "Installation options" "Choose your shortcuts."
@@ -42,6 +45,13 @@ Function ShortcutOptionsLeave
   ${NSD_GetState} $ShortcutCheckbox $ShortcutChoice
 FunctionEnd
 Function .onInit
+  System::Call 'kernel32::CreateMutexW(p 0, i 0, w "Local\StreamNestInstaller") p .r0 ?e'
+  Pop $1
+  StrCpy $InstallMutex $0
+  ${If} $1 == 183
+    MessageBox MB_OK "Another StreamNest installation is already running. Wait for it to finish."
+    Abort
+  ${EndIf}
   SetShellVarContext current
   StrCpy $ShortcutChoice ${BST_CHECKED}
   ${GetParameters} $UpdateParameters
@@ -75,6 +85,19 @@ Section "StreamNest"
   FileClose $0
   installFiles:
   SetOutPath "$INSTDIR"
+  System::Call 'kernel32::GetCurrentProcessId() i .r0'
+  StrCpy $InstallPid $0
+  StrCpy $InstallMarker "$INSTDIR\.streamnest-installing"
+  ClearErrors
+  FileOpen $0 "$InstallMarker" w
+  IfErrors markerFailed
+  FileWrite $0 "$InstallPid"
+  FileClose $0
+  Goto markerReady
+  markerFailed:
+    MessageBox MB_OK "Cannot prepare installation. Check folder permissions and retry."
+    Abort
+  markerReady:
   File /r "${APPDIR}\*"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   CreateDirectory "$SMPROGRAMS\StreamNest"
@@ -86,14 +109,21 @@ Section "StreamNest"
       ClearErrors
   ${EndIf}
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "DisplayName" "StreamNest"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "DisplayVersion" "0.17.0"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "DisplayVersion" "${VERSION}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "UninstallString" '$\"$INSTDIR\Uninstall.exe$\"'
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "InstallLocation" "$INSTDIR"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "DisplayIcon" '$\"$INSTDIR\src\app\images\streamnest.ico$\",0' 
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "Publisher" "StreamNest contributors"
   WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "NoModify" 1
   WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StreamNest" "NoRepair" 1
+  Delete "$InstallMarker"
 SectionEnd
+Function .onInstFailed
+  Delete "$InstallMarker"
+FunctionEnd
+Function .onUserAbort
+  Delete "$InstallMarker"
+FunctionEnd
 Section "Uninstall"
   SetShellVarContext current
   ; Delete the build's explicit inventory only. Preserve user-added files and profile/cache.

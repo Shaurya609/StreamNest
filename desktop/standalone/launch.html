@@ -1,0 +1,16 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>StreamNest</title>
+<style>body{background:#15171c;color:#f3f4f6;font:18px/1.5 sans-serif;padding:48px}p{color:#b9c1ce}</style></head>
+<body><h1>StreamNest is updating</h1><p id="status">Waiting for installation to finish. This window will open your library automatically.</p>
+<script>
+'use strict';
+const gate=require('./launch-guard');
+const fs=require('fs'),path=require('path');
+const marker=path.join(path.dirname(process.execPath),'.streamnest-installing');
+function check(){
+ if(!gate.installing(marker,fs,process)){location.replace('index.html');return;}
+ if(!process.env.STREAMNEST_SMOKE_ROOT)nw.Window.get().show();
+ setTimeout(check,500);
+}
+check();
+</script></body></html>

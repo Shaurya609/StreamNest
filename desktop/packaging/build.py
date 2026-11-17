@@ -103,7 +103,7 @@ def assemble(skip_install=False):
     for module in ('lzma','lzma-win32-x64-msvc'):
         shutil.copytree(DESKTOP / ('packaging/node_modules/@napi-rs/' + module), production / '@napi-rs' / module, dirs_exist_ok=True)
     for source in (DESKTOP / 'standalone').rglob('*'):
-        if source.suffix in ('.js', '.tpl', '.pem'):
+        if source.suffix in ('.js', '.tpl', '.pem', '.html'):
             target = app / 'src/app' / source.relative_to(DESKTOP / 'standalone')
             if source.name == 'trakttv.js': target = app / 'src/app/lib/providers/trakttv.js'
             if source.name == 'disclaimer.tpl': target = app / 'src/app/templates/disclaimer.tpl'
@@ -143,6 +143,7 @@ def assemble(skip_install=False):
                    installIcon='./src/app/images/streamnest.ico', unInstallIcon='./src/app/images/streamnest.ico')
     package['chromium-args'] = package.get('chromium-args','') + ' --enable-blink-features=AudioVideoTracks'
     package['window'].update(title='StreamNest', icon='src/app/images/icon.png', show=False)
+    package['main'] = 'src/app/launch.html'
     package['scripts'] = {}
     package.pop('devDependencies', None)
     (app / 'package.json').write_text(json.dumps(package, indent=2)+'\n', encoding='utf8')
@@ -203,7 +204,7 @@ def archive(app):
     entries+=['RMDir "$INSTDIR\\'+p.relative_to(app).as_posix().replace('/','\\').replace('$','$$')+'"' for p in sorted((p for p in app.rglob('*') if p.is_dir()),key=lambda p:len(p.parts),reverse=True)]
     delete_list.write_text('\n'.join(entries)+'\n',encoding='utf8')
     installer=DIST/f'StreamNest-Desktop-{VERSION}-win-x64-Setup.exe'
-    run([compiler,'/V2',f'/DAPPDIR={app}',f'/DOUTPUT={installer}',f'/DDELETE_LIST={delete_list}',DESKTOP/'packaging/installer.nsi'])
+    run([compiler,'/V2',f'/DVERSION={VERSION}',f'/DAPPDIR={app}',f'/DOUTPUT={installer}',f'/DDELETE_LIST={delete_list}',DESKTOP/'packaging/installer.nsi'])
     files=[portable,installer,source_archive(app)]
     (DIST/f'SHA256SUMS-Desktop-{VERSION}.txt').write_text(''.join(sha(file)+'  '+file.name+'\n' for file in files),encoding='utf8')
     print(json.dumps({'app':str(app),'artifacts':[str(p) for p in files]}))

@@ -14,10 +14,17 @@ final class PosterLoader implements AutoCloseable {
   final ThreadPoolExecutor worker;
   final Handler ui = new Handler(Looper.getMainLooper());
   volatile boolean closed;
+  volatile int generation;
+  interface Fetch { byte[] get(String url) throws Exception; }
+  final Fetch fetch;
   final File disk;
   final int targetWidth, targetHeight;
+  long pruneAfter;
 
-  PosterLoader(Context c) {
+  PosterLoader(Context c) { this(c, url -> Net.catalogBytes(url, 3 * 1024 * 1024, System.nanoTime()+8000000000L)); }
+
+  PosterLoader(Context c, Fetch fetch) {
+    this.fetch = fetch;
     boolean lite = DeviceProfile.lite(c);
     targetWidth = lite ? 192 : 320;
     targetHeight = lite ? 288 : 480;
@@ -44,6 +51,7 @@ final class PosterLoader implements AutoCloseable {
   void load(Catalog.Title title, ImageView view){List<String> urls=Artwork.candidates(title.raw);load(urls.isEmpty()?"":urls.get(0),view,urls,0,title);}
   void load(String url, ImageView view) {load(url,view,Collections.emptyList(),0,null);}
   void load(String url, ImageView view,List<String> urls,int at,Catalog.Title title) {
+    final int request = generation;
     view.setTag(url);
     view.setImageDrawable(null);
     Bitmap found = cache.get(url);
@@ -55,6 +63,10 @@ final class PosterLoader implements AutoCloseable {
     worker.execute(
         () -> {
           try {
+            // A catalog refresh may replace the view before this bounded worker reaches it.
+            if (closed || request != generation || !url.equals(view.getTag())) return;
+            Bitmap reused = cache.get(url);
+            if (reused != null) { publish(url, view, reused, request); return; }
             String key = orgHash(url);
             File local = new File(disk, key + ".jpg");
             BitmapFactory.Options localOptions = new BitmapFactory.Options();
@@ -62,10 +74,11 @@ final class PosterLoader implements AutoCloseable {
             Bitmap existing =
                 local.isFile() ? BitmapFactory.decodeFile(local.getPath(), localOptions) : null;
             if (existing != null) {
-              publish(url, view, existing);
+              publish(url, view, existing, request);
               return;
             }
-            byte[] data = Net.catalogBytes(url, 3 * 1024 * 1024,System.nanoTime()+8000000000L);
+            byte[] data = fetch.get(url);
+            if (closed || request != generation || !url.equals(view.getTag())) return;
             BitmapFactory.Options bounds = new BitmapFactory.Options();
             bounds.inJustDecodeBounds = true;
             BitmapFactory.decodeByteArray(data, 0, data.length, bounds);
@@ -101,12 +114,12 @@ final class PosterLoader implements AutoCloseable {
                 prune();
               } catch (IOException ignored) {
               }
-              publish(url, view, bitmap);
+              publish(url, view, bitmap, request);
               return;
             }
           } catch (Exception | OutOfMemoryError ignored) {
           }
-          if(!closed){String next=at+1<urls.size()?urls.get(at+1):title==null?"":Artwork.alternate(title);if(!next.isEmpty()&&!urls.subList(0,Math.min(at+1,urls.size())).contains(next))ui.post(()->{if(!closed&&url.equals(view.getTag()))load(next,view,urls,at+1,at+1<urls.size()?title:null);});}
+          if(!closed&&request==generation){String next=at+1<urls.size()?urls.get(at+1):title==null?"":Artwork.alternate(title);if(!next.isEmpty()&&!urls.subList(0,Math.min(at+1,urls.size())).contains(next))ui.post(()->{if(!closed&&request==generation&&url.equals(view.getTag()))load(next,view,urls,at+1,at+1<urls.size()?title:null);});}
         });
   }
 
@@ -119,20 +132,28 @@ final class PosterLoader implements AutoCloseable {
     return out.toString();
   }
 
-  void publish(String url, ImageView view, Bitmap bitmap) {
-    if (closed) return;
+  void publish(String url, ImageView view, Bitmap bitmap, int request) {
+    if (closed || request != generation) return;
     cache.put(url, bitmap);
     ui.post(
         () -> {
-          if (!closed && url.equals(view.getTag())) view.setImageBitmap(bitmap);
+          if (!closed && request == generation && url.equals(view.getTag())) view.setImageBitmap(bitmap);
         });
   }
 
   synchronized void prune() {
+    long now = SystemClock.elapsedRealtime();
+    if (now < pruneAfter) return;
+    pruneAfter = now + 60000;
     File[] files = disk.listFiles((folder, name) -> name.endsWith(".jpg"));
     if (files == null || files.length <= 128) return;
     Arrays.sort(files, Comparator.comparingLong(File::lastModified));
     for (int i = 0; i < files.length - 128; i++) files[i].delete();
+  }
+
+  void cancelPending() {
+    generation++;
+    worker.getQueue().clear();
   }
 
   void trim() {

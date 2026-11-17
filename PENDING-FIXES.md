@@ -1,3 +1,5 @@
+0.30.0 maintenance: targeted artwork optimization, guarded Windows launch/restart, and repeatable live content checks. Live Android/Windows validated timestamps and Korean English subtitle downloads pass for the checked titles; later-page Jikan requests still time out. English dub coverage is not inferred from metadata. The projector native engine-start hang remains open; no engine-process recovery fix is claimed.
+
 # Pending fixes and verification
 
 Anime 0.29.0: real audio/embedded subtitle controls, anonymous exact-source TsukiHime fallback, Android ASS font setup and season-pack filename matching are implemented. See ANIME-PLAYBACK.md and VALIDATION.md. The reported projector freeze remains open for the owner’s retest; healthy TheBeast samples do not establish its cause.
@@ -9,9 +11,9 @@ Owner group deletion and separate current watching activity are implemented for 
 
 Implemented for Android 0.28.1 after the owner requested the fix. The supplied screenshot showed the StreamNest logo, title and top navigation overlapping Android's notification/status bar in the mobile Home screen. Shared browsing/settings safe-area handling now reserves system-bar, display-cutout and keyboard space. Fullscreen player remains separate. Tablet and synthetic-inset acceptance is tracked in VALIDATION.md; the original physical phone is not connected for exact-device confirmation.
 
-## Cross-platform app optimization — backlog
+## Cross-platform app optimization — first maintenance pass 0.30.0
 
-Requested 18 November 2026. Backlog only; do not begin implementation from this request. Make Android/mobile, TV/projector and Windows lighter and faster without removing functionality. Measure launch/catalog responsiveness, peak and steady-state RAM, CPU/background work and network requests before and after changes, with particular attention to the 1 GB projector. Review duplicate requests, bounded metadata/poster caches, image decoding, player/torrent resource lifetimes and optional episode preloading. Preserve playback, subtitles, sync, resume, recommendations, cache cleanup and auto-update behavior. Existing targeted Low Memory improvements do not close this broader optimization pass.
+Authorized 18 November 2026. First pass implemented for 0.30.0: Android cancels superseded poster queues, skips stale views, reuses queued cache hits and amortizes disk pruning; Windows defers off-screen Home artwork. Native targeted image and packaged Home checks pass. See PERFORMANCE.md. The broader launch/steady/peak RAM and CPU benchmark remains open, especially on the physical 1 GB projector. Make Android/mobile, TV/projector and Windows lighter and faster without removing functionality. Measure launch/catalog responsiveness, peak and steady-state RAM, CPU/background work and network requests before and after changes, with particular attention to the 1 GB projector. Review duplicate requests, bounded metadata/poster caches, image decoding, player/torrent resource lifetimes and optional episode preloading. Preserve playback, subtitles, sync, resume, recommendations, cache cleanup and auto-update behavior. Existing targeted Low Memory improvements do not close this broader optimization pass.
 
 ## Planned additions — requested 12 November 2026
 
@@ -70,9 +72,9 @@ Timestamp provider scope — owner selected IntroDB and cached timestamps for no
 Owner confirmation: Percy Jackson TV playback, projector operation and USB cache storage are fixed. Removed from active device backlog based on that confirmation.
 
 
-## Windows update launch guard — observed 11 November 2026
+## Windows update launch guard — implemented for 0.30.0
 
-A window launched from Explorer while installation was still extracting files kept older Home controls in memory, even though the final files/package version were updated. The normal helper completed and attempted restart, but the already-running instance remained. A full quit/reopen after installation completed loaded the corrected controls. Add an installation-in-progress launch guard or clearer wait/restart UX; do not reset the profile to work around this condition.
+A window launched from Explorer while installation was still extracting files kept older Home controls in memory, even though the final files/package version were updated. The normal helper completed and attempted restart, but the already-running instance remained. A full quit/reopen after installation completed loaded the corrected controls. 0.30.0 adds an installer-owned marker and guarded app entry, serializes installers, gracefully closes an instance opened during extraction before the updater restarts, and records restart survival. Profile resets and force-killing unrelated apps are not used. Packaging/installer acceptance is recorded in VALIDATION.md.
 
 ## Owner acceptance — 11 November 2026
 

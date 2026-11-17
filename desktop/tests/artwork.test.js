@@ -19,5 +19,18 @@ test('resume fractions use timestamps, clamp invalid values and retain small pos
  assert.equal(A.fraction({positionMs:71,durationMs:100}),.71);assert.equal(A.fraction({positionMs:38000,durationMs:2200000})>0,true);assert.equal(A.fraction({positionMs:5,durationMs:0}),0);assert.equal(A.fraction({positionMs:200,durationMs:100}),1);assert.equal(A.fraction({positionMs:NaN,durationMs:100}),0);
 });
 
-test('a hidden-window observer cannot prevent a missing-poster URL from being assigned',()=>{const image={ownerDocument:{defaultView:{IntersectionObserver:class{observe(){}disconnect(){}}}},parentElement:{},removeAttribute(){delete this.src;}},placeholder={};const stop=A.attach({imdb:'tt991236'},image,placeholder);assert.equal(image.src,'https://images.metahub.space/poster/medium/tt991236/img');stop();});
+test('a hidden-window observer cannot prevent a missing-poster URL from being assigned',()=>{const image={ownerDocument:{visibilityState:'hidden',defaultView:{IntersectionObserver:class{observe(){}disconnect(){}}}},parentElement:{},removeAttribute(){delete this.src;}},placeholder={};const stop=A.attach({imdb:'tt991236'},image,placeholder);assert.equal(image.src,'https://images.metahub.space/poster/medium/tt991236/img');stop();});
 test('exhausted artwork shows a clean placeholder instead of a broken image',async()=>{const image={removeAttribute(){delete this.src;}},placeholder={hidden:true};const stop=A.attach({poster_big:'https://example.invalid/a.jpg',kind:'movies'},image,placeholder);image.onerror();await new Promise(r=>setImmediate(r));assert.equal(image.hidden,true);assert.equal(placeholder.hidden,false);stop();});
+
+test('offscreen Home cards defer artwork and metadata work until near viewport',()=>{
+ const callbacks=[];let assignments=0;
+ class Observer{constructor(cb){callbacks.push(cb);}observe(){}disconnect(){}}
+ const stops=[];
+ for(let i=0;i<100;i++){
+  const image={parentElement:{},ownerDocument:{defaultView:{IntersectionObserver:Observer}},set src(v){assignments++;this.value=v;},get src(){return this.value;},removeAttribute(){}};
+  stops.push(A.attach({poster_big:'https://example.invalid/'+i+'.jpg',kind:'movies'},image,{hidden:false}));
+ }
+ assert.equal(assignments,0);
+ callbacks[0]([{isIntersecting:true}]);assert.equal(assignments,1);
+ for(const stop of stops)stop();
+});

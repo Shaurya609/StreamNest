@@ -350,7 +350,7 @@ public class MainActivity extends Activity {
     browseAdapter = null;
     browseList = null;
     moreControl = null;
-    content.removeAllViews();
+    clearContent();
     status.setText(favoriteTab ? "Saved titles" : "Loading " + kind + "…");
     requestPage(1, generation);
   }
@@ -366,7 +366,7 @@ public class MainActivity extends Activity {
     final int request=++generation; browseAdapter=null; browseList=null; moreControl=null;
     filtersRow.setVisibility(View.GONE);status.setText("Home · Your library, together");
     for(int i=0;i<tabs.getChildCount();i++)tabs.getChildAt(i).setSelected(((Button)tabs.getChildAt(i)).getText().toString().equals("Home"));
-    content.removeAllViews();content.addView(text("Loading your home…",16,0xffaaaaaa));
+    clearContent();content.addView(text("Loading your home…",16,0xffaaaaaa));
     browseJob=work.submit(()->{
       try{
         JSONObject history=WatchProgress.records(this);List<Catalog.Title> pool=HomeLibrary.load(this);
@@ -374,7 +374,7 @@ public class MainActivity extends Activity {
         ui.post(()->{if(request==generation&&homeTab&&!isDestroyed()){homeHistorySignature=history.toString();homeLibraryRevision=HomeLibrary.revision;renderHome(rows);}});
         List<Catalog.Title> before=new ArrayList<>(pool);pool=HomeLibrary.enrich(this,pool,history);if(pool.equals(before))return;List<HomeFeed.Row> enriched=HomeSync.build(this,pool,history,DeviceProfile.lite(this)?6:12);
         ui.post(()->{if(request==generation&&homeTab&&!isDestroyed()){homeLibraryRevision=HomeLibrary.revision;renderHome(enriched);}});
-      }catch(Exception e){ui.post(()->{if(request==generation&&homeTab&&!isDestroyed()){content.removeAllViews();content.addView(text("Home unavailable. Open Movies, Series or Anime, or tap above to retry.",16,0xffaaaaaa));}});}
+      }catch(Exception e){ui.post(()->{if(request==generation&&homeTab&&!isDestroyed()){clearContent();content.addView(text("Home unavailable. Open Movies, Series or Anime, or tap above to retry.",16,0xffaaaaaa));}});}
     });
   }
 
@@ -400,7 +400,7 @@ public class MainActivity extends Activity {
   }
 
   void renderHome(List<HomeFeed.Row> rows){
-    content.removeAllViews();final Map<ImageView,Catalog.Title> homeImages=new LinkedHashMap<>();final Set<ImageView> requested=new HashSet<>();ScrollView scroll=new ScrollView(this);LinearLayout body=new LinearLayout(this);body.setOrientation(LinearLayout.VERTICAL);scroll.addView(body);content.addView(scroll,new LinearLayout.LayoutParams(-1,-1));
+    clearContent();final Map<ImageView,Catalog.Title> homeImages=new LinkedHashMap<>();final Set<ImageView> requested=new HashSet<>();ScrollView scroll=new ScrollView(this);LinearLayout body=new LinearLayout(this);body.setOrientation(LinearLayout.VERTICAL);scroll.addView(body);content.addView(scroll,new LinearLayout.LayoutParams(-1,-1));
     TextView heading=text(homeQuery.isEmpty()?"Something for your next watch":"Search results for “"+homeQuery+"”",25,-1);heading.setPadding(dp(8),dp(14),dp(8),dp(16));body.addView(heading);
     for(HomeFeed.Row section:rows){
       if(section.cards.isEmpty()&&!section.name.equals("Continue Watching"))continue;
@@ -577,7 +577,7 @@ public class MainActivity extends Activity {
   }
 
   void render() {
-    content.removeAllViews();
+    clearContent();
     if (titles.isEmpty()) {
       content.addView(
           text(
@@ -1276,6 +1276,8 @@ public class MainActivity extends Activity {
     } catch (Exception ignored) {
     }
   }
+
+  void clearContent() { if (posters != null) posters.cancelPending(); content.removeAllViews(); }
 
   @Override protected void onSaveInstanceState(Bundle state){state.putBoolean("homeTab",homeTab);state.putString("homeQuery",homeQuery);super.onSaveInstanceState(state);}
 

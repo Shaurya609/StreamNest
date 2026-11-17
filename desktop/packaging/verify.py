@@ -6,7 +6,9 @@ app=args.app.resolve();manifest=json.loads((app/'package.json').read_text(encodi
 assert manifest['name']=='StreamNest'
 assert manifest['window']['title']=='StreamNest'
 assert manifest['homepage']=='https://github.com/Shaurya609/StreamNest'
+assert manifest['main']=='src/app/launch.html'
 assert (app/manifest['main']).is_file()
+assert (app/'src/app/launch-guard.js').is_file()
 for name in ('User Data','Profile','Cache','data','settings.db','logs.txt','debug.log','Popcorn-Time.exe'):
     assert not (app/name).exists(),'State or upstream executable leaked into payload: '+name
 binary=(app/'StreamNest.exe').read_bytes();offset=struct.unpack_from('<I',binary,0x3c)[0]
