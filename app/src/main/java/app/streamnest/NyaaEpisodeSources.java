@@ -15,6 +15,8 @@ final class NyaaEpisodeSources {
     String text=release.replaceAll("^(?:\\[[^\\]]+\\]\\s*)+","");
     Matcher prefix=Pattern.compile("(?iu)^"+Pattern.quote(title)+"(?:\\s*\\((?:TV|[12][0-9]{3})\\))?(?=\\s|\\[|\\(|$)").matcher(text);
     if(!prefix.find())return 0;String tail=text.substring(prefix.end());
+    Matcher seasonal=Pattern.compile("^\\s*(?:-\\s*)?S([0-9]{1,2})E([0-9]{1,4})(?![0-9])",Pattern.CASE_INSENSITIVE).matcher(tail);
+    if(seasonal.find()){if(tail.substring(seasonal.end()).matches("^\\s*[-~].*"))return 0;return Integer.parseInt(seasonal.group(1))==season&&Integer.parseInt(seasonal.group(2))==episode?1:0;}
     Matcher single=Pattern.compile("^\\s*-\\s*([0-9]{1,4})(?:v[0-9]+)?(?=\\s|\\[|\\(|\\.|$)").matcher(tail);
     if(single.find()&&!tail.substring(single.end()).matches("^\\s*[-~].*"))return absolute>0&&Integer.parseInt(single.group(1))==absolute?1:0;
     Matcher ranged=Pattern.compile("^\\s*(?:-\\s*)?[\\[(]?([0-9]{1,4})\\s*[-~]\\s*([0-9]{1,4})(?=\\s|[)\\]]|$)").matcher(tail);

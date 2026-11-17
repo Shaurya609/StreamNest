@@ -1,5 +1,5 @@
 {
-  "version": "0.28.0",
+  "version": "0.29.0",
   "target": "Popcorn Time 0.5.1",
   "files": [
     {
@@ -84,11 +84,11 @@
     },
     {
       "path": "butter-provider/streamnest-discovery.js",
-      "sha256": "adb5cf45fb1d49c7b478b245a16ea44af27ec60d46727a727afa9fb721cad4c3"
+      "sha256": "7d533112515506c226f60766d2216429dadd51f88c31eaf3c2fe759689549f7c"
     },
     {
       "path": "butter-provider/streamnest-episodes.js",
-      "sha256": "8cecb3e542cd38c87a54a15f749278bddcf5f3a505977ceb6296efcfd1a1751e"
+      "sha256": "05068fe102b0ece0c6a977e12cc6fd6fa17efb81e90f26560c6fbac48aa49d51"
     },
     {
       "path": "butter-provider/streamnest-eztv.js",
@@ -172,7 +172,7 @@
     },
     {
       "path": "butter-provider/streamnest-subtitles.js",
-      "sha256": "1297d7c88ec2eca6d3a3fa9300a8246a3d85fb8ddf3857461495b2c862d31b3f"
+      "sha256": "6e6b7bdeb4d3fc8461b3cf5a269eaab6e7e6bca17aae782b8ef36eb4dd790039"
     },
     {
       "path": "butter-provider/streamnest-sync-crypto.js",
@@ -204,7 +204,7 @@
     },
     {
       "path": "lib/providers/opensubtitles.js",
-      "sha256": "5e70b1dc1b846b316214064c6bbf7de837a2ff723cc0afeb30920b6db5d95298"
+      "sha256": "f58eb77b1ca512c0d2c0d3ff73ab9b7ef7d671ede7722738e67f377c093c40d3"
     },
     {
       "path": "lib/subtitle/generic.js",
@@ -236,7 +236,7 @@
     },
     {
       "path": "lib/views/player.js",
-      "sha256": "7f3917022d6b3726634247e4acef495436b99a6925dbc73138365a8cbf318532"
+      "sha256": "a21ad2ee4cbf9438f5ab2519ddfc1fe0b125471b162f7d454e1d10553e0d0152"
     },
     {
       "path": "lib/views/quality_selector.js",
@@ -252,7 +252,7 @@
     },
     {
       "path": "streamer.js",
-      "sha256": "85791a4e02a76ec109708e3efa4980165f30c93b0a00f57903842e2a56884c66"
+      "sha256": "16d8086795547197220b5e1ad7e25c4c9e1a9714e3a92af55a6e839f9759a528"
     },
     {
       "path": "templates/filter-bar.tpl",
@@ -277,6 +277,14 @@
     {
       "path": "butter-provider/streamnest-watching-activity.js",
       "sha256": "8a7037eb988d17c754c7348c51dd8db9e0a6a85d24f198157c65e503171f70b4"
+    },
+    {
+      "path": "butter-provider/streamnest-anime-subs.js",
+      "sha256": "596de4eeb80baff51cbc89874bca004a77a905cd973f6da395f5ff8f8792a266"
+    },
+    {
+      "path": "butter-provider/streamnest-media-tracks.js",
+      "sha256": "1ec03334ef0af1b18dfd1390b2b49306fdaeb84c6df29aa435793eca08bb0cd8"
     }
   ]
 }

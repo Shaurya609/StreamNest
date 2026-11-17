@@ -100,6 +100,8 @@ def assemble(skip_install=False):
         source = UPSTREAM / 'node_modules' / name
         if source.is_dir(): shutil.copytree(source, production / name, dirs_exist_ok=True)
     shutil.copytree(DESKTOP / 'packaging/node_modules/qrcode-generator', production / 'qrcode-generator', dirs_exist_ok=True)
+    for module in ('lzma','lzma-win32-x64-msvc'):
+        shutil.copytree(DESKTOP / ('packaging/node_modules/@napi-rs/' + module), production / '@napi-rs' / module, dirs_exist_ok=True)
     for source in (DESKTOP / 'standalone').rglob('*'):
         if source.suffix in ('.js', '.tpl', '.pem'):
             target = app / 'src/app' / source.relative_to(DESKTOP / 'standalone')
@@ -139,6 +141,7 @@ def assemble(skip_install=False):
                    repository={'type':'git','url':'https://github.com/Shaurya609/StreamNest.git'},
                    bugs='https://github.com/Shaurya609/StreamNest/issues',
                    installIcon='./src/app/images/streamnest.ico', unInstallIcon='./src/app/images/streamnest.ico')
+    package['chromium-args'] = package.get('chromium-args','') + ' --enable-blink-features=AudioVideoTracks'
     package['window'].update(title='StreamNest', icon='src/app/images/icon.png', show=False)
     package['scripts'] = {}
     package.pop('devDependencies', None)

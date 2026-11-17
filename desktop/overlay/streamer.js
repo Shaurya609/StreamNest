@@ -927,7 +927,10 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                 queryData = extractSubtitle;
             }
 
+            if(!this.torrentModel||!this.torrentModel.get('video_file'))return;
             queryData.filename = this.torrentModel.get('video_file').name;
+            queryData.streamnestAnime=this.torrentModel.get('streamnestActivityKind')==='animes'||this.torrentModel.get('animeMapped')===true;
+            const activeTorrent=this.torrentModel.get('torrent');queryData.btih=activeTorrent&&activeTorrent.infoHash||'';
 
             if (this.torrentModel.get('imdb_id')) {
                 queryData.imdbid = this.torrentModel.get('imdb_id');

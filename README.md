@@ -108,3 +108,5 @@ Skip timestamp attribution: SkipDB (https://skipdb.tv) data is licensed under OD
 On a movie, series or anime details screen, select **▶ Trailer** when available. It opens YouTube or your browser; return to StreamNest to continue browsing. A YouTube app or browser must be installed. Trailer availability depends on title metadata and YouTube availability. Trailers do not start torrent downloads or change Continue Watching, Watched preferences or synced playback positions.
 
 Owner dashboard: delete groups with exact-name confirmation and view separately shared current/recent activity. Watching activity is on by default with a per-device off switch; [privacy and owner controls](WATCH-SYNC.md#owner-controls-and-watching-activity-0280).
+
+Anime: [audio tracks, embedded subtitles and anonymous subtitle fallback](ANIME-PLAYBACK.md).

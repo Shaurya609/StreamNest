@@ -29,7 +29,9 @@ public class PlayerActivity extends Activity {
   List<SkipSegments.Segment> segments = new ArrayList<>();
   SkipSegments.Segment activeSegment;
   boolean changingEpisode, endedHandled, pendingAuto, skipRequested;
+  final PlaybackStall playbackStall=new PlaybackStall();
   int playbackVersion;
+  int automaticTracksVersion=-1,manualAudioVersion=-1,manualSubtitleVersion=-1;
   long lastPosition, lastLength, lastProgressSave;
   long savedPlaybackPosition = -1;
   String savedPlaybackIdentity = "";
@@ -53,6 +55,7 @@ public class PlayerActivity extends Activity {
   final java.util.concurrent.ExecutorService subtitleWorker =
       java.util.concurrent.Executors.newSingleThreadExecutor();
   boolean subtitleBusy;
+  int subtitleChoice;
   List<Catalog.Source> alternatives = new ArrayList<>();
   int attempt;
   long attemptStarted, resumeAfterSwitch, lastProgressAt, lastReceived;
@@ -200,11 +203,13 @@ public class PlayerActivity extends Activity {
           }
           setControlsVisible(true);
         });
+    button(R.drawable.ic_audio, "Audio tracks", buttons, this::audioMenu);
     button(R.drawable.ic_subtitles, "Subtitles", buttons, this::subtitleMenu);
     nextSource =
         button(R.drawable.ic_retry, "Try another source", buttons, () -> switchSource(false));
     nextSource.setVisibility(alternatives.size() > 1 ? View.VISIBLE : View.GONE);
     button(R.drawable.ic_stop, "Stop", buttons, this::finish);
+    SubtitleFonts.configure(this);
     vlc =
         new LibVLC(
             this,
@@ -267,14 +272,7 @@ public class PlayerActivity extends Activity {
             startupPosition = p;
             if (p > 0) player.setTime(p);
             getIntent().putExtra("startFromBeginning", false);
-            if (!getIntent().getBooleanExtra("embeddedFirst", false)
-                && !(getIntent().getStringExtra("imdb") != null
-                    && getIntent().getStringExtra("imdb").startsWith("nyaa:"))
-                && getIntent()
-                    .getBooleanExtra(
-                        "subtitlesEnabled",
-                        getSharedPreferences("subtitles", 0).getBoolean("auto", true))
-                && new OpenSubtitles(this).signedIn()) findSubtitles(true);
+            prepareTracks();
           }
         });
     seek.setOnSeekBarChangeListener(
@@ -724,55 +722,27 @@ public class PlayerActivity extends Activity {
     return b;
   }
 
-  void subtitleMenu() {
-    setControlsVisible(true);
-    new AlertDialog.Builder(this)
-        .setTitle("Subtitles")
-        .setItems(
-            new String[] {
-              "Find on OpenSubtitles",
-              "Choose a local file",
-              "Language: English / Hindi",
-              "OpenSubtitles account",
-              "Turn subtitles off"
-            },
-            (d, n) -> {
-              if (n == 0) findSubtitles(false);
-              else if (n == 1)
-                startActivityForResult(
-                    new Intent(Intent.ACTION_OPEN_DOCUMENT)
-                        .setType("*/*")
-                        .addCategory(Intent.CATEGORY_OPENABLE),
-                    30);
-              else if (n == 2)
-                new AlertDialog.Builder(this)
-                    .setTitle("Subtitle language")
-                    .setItems(
-                        new String[] {"English", "Hindi"},
-                        (x, i) -> {
-                          getSharedPreferences("subtitles", 0)
-                              .edit()
-                              .putString("language", i == 0 ? "en" : "hi")
-                              .apply();
-                          getIntent().putExtra("subtitleLanguage", i == 0 ? "en" : "hi");
-                          findSubtitles(false);
-                        })
-                    .show();
-              else if (n == 3) startActivity(new Intent(this, SubtitleSettingsActivity.class));
-              else {
-                player.setSpuTrack(-1);
-                subtitleStatus.setText("Subtitles off");
-              }
-            })
-        .show();
+  boolean animePlayback(){return "animes".equals(getIntent().getStringExtra("activityKind"))||getIntent().getBooleanExtra("embeddedFirst",false);}
+  String trackLanguage(int id,boolean audio){org.videolan.libvlc.interfaces.IMedia media=player.getMedia();if(media==null)return "";try{for(int i=0;i<media.getTrackCount();i++){org.videolan.libvlc.interfaces.IMedia.Track t=media.getTrack(i);if(t.id==id&&(audio?t.type==org.videolan.libvlc.interfaces.IMedia.Track.Type.Audio:t.type==org.videolan.libvlc.interfaces.IMedia.Track.Type.Text))return t.language==null?"":t.language;}}finally{media.release();}return "";}
+  int preferredTrack(boolean audio,String language){MediaPlayer.TrackDescription[] tracks=audio?player.getAudioTracks():player.getSpuTracks();if(tracks==null)return -1;for(MediaPlayer.TrackDescription t:tracks)if(t.id>=0&&MediaTracks.language(trackLanguage(t.id,audio),t.name,language)&&(audio?!MediaTracks.commentary(t.name):!MediaTracks.partial(t.name)))return t.id;return -1;}
+  void prepareTracks(){if(player==null||automaticTracksVersion==playbackVersion)return;automaticTracksVersion=playbackVersion;
+    if(animePlayback()&&manualAudioVersion!=playbackVersion){String language=getSharedPreferences("playback",0).getString("audioLanguage","en");int id=preferredTrack(true,language);if(id>=0)player.setAudioTrack(id);else if(language.equals("en"))subtitleStatus.setText("English audio unavailable in this source. Choose another audio track or source.");}
+    if(!getIntent().getBooleanExtra("subtitlesEnabled",getSharedPreferences("subtitles",0).getBoolean("auto",true))){player.setSpuTrack(-1);return;}
+    if(manualSubtitleVersion==playbackVersion)return;
+    String language=getIntent().getStringExtra("subtitleLanguage");if(language==null)language=getSharedPreferences("subtitles",0).getString("language","en");int embedded=preferredTrack(false,language);if(embedded>=0){player.setSpuTrack(embedded);subtitleStatus.setText("Embedded "+(language.equals("hi")?"Hindi":"English")+" subtitles");}else findSubtitles(true);
   }
+  void audioMenu(){setControlsVisible(true);MediaPlayer.TrackDescription[] tracks=player.getAudioTracks();if(tracks==null||tracks.length==0){subtitleStatus.setText("Audio tracks are not available yet");return;}String[] names=new String[tracks.length];int selected=-1;for(int i=0;i<tracks.length;i++){names[i]=tracks[i].name+(tracks[i].id==player.getAudioTrack()?" · selected":"");if(tracks[i].id==player.getAudioTrack())selected=i;}new AlertDialog.Builder(this).setTitle("Audio tracks in this source").setSingleChoiceItems(names,selected,(dialog,n)->{int id=tracks[n].id;if(player.setAudioTrack(id)){manualAudioVersion=playbackVersion;String lang=trackLanguage(id,true);if(lang.equals("eng"))lang="en";if(lang.equals("hin"))lang="hi";if(!lang.isEmpty())getSharedPreferences("playback",0).edit().putString("audioLanguage",lang).apply();subtitleStatus.setText("Audio: "+tracks[n].name);}else subtitleStatus.setText("Unable to select that audio track");dialog.dismiss();}).setNegativeButton("Cancel",null).show();}
+  void embeddedSubtitles(){MediaPlayer.TrackDescription[] tracks=player.getSpuTracks();if(tracks==null||tracks.length==0){subtitleStatus.setText("No embedded subtitle tracks in this source");return;}String[] labels=new String[tracks.length];for(int i=0;i<tracks.length;i++)labels[i]=tracks[i].name+(MediaTracks.partial(tracks[i].name)?" · signs/songs only":"")+(tracks[i].id==player.getSpuTrack()?" · selected":"");new AlertDialog.Builder(this).setTitle("Embedded subtitles").setItems(labels,(d,n)->{manualSubtitleVersion=playbackVersion;subtitleChoice++;if(player.setSpuTrack(tracks[n].id))subtitleStatus.setText("Subtitles: "+labels[n]);else subtitleStatus.setText("Unable to select that subtitle track");}).setNegativeButton("Cancel",null).show();}
+  void subtitleMenu(){setControlsVisible(true);new AlertDialog.Builder(this).setTitle("Subtitles").setItems(new String[]{"Embedded subtitle tracks","Find online subtitles","Choose a local file","Language: English / Hindi","OpenSubtitles account","Turn subtitles off"},(d,n)->{if(n==0)embeddedSubtitles();else if(n==1)findSubtitles(false);else if(n==2){manualSubtitleVersion=playbackVersion;subtitleChoice++;startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE),30);}else if(n==3)new AlertDialog.Builder(this).setTitle("Subtitle language").setItems(new String[]{"English","Hindi"},(dialog,i)->{getSharedPreferences("subtitles",0).edit().putString("language",i==0?"en":"hi").apply();getIntent().putExtra("subtitleLanguage",i==0?"en":"hi");findSubtitles(false);}).show();else if(n==4)startActivity(new Intent(this,SubtitleSettingsActivity.class));else{manualSubtitleVersion=playbackVersion;subtitleChoice++;player.setSpuTrack(-1);subtitleStatus.setText("Subtitles off");}}).setNegativeButton("Cancel",null).show();}
 
   void findSubtitles(boolean automatic) {
+    if(!automatic)subtitleChoice++;
+    final int choice=subtitleChoice;
     if (subtitleBusy) return;
     final int requestAttempt = attempt;
     final int requestVersion = playbackVersion;
     OpenSubtitles api = new OpenSubtitles(this);
-    if (!api.configured()) {
+    if (!api.configured()&&!animePlayback()) {
       if (!automatic) startActivity(new Intent(this, SubtitleSettingsActivity.class));
       return;
     }
@@ -791,20 +761,22 @@ public class PlayerActivity extends Activity {
           try {
             TorrentEngine engine = StreamService.engine;
             String hash = engine == null ? "" : engine.movieHash();
-            java.util.List<SubtitleQuery.Result> results =
-                api.search(
-                    imdb, season, episode, title, language, hash, engine == null ? 0 : engine.size);
+            java.util.List<SubtitleQuery.Result> results = new ArrayList<>();
+            Exception lookupFailure=null;
+            if(animePlayback()&&engine!=null&&engine.info!=null)try{results.addAll(AnimeSubtitles.search(engine.info.infoHash().toHex(),engine.video==null?"":engine.video.getName(),language));}catch(Exception error){lookupFailure=error;}
+            if(results.isEmpty()&&api.configured())try{results.addAll(api.search(imdb,season,episode,title,language,hash,engine==null?0:engine.size));}catch(Exception error){lookupFailure=error;}
+            if(results.isEmpty()&&lookupFailure!=null)throw lookupFailure;
             ui.post(
                 () -> {
                   subtitleBusy = false;
                   if (isDestroyed()
-                      || (attempt != requestAttempt || playbackVersion != requestVersion)) return;
+                      || (attempt != requestAttempt || playbackVersion != requestVersion)||choice!=subtitleChoice) return;
                   if (results.isEmpty()) {
                     subtitleStatus.setText(
                         "No " + (language.equals("hi") ? "Hindi" : "English") + " subtitles found");
                     return;
                   }
-                  if (automatic) downloadSubtitle(results.get(0));
+                  if (automatic){SubtitleQuery.Result selected=null;for(SubtitleQuery.Result r:results)if(!r.forced){selected=r;break;}if(selected!=null)downloadSubtitle(selected);else subtitleStatus.setText("Only signs/songs subtitles found. Choose a track manually.");}
                   else {
                     String[] labels = new String[results.size()];
                     for (int i = 0; i < labels.length; i++) labels[i] = results.get(i).label;
@@ -831,10 +803,13 @@ public class PlayerActivity extends Activity {
   void downloadSubtitle(SubtitleQuery.Result result) {
     final int requestAttempt = attempt;
     final int requestVersion = playbackVersion;
+    manualSubtitleVersion=playbackVersion;
+    final int choice=++subtitleChoice;
     subtitleStatus.setText("Downloading subtitles…");
     subtitleWorker.execute(
         () -> {
           try {
+            if(result.provider.equals("tsukihime")){File file=AnimeSubtitles.download(result,getCacheDir());ui.post(()->{if(!isDestroyed()&&attempt==requestAttempt&&playbackVersion==requestVersion&&choice==subtitleChoice){player.addSlave(Media.Slave.Type.Subtitle,Uri.fromFile(file),true);subtitleStatus.setText("Subtitles added: "+result.label);}});return;}
             File existing =
                 new File(
                     getCacheDir(),
@@ -850,7 +825,7 @@ public class PlayerActivity extends Activity {
                 () -> {
                   if (!isDestroyed()
                       && attempt == requestAttempt
-                      && playbackVersion == requestVersion) {
+                      && playbackVersion == requestVersion&&choice==subtitleChoice) {
                     player.addSlave(Media.Slave.Type.Subtitle, Uri.fromFile(file), true);
                     subtitleStatus.setText("Subtitles added: " + result.label);
                   }
@@ -883,6 +858,7 @@ public class PlayerActivity extends Activity {
             EpisodePreload.consider(PlayerActivity.this,e,episodeQueue,neighbour(1));
           }
           long now = SystemClock.elapsedRealtime();
+          if(player!=null&&playbackStall.sample(now,Math.max(0,player.getTime()),Math.max(0,player.getLength()),playedVideo&&!userPaused&&!dragging&&pendingSeek<0&&viewsAttached&&hasWindowFocus())){Diagnostics.event("torrent.stalled");DiagnosticPlayback.sample(PlayerActivity.this,player,currentEngine?e:null,softwareDecoder,diagnosticBufferPercent);episodeMessage="Playback has stalled. Try another source or a lower quality.";setControlsVisible(true);}else if(playbackStall.advancedAt==now&&episodeMessage!=null&&episodeMessage.startsWith("Playback has stalled"))episodeMessage=null;
           if(now-watchingActivityAt>=30000){watchingActivityAt=now;WatchingActivity.report(PlayerActivity.this,userPaused||!viewsAttached||opened&&!player.isPlaying()&&!diagnosticBuffering?"paused":playedVideo&&player.isPlaying()&&!diagnosticBuffering?"playing":mediaSet?"buffering":"starting");}
           if(mediaSet&&player.isPlaying()&&player.getTime()>1500&&videoOutputs==0&&diagnosticAudioOnlyVersion!=playbackVersion){diagnosticAudioOnlyVersion=playbackVersion;try{Diagnostics.event("player.audio_only",new org.json.JSONObject().put("attempt",attempt).put("decoder",softwareDecoder?"software":"auto"));}catch(Exception ignored){}}
           if(mediaSet&&now-diagnosticSampleAt>=30000){diagnosticSampleAt=now;DiagnosticPlayback.sample(PlayerActivity.this,player,currentEngine?e:null,softwareDecoder,diagnosticBufferPercent);}

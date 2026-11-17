@@ -28,6 +28,10 @@ final class CanonicalEpisodes {
     return new JSONArray(rows);
   }
 
+  // Verified original Black Clover TV run: Cinemeta S1 episodes 1–170 are the same
+  // absolute sequence as MAL 34572. Never extend this identity to specials or later seasons.
+  static void knownAnime(JSONArray rows,String imdb)throws Exception{if(!"tt7441658".equals(imdb))return;for(int n=0;n<rows.length();n++){JSONObject r=rows.getJSONObject(n);int ep=r.optInt("number");if(r.optInt("season")==1&&ep>=1&&ep<=170&&!r.has("absolute"))r.put("absolute",ep).put("skipMalId",34572).put("animeMapped",true).put("animeTitle","Black Clover");}}
+
   static boolean trustedReverseMapping(JSONObject doc,String imdb,String title){
     JSONObject mappings=doc.optJSONObject("mappings"),titles=doc.optJSONObject("titles");
     if(mappings==null||titles==null||!imdb.equals(mappings.optString("imdb_id"))||!Arrays.asList("TV","ONA").contains(mappings.optString("type")))return false;

@@ -1,8 +1,9 @@
 {
   "name": "streamnest-desktop-build",
   "private": true,
-  "version": "0.28.0",
+  "version": "0.29.0",
   "dependencies": {
+    "@napi-rs/lzma": "1.5.3",
     "@resvg/resvg-js": "2.6.2",
     "qrcode-generator": "1.4.4",
     "yarn": "1.22.22"

@@ -132,6 +132,7 @@ final class EpisodeLibrary {
         if (response instanceof JSONArray) metadata = (JSONArray) response;
       } catch (Exception ignored) {
       }
+    CanonicalEpisodes.knownAnime(metadata,id);
     List<JSONObject> rows = merge(metadata, source);
     if (title.raw.optBoolean("animeSeries"))
       try {

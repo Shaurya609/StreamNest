@@ -5,6 +5,7 @@ function match(release,title,row){
  if(!text.toLowerCase().startsWith(title.toLowerCase()))return 0;
  let tail=text.slice(title.length);if(!/^(?:\s|\[|\(|$)/.test(tail))return 0;
  tail=tail.replace(/^\s*\((?:TV|[12][0-9]{3})\)/i,'');
+ const seasonal=tail.match(/^\s*(?:-\s*)?S(\d{1,2})E(\d{1,4})(?!\d)/i);if(seasonal){if(/^\s*[-~]/.test(tail.slice(seasonal[0].length)))return 0;return Number(seasonal[1])===Number(row.season)&&Number(seasonal[2])===Number(row.episode)?1:0;}
  const single=tail.match(/^\s*-\s*(\d{1,4})(?:v\d+)?(?=\s|\[|\(|\.|$)/);
  if(single&&!/^\s*[-~]/.test(tail.slice(single[0].length)))return row.absolute>0&&Number(single[1])===Number(row.absolute)?1:0;
  const range=tail.match(/^\s*(?:-\s*)?[\[(]?(\d{1,4})\s*[-~]\s*(\d{1,4})(?=\s|[)\]]|$)/);

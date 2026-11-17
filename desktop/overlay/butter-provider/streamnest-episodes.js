@@ -88,6 +88,7 @@ function augmentMappings(mapped,canonical,preferCanonical=false){
  if(!canonical.length||!preferCanonical&&(!aligned||canonical.filter(r=>r.season>0).length<=regular.length))return mapped;
  return canonical.map(r=>{const m=mapping.get(key(r)),row={...r};if(m&&same(m,r))for(const field of ['absolute','skipMalId','kitsuId','kitsuEpisode','animeMapped','animeTitle'])if(m[field]!==undefined)row[field]=m[field];return row;});
 }
+function knownAnime(rows,id){if(id!=='tt7441658')return rows;return rows.map(r=>r.season===1&&r.episode>=1&&r.episode<=170&&!r.absolute?{...r,absolute:r.episode,skipMalId:34572,animeMapped:true,animeTitle:'Black Clover'}:r);}
 function merge(metadata, source, collect) {
   const byKey=new Map();
   for (const [season,rows] of Object.entries(source || {})) if (Array.isArray(rows)) for (const e of rows)
@@ -121,7 +122,7 @@ async function detail(id,old,source,collect) {
       season:e.season,episode:e.number,title:e.name,overview:(e.summary||'').replace(/<[^>]+>/g,' '),first_aired:Date.parse(e.airdate)/1000||0,tvdb_id:e.id
     }));
   } catch(e) {}
-  const rows=merge(metadata,source,collect);
+  const rows=merge(knownAnime(metadata,id),source,collect);
   for(const row of rows)row.streamnestSeriesTitle=old&&old.title||'';
   if(old && !old.homeMetadataOnly && (old.animeSeries || mal))try{await require('./streamnest-releases').attach(rows,old.title);}catch(e){}
   require('./streamnest-filler').apply(rows);
@@ -137,9 +138,10 @@ function selectFile(files, model) {
   }
   const videos=files.map((file,index)=>({file,index})).filter(x=>video(x.file.name));
   const matched=videos.filter(({file})=>{
-    let m=file.path.match(/(?:^|[^a-z0-9])s(\d{1,2})e(\d{1,4})(?!\d)/i) || file.path.match(/(?:^|[^a-z0-9])(\d{1,2})x(\d{1,4})(?!\d)/i);
+    const member=path.basename(String(file.path).replace(/\\/g,'/'));
+    let m=member.match(/(?:^|[^a-z0-9])s(\d{1,2})e(\d{1,4})(?!\d)/i) || member.match(/(?:^|[^a-z0-9])(\d{1,2})x(\d{1,4})(?!\d)/i);
     if (m) return Number(m[1])===Number(model.season) && Number(m[2])===Number(model.episode);
-    m=file.path.match(/\s-\s(\d{1,4})(?:v\d+)?(?=\s|\[|\(|\.)/);
+    m=member.match(/\s-\s(\d{1,4})(?:v\d+)?(?=\s|\[|\(|\.)/);
     return m && model.absolute>0 && Number(m[1])===Number(model.absolute);
   });
   if (matched.length===1) return matched[0].index;
@@ -161,4 +163,4 @@ function nextUnwatched(episodes,watched,mode){
   if(mode!=='firstUnwatched'){let last=-1;rows.forEach((e,n)=>{if(seen.has(e.season+':'+e.episode))last=n;});if(last>=0&&last+1<rows.length)return rows[last+1];}
   return rows.find(e=>!seen.has(e.season+':'+e.episode))||rows[0];
 }
-module.exports={augmentMappings,trustedReverseMapping,attempts,quality,rank,qualities,parseStreams,alternatives,canonical,mapped,merge,detail,selectFile,nextAttempt,compareId,nextUnwatched};
+module.exports={knownAnime,augmentMappings,trustedReverseMapping,attempts,quality,rank,qualities,parseStreams,alternatives,canonical,mapped,merge,detail,selectFile,nextAttempt,compareId,nextUnwatched};

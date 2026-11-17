@@ -58,6 +58,8 @@
     };
 
     OpenSubtitles.prototype.fetch = function (queryParams) {
+        if(!queryParams)return Promise.resolve({});
+        if(queryParams.streamnestAnime){const copy={...queryParams};delete copy.streamnestAnime;delete copy.btih;return Promise.allSettled([this.fetch(copy),require('./butter-provider/streamnest-anime-subs').search(queryParams.btih,queryParams.filename)]).then(results=>{const subs=results[0].status==='fulfilled'?results[0].value:{};if(!subs.en&&results[1].status==='fulfilled'){let n=0;for(const row of results[1].value.filter(r=>!r.forced))subs[n++?'en|'+n:'en']=row.url;}return subs;});}
         if(AdvSettings.get('opensubtitlesAnonymous') || !AdvSettings.get('opensubtitlesAuthenticated') || !AdvSettings.get('opensubtitlesUsername'))
             return require('./butter-provider/streamnest-org').search(queryParams).then(formatForButter);
         openSRT = new OS({

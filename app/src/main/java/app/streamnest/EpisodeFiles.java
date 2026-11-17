@@ -12,6 +12,7 @@ final class EpisodeFiles {
   }
 
   static boolean matches(String path, int season, int episode, int absolute) {
+    path=path.replace('\\','/');path=path.substring(path.lastIndexOf('/')+1);
     Matcher m = Pattern.compile("(?i)(?:^|[^a-z0-9])s(\\d{1,2})e(\\d{1,4})(?!\\d)").matcher(path);
     if (m.find())
       return Integer.parseInt(m.group(1)) == season && Integer.parseInt(m.group(2)) == episode;

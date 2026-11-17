@@ -1,5 +1,7 @@
 # Pending fixes and verification
 
+Anime 0.29.0: real audio/embedded subtitle controls, anonymous exact-source TsukiHime fallback, Android ASS font setup and season-pack filename matching are implemented. See ANIME-PLAYBACK.md and VALIDATION.md. The reported projector freeze remains open for the owner’s retest; healthy TheBeast samples do not establish its cause.
+
 Owner group deletion and separate current watching activity are implemented for 0.28.0. See WATCH-SYNC.md for privacy, freshness and deletion scope. Release acceptance is recorded in VALIDATION.md.
 
 

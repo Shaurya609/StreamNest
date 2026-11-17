@@ -26,6 +26,7 @@ final class SubtitleQuery {
   static class Result {
     int fileId;
     String provider = "com";
+    String link="",codec="srt";boolean forced;
     String label;
     boolean exact;
 
