@@ -5,7 +5,8 @@ import fs from 'node:fs';
 import {createRequire} from 'node:module';
 import worker from './worker.mjs';
 const require=createRequire(import.meta.url),C=require('../desktop/overlay/butter-provider/streamnest-sync-crypto');
-function environment(){const database=new DatabaseSync(':memory:');database.exec(fs.readFileSync(new URL('schema.sql',import.meta.url),'utf8'));return {database,DB:{prepare(sql){let values=[];return {bind(...v){values=v;return this;},async first(){return database.prepare(sql).get(...values)||null;},async all(){return {results:database.prepare(sql).all(...values)};},async run(){const result=database.prepare(sql).run(...values);return {meta:{changes:Number(result.changes)}};}};}},RATE:{limit:async()=>({success:true})}};}
+function environment(){const database=new DatabaseSync(':memory:');database.exec(fs.readFileSync(new URL('schema.sql',import.meta.url),'utf8'));return {database,DB:{prepare(sql){let values=[];return {bind(...v){values=v;return this;},async first(){return database.prepare(sql).get(...values)||null;},async all(){return {results:database.prepare(sql).all(...values)};},syncRun(){const result=database.prepare(sql).run(...values);return {meta:{changes:Number(result.changes)}};},async run(){return this.syncRun();}};},async batch(statements){database.exec('BEGIN IMMEDIATE');try{const result=statements.map(s=>s.syncRun());database.exec('COMMIT');return result;}catch(e){database.exec('ROLLBACK');throw e;}}},RATE:{limit:async()=>({success:true})}};}
+
 function request(method,auth,data,revision){const headers={Authorization:'Bearer '+auth};if(revision!==undefined)headers['If-Match']=String(revision);return new Request('https://sync.example/v1/progress',{method,headers,body:data?JSON.stringify(data):undefined});}
 test('private groups are separated and server stores only opaque encrypted history',async()=>{
  const env=environment(),code=C.create(),other=C.create(),auth=C.auth(code),data={'episode:tt123:1:1':{positionMs:120000,durationMs:1500000,updatedAt:Date.now()}};
@@ -147,3 +148,53 @@ test('extended diagnostic samples and safe failure locations survive server sani
  assert.deepEqual(cleanConfig({hardwareH264:true,hardwareHevc:false,hardwareAv1:true}),{hardwareH264:true,hardwareHevc:false,hardwareAv1:true});
  assert(cleanEvent({id:'a'.repeat(32),session:'b'.repeat(32),type:'player.sample',level:'info',at:Date.now(),data}));
 });
+
+
+test('owner can see separate current activity without exposing encrypted resume history',async()=>{
+ const env=environment(),code=C.create(),other=C.create();env.ADMIN_TOKEN='o'.repeat(40);
+ const send=(method,data,c=code)=>worker.fetch(new Request('https://sync.example/v1/activity',{method,headers:{Authorization:'Bearer '+C.auth(c)},body:JSON.stringify(data)}),env),body={deviceId:device.deviceId,sharing:true,activity:{title:'One Piece',kind:'animes',season:1,episode:4,state:'playing',url:'https://private',positionMs:123}};
+ try{
+  assert.equal((await send('PUT',body)).status,403);await worker.fetch(groupRequest(code,'PUT',{...device,groupName:'Fixture'}),env);
+  assert.equal((await send('PUT',body,other)).status,403);assert.equal((await send('PUT',{...body,sharing:false})).status,400);
+  assert.equal((await send('PUT',body)).status,200);
+  const report=await(await worker.fetch(new Request('https://sync.example/admin/data',{headers:{Authorization:'Bearer '+env.ADMIN_TOKEN}}),env)).json(),row=report.groups[0];
+  assert.deepEqual(row.activity,{title:'One Piece',kind:'animes',season:1,episode:4,state:'playing'});assert(!JSON.stringify(report).includes('https://private'));assert(!JSON.stringify(report).includes('positionMs'));
+  assert.equal((await worker.fetch(new Request('https://sync.example/admin/data'),env)).status,401);
+  await send('PUT',{...body,ageMs:3600000,activity:{...body.activity,title:'Old observation'}});assert.equal(JSON.parse(env.database.prepare('SELECT payload FROM watch_activity').get().payload).title,'One Piece');
+  await send('DELETE',{deviceId:device.deviceId});assert.equal(env.database.prepare('SELECT count(*) n FROM watch_activity').get().n,0);
+ }finally{env.database.close();}
+});
+test('owner group deletion is confirmed, transactional, isolated and permanently revokes codes',async()=>{
+ const env=environment(),code=C.create(),other=C.create();env.ADMIN_TOKEN='o'.repeat(40);
+ try{
+  await worker.fetch(groupRequest(code,'PUT',{...device,groupName:'Fixture'}),env);await worker.fetch(request('PUT',C.auth(code),C.seal(code,{}),0),env);await worker.fetch(groupRequest(other,'PUT',{...device,groupName:'Keep'}),env);
+  const id=env.database.prepare("SELECT id FROM sync_groups WHERE name='Fixture'").get().id;
+  env.database.prepare('INSERT INTO watch_activity VALUES (?,?,?,?)').run(id,device.deviceId,'{}',Date.now());
+  const url='https://sync.example/admin/groups?group='+id,del=(key,confirmName)=>new Request(url,{method:'DELETE',headers:{Authorization:'Bearer '+key},body:JSON.stringify({confirmName})});
+  assert.equal((await worker.fetch(del('wrong','Fixture'),env)).status,401);assert.equal((await worker.fetch(del(env.ADMIN_TOKEN,'Wrong'),env)).status,400);
+  const batch=env.DB.batch.bind(env.DB);env.DB.batch=statements=>batch([...statements,env.DB.prepare('DELETE FROM nonexistent_fixture_table')]);
+  assert.equal((await worker.fetch(del(env.ADMIN_TOKEN,'Fixture'),env)).status,503);assert(env.database.prepare('SELECT id FROM sync_groups WHERE id=?').get(id));assert.equal(env.database.prepare('SELECT count(*) n FROM revoked_groups').get().n,0);
+  env.DB.batch=batch;assert.equal((await worker.fetch(del(env.ADMIN_TOKEN,'Fixture'),env)).status,200);
+  for(const table of ['rooms','sync_groups'])assert.equal(env.database.prepare('SELECT count(*) n FROM '+table+' WHERE id=?').get(id).n,0);
+  for(const table of ['watch_activity','sync_devices','diagnostic_events','diagnostic_devices'])assert.equal(env.database.prepare('SELECT count(*) n FROM '+table+' WHERE room_id=?').get(id).n,0);
+  assert.equal((await worker.fetch(groupRequest(code,'PUT',device),env)).status,410);assert.equal((await worker.fetch(request('GET',C.auth(code)),env)).status,410);assert.equal((await worker.fetch(request('PUT',C.auth(code),C.seal(code,{}),0),env)).status,410);
+  assert.equal((await worker.fetch(groupRequest(other,'GET'),env)).status,200);assert.equal(env.database.prepare('SELECT count(*) n FROM sync_groups').get().n,1);
+  assert.equal((await worker.fetch(del(env.ADMIN_TOKEN,'Fixture'),env)).status,200);
+ }finally{env.database.close();}
+});
+
+
+test('in-flight writes cannot resurrect a group after owner deletion commits',async()=>{
+ for(const target of ['progress','group','diagnostics','activity']){
+  const env=environment(),code=C.create();env.ADMIN_TOKEN='o'.repeat(40);
+  try{
+   await worker.fetch(groupRequest(code,'PUT',{...device,groupName:'Race fixture'}),env);const id=env.database.prepare('SELECT id FROM sync_groups').get().id;
+   const original=env.DB.prepare.bind(env.DB);let armed=true;const table={progress:'rooms',group:'sync_groups',diagnostics:'diagnostic_devices',activity:'watch_activity'}[target];
+   env.DB.prepare=sql=>{const stmt=original(sql),run=stmt.run;stmt.run=async function(){if(armed&&sql.startsWith('INSERT')&&sql.includes('INTO '+table+'(')){armed=false;const deleted=await worker.fetch(new Request('https://sync.example/admin/groups?group='+id,{method:'DELETE',headers:{Authorization:'Bearer '+env.ADMIN_TOKEN},body:JSON.stringify({confirmName:'Race fixture'})}),env);assert.equal(deleted.status,200);}return run.call(this);};return stmt;};
+   let req;if(target==='progress')req=request('PUT',C.auth(code),C.seal(code,{}),0);else if(target==='group')req=groupRequest(code,'PUT',device);else {const data=target==='activity'?{deviceId:device.deviceId,sharing:true,activity:{title:'Fixture',kind:'movies',state:'playing'}}:{deviceId:device.deviceId,schema:1,consent:true,events:[{id:'c'.repeat(32),session:'d'.repeat(32),at:Date.now(),type:'app.start',level:'info'}]};req=new Request('https://sync.example/v1/'+target,{method:target==='activity'?'PUT':'POST',headers:{Authorization:'Bearer '+C.auth(code)},body:JSON.stringify(data)});}
+   const result=await worker.fetch(req,env);assert([200,410].includes(result.status));assert(!armed,'Race injection did not execute');
+   assert.equal(env.database.prepare('SELECT count(*) n FROM sync_groups').get().n,0);assert.equal(env.database.prepare('SELECT count(*) n FROM rooms').get().n,0);for(const t of ['watch_activity','sync_devices','diagnostic_devices','diagnostic_events'])assert.equal(env.database.prepare('SELECT count(*) n FROM '+t).get().n,0,target+' resurrected '+t);
+  }finally{env.database.close();}
+ }
+});
+test('activity ages, expiry and invalid title reports cannot create misleading live status',async()=>{const {cleanActivity}=await import('./owner-controls.mjs');for(const title of ['https://private','magnet:?private','C:\\private','bad\nname'])assert.equal(cleanActivity({title,kind:'movies',state:'playing'}),null);const env=environment(),code=C.create();try{await worker.fetch(groupRequest(code,'PUT',device),env);const send=ageMs=>worker.fetch(new Request('https://sync.example/v1/activity',{method:'PUT',headers:{Authorization:'Bearer '+C.auth(code)},body:JSON.stringify({deviceId:device.deviceId,sharing:true,ageMs,activity:{title:'Fixture',kind:'movies',state:'playing'}})}),env);assert.equal((await send(-1)).status,400);assert.equal((await send(120000)).status,200);env.database.prepare('UPDATE watch_activity SET updated_at=1').run();await worker.scheduled({},env);assert.equal(env.database.prepare('SELECT count(*) n FROM watch_activity').get().n,0);}finally{env.database.close();}});

@@ -637,6 +637,7 @@ final class TitleScreen extends Dialog {
         new Intent(a, PlayerActivity.class)
             .putExtra("episodeQueue", queueToken)
             .putExtra("title", playTitle)
+            .putExtra("activityTitle", title.title).putExtra("activityKind", title.kind)
             .putExtra("source", best.url)
             .putExtra("fileIndex", best.fileIndex)
             .putExtra("filename", best.filename)

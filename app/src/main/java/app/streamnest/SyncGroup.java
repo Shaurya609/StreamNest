@@ -26,6 +26,7 @@ final class SyncGroup {
     connection.setRequestMethod(method);connection.setRequestProperty("Authorization","Bearer "+WatchSyncCrypto.auth(code));
     try {
       if(body!=null){byte[] bytes=body.toString().getBytes(StandardCharsets.UTF_8);connection.setRequestProperty("Content-Type","application/json");connection.setFixedLengthStreamingMode(bytes.length);connection.setDoOutput(true);try(OutputStream out=connection.getOutputStream()){out.write(bytes);}}
+      if(connection.getResponseCode()==410)throw new GroupDeletedException();
       if(connection.getResponseCode()!=200)throw new IOException("Group service HTTP "+connection.getResponseCode());
       try(InputStream in=connection.getInputStream()){return new JSONObject(new String(Net.read(in,16000),StandardCharsets.UTF_8));}
     } finally {connection.disconnect();}
@@ -35,7 +36,7 @@ final class SyncGroup {
     JSONObject body=new JSONObject().put("deviceId",deviceId(c)).put("deviceName",deviceName(c));
     if(name!=null)body.put("groupName",name);
     try {JSONObject result=call(c,code,"PUT",body);if(code.equals(WatchSync.code(c))){current=result;error="";last=System.currentTimeMillis();}}
-    catch(Exception e){error="Group details unavailable — watch sync still works";throw e;}
+    catch(Exception e){if(e instanceof GroupDeletedException){WatchSync.deleted(c,code);error="Sync group deleted by owner";}else error="Group details unavailable — watch sync still works";throw e;}
   }
   static synchronized void refresh(Context c) {if(System.currentTimeMillis()-last<60000)return;last=System.currentTimeMillis();Context app=c.getApplicationContext();worker.execute(()->{try{update(app,null);}catch(Exception ignored){}});}
 }

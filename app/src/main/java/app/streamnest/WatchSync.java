@@ -33,7 +33,7 @@ final class WatchSync {
 
   static void connect(Context c, String code) throws Exception {
     String normalized = WatchSyncCrypto.format(WatchSyncCrypto.parse(code));
-    if(!normalized.equals(code(c)))Diagnostics.reset(c);
+    if(!normalized.equals(code(c))){WatchingActivity.reset(c);Diagnostics.reset(c);}
     new SecretStore(c).put("watchSyncCode", normalized);
     Diagnostics.connected(c);
     HomeLibrary.revision++;
@@ -42,7 +42,7 @@ final class WatchSync {
   }
 
   static void disconnect(Context c) throws Exception {
-    Diagnostics.reset(c);
+    WatchingActivity.reset(c);Diagnostics.reset(c);
     String previous = code(c);
     Context app = c.getApplicationContext();
     SyncGroup.worker.execute(() -> {try{if(!previous.isEmpty())SyncGroup.call(app,previous,"DELETE",new JSONObject().put("deviceId",SyncGroup.deviceId(app)));}catch(Exception ignored){}});
@@ -52,6 +52,7 @@ final class WatchSync {
     status = "Not connected";
   }
 
+  static void deleted(Context c,String expected){try{if(!expected.equals(code(c)))return;disconnect(c);if(testPairingCode!=null)testPairingCode="";status="Sync group deleted by owner. Create or join a new group.";}catch(Exception ignored){}}
   static synchronized void request(Context c, boolean force) {
     if (pending) { if (force) followup = true; return; }
     if (!force && System.currentTimeMillis() - last < 10000) return;
@@ -60,14 +61,14 @@ final class WatchSync {
     last = System.currentTimeMillis();
     worker.execute(
         () -> {
-          try {
-            String pairing = code(app);
+          String pairing="";try {
+            pairing = code(app);
             if (pairing.isEmpty()) return;
             sync(app, pairing);
             if (pairing.equals(code(app))) {status = "Synced"; SyncGroup.refresh(app);}
           } catch (Exception e) {
             Diagnostics.failure("sync.failed","sync","fetch",e);
-            status = "Offline — progress stays on this device";
+            if(e instanceof GroupDeletedException)deleted(app,pairing);else status = "Offline — progress stays on this device";
           } finally {
             synchronized (WatchSync.class) {
               pending = false;
@@ -99,6 +100,7 @@ final class WatchSync {
         }
       }
       int response = c.getResponseCode();
+      if (response == 410) throw new GroupDeletedException();
       if (response == 409) return new JSONObject().put("conflict", true);
       if (response != 200) throw new IOException("Sync service HTTP " + response);
       try (InputStream in = c.getInputStream()) {

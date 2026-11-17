@@ -571,6 +571,7 @@
             });
 
             require('./butter-provider/streamnest-diagnostics').attachPlayer(this.player,this.el,this.model);
+            require('./butter-provider/streamnest-watching-activity').attachPlayer(this.player,this.el,this.model);
             this.player.on('ended', this.onPlayerEnded.bind(this));
             this.player.one('play', this.onPlayerFirstPlay.bind(this));
             this.player.on('loadeddata', this.onPlayerReady.bind(this));

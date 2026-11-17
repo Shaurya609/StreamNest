@@ -1,0 +1,7 @@
+package app.streamnest;
+import org.junit.Test;import static org.junit.Assert.*;import org.json.*;
+public class WatchingPayloadTest {
+ @Test public void titleEpisodeStateAreSeparateFromResumeAndSecrets()throws Exception{JSONObject d=WatchingPayload.clean(new JSONObject().put("title","One Piece").put("kind","animes").put("state","playing").put("season",1).put("episode",4).put("positionMs",100).put("url","https://private").put("password","secret"));assertNotNull(d);assertEquals(5,d.length());assertEquals("One Piece",d.getString("title"));assertFalse(d.has("positionMs"));assertFalse(d.has("url"));}
+ @Test public void moviesDoNotLeakEpisodeFieldsAndInvalidStatesAreRejected()throws Exception{JSONObject raw=new JSONObject().put("title","A movie").put("kind","movies").put("state","paused").put("episode",1);assertEquals(3,WatchingPayload.clean(raw).length());assertNull(WatchingPayload.clean(raw.put("state","secret")));}
+ @Test public void unsafeTitleAndInvalidEpisodeAreRejected()throws Exception{JSONObject raw=new JSONObject().put("title","https://private").put("kind","shows").put("state","starting");assertNull(WatchingPayload.clean(raw));assertNull(WatchingPayload.clean(raw.put("title","Two\nlines")));assertNull(WatchingPayload.clean(raw.put("title","C:\\private")));assertNull(WatchingPayload.clean(raw.put("title","Series").put("episode",-1)));assertNull(WatchingPayload.clean(raw.put("episode",1.5)));}
+}

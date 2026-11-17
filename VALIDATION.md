@@ -372,3 +372,12 @@ Keyboard isolation follow-up: desktop trailer Enter/Space activation now stops p
 - Hardware capability/renderer information does not establish which hardware decoder is active. Android GPU model, inaccessible native/OS errors, post-exit installer failures, native crash/ANR stress testing and a physical 1 GB projector overhead benchmark remain outside this verification. Sampling stays at most once every 30 seconds per player, with bounded journal/upload sizes and seven-day report expiry.
 
 0.27.0 updater acceptance: feed workflow 44104991508 succeeded. The fresh GitHub API envelope verified correctly first; after raw-file cache propagation, the ordinary updater URL also fetched and verified Android 0.27.0/code 39 and Windows 0.27.0. Both normal update paths now advertise this release.
+
+## Owner controls / watching activity — 0.28.0 acceptance
+
+- 146 Node checks pass, including backend owner authorization, typed deletion, transactional rollback, concurrent-write revocation, activity validation/expiry and desktop payload policy.
+- Android unit/build/lint pass. Disposable tablet clone passes native default-on and independent off control, live acknowledged activity upload, and retained off choice. Clone removed; production app was not replaced through ADB.
+- Standalone 0.28.0 verification passes. Hidden Windows watching/settings test passes live upload acknowledgement, privacy notice, persisted off choice and disabled-report suppression. Hidden dashboard test passes display, filters/export and typed-name deletion confirmation with synthetic data.
+- Worker version 3a58035b-f7af-4a5d-a30c-2ecd3f8c0630 deployed after additive schema migration. Live disposable group: owner display, activity erasure, deletion and subsequent HTTP 410 confirmed. No existing user group deleted.
+- Current state is reported at event transitions and approximately 30-second intervals; dashboard marks states older than two minutes as last reported. No claim of a full title-bearing history timeline. Legacy encrypted preference namespace limitation is documented in WATCH-SYNC.md.
+- Release publication and signed update-feed acceptance are pending below.

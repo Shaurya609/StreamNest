@@ -1,5 +1,5 @@
 {
-  "version": "0.27.0",
+  "version": "0.28.0",
   "target": "Popcorn Time 0.5.1",
   "files": [
     {
@@ -8,7 +8,7 @@
     },
     {
       "path": "bootstrap.js",
-      "sha256": "8aafe9c1ed75c1070bb2c4fd9ea90825562215bb3f24486424a24377c22d9805"
+      "sha256": "ef7601236c9715f1b166e14bfed16f5f4ed1630fdbad72f1ccdc43de426a61d4"
     },
     {
       "path": "butter-provider/anime-series-v6.json",
@@ -104,7 +104,7 @@
     },
     {
       "path": "butter-provider/streamnest-group.js",
-      "sha256": "0f3df75a724a00358f20329006d576635bddeab1c95438c8c67d9a75ce7af175"
+      "sha256": "b101f689f0e59d3125667caf7273f6e946dec668e7b5a99334fb0335d016c0af"
     },
     {
       "path": "butter-provider/streamnest-hindi.js",
@@ -180,7 +180,7 @@
     },
     {
       "path": "butter-provider/streamnest-sync.js",
-      "sha256": "1ef82ec36c16304f206accb3b4df8a23755ea750ea35e65ab324351a5e71b3cc"
+      "sha256": "43608d60c0fee9c9228efea0698c765041154ba04d5e50d67d83fde687246431"
     },
     {
       "path": "butter-provider/streamnest-trailers.js",
@@ -236,7 +236,7 @@
     },
     {
       "path": "lib/views/player.js",
-      "sha256": "440c8287eb3169d84f3fc07297cc117d3918b6e97402287fe7312cd85d6c41fb"
+      "sha256": "7f3917022d6b3726634247e4acef495436b99a6925dbc73138365a8cbf318532"
     },
     {
       "path": "lib/views/quality_selector.js",
@@ -244,11 +244,11 @@
     },
     {
       "path": "lib/views/settings_container.js",
-      "sha256": "535e4263fcfed06d10f19d6fc3a7f56dcc63ede9ecaf7bad62383c87376e19aa"
+      "sha256": "a22a906712f002a349ff19f193ffee664c0605a5c5224b7a16bc4f5830e985a5"
     },
     {
       "path": "lib/views/show_detail.js",
-      "sha256": "1ae9cf1dbc3c2f065c65585b1d6f6148d01b91bf6e87861a8b498cfaf8724393"
+      "sha256": "9a0880aceab668e485146a4f0ba82f21fc6c656366a9d4adc55f7e10e7a236b5"
     },
     {
       "path": "streamer.js",
@@ -260,7 +260,7 @@
     },
     {
       "path": "templates/settings-container.tpl",
-      "sha256": "c55f559d8bd1fb371bf3bb5e485992ea7896df2ab6686fab9dcfb93793819155"
+      "sha256": "276f97514e96c26bb76633408bdf3e8b9a0aacccb24cc8e547a8fb4296ea119d"
     },
     {
       "path": "templates/show-detail.tpl",
@@ -273,6 +273,10 @@
     {
       "path": "butter-provider/streamnest-diagnostics.js",
       "sha256": "09205804d297367de4a8c5227e70d5662dcef94aa765ad766809ca2bee0c75e2"
+    },
+    {
+      "path": "butter-provider/streamnest-watching-activity.js",
+      "sha256": "8a7037eb988d17c754c7348c51dd8db9e0a6a85d24f198157c65e503171f70b4"
     }
   ]
 }

@@ -6,7 +6,7 @@ Keep the pairing code private: it grants access to the group. Disconnect removes
 
 Positions sync in the background while playing and on launch. Offline playback stays local until connectivity returns. Newer changes win, including deliberate rewinds. Completed videos restart from the beginning. Source and quality changes retain the same title/episode position.
 
-The free Cloudflare Worker stores encrypted progress snapshots in D1. Encryption happens on the device; the pairing secret and plaintext titles never reach the database. Inactive groups are removed after 180 days. Free service quotas and outages can delay synchronization; local resume continues working. Devices must have reasonably correct clocks.
+The free Cloudflare Worker stores encrypted progress snapshots in D1. Encryption happens on the device; the pairing secret and plaintext resume history never reach the database. Owner-visible watching activity is a separate, optional report described below. Inactive groups are removed after 180 days. Free service quotas and outages can delay synchronization; local resume continues working. Devices must have reasonably correct clocks.
 
 Deployment source is in `sync/`. Run `npm ci`, create a D1 database, update `wrangler.toml`, apply `schema.sql`, then deploy with Wrangler. Both embedded `watch-sync.json` files must use the same HTTPS endpoint. The deployed endpoint is https://streamnest-watch-sync.streamnest-shaurya609.workers.dev.
 
@@ -48,3 +48,15 @@ After progress sync, devices download the group's recommendation snapshot. The f
 Recommendations sync automatically on launch and after new viewing choices. Home also checks while left open, and unchanged recommendation polling is bounded to once a minute so it does not crowd out watch-position sync on shared networks. They are eventually consistent, not instantaneous: offline devices retain their last shared Home and catch up after reconnecting. Before a first successful recommendation sync, local Home remains usable. Disconnecting returns to local recommendations; the saved shared snapshot is scoped to its group and is never used for another pairing.
 
 Recommendation titles, genres, poster URLs and watched-title ordering are encrypted on the device using a separately derived group key. They use a separate bounded snapshot in the existing service so older clients cannot erase it when uploading progress. Subtitle credentials, magnets, video files and private local paths are excluded. This adds an encrypted recommendation row per active group under the existing 180-day expiry, with no schema migration or new hosting service. Group/device names remain administrative metadata as described above.
+
+## Owner controls and watching activity (0.28.0)
+
+The private owner dashboard can delete a sync group after the owner types its exact name. This removes the server resume snapshot, device registrations, shared activity and diagnostics, and permanently revokes the primary group credential. Connected devices disconnect when they next contact the server. They keep their local watch history and can create or join a new group. Existing recovery codes cannot restore a deleted primary group. This is not an account-wide erasure tool: older encrypted Watched/recommendation namespaces cannot be linked server-side and expire under their normal retention rules.
+
+Watching activity sharing is on by default, independently of diagnostics. A first-use notice explains it. Android: Settings → Playback & storage → Share watching activity. Windows: Settings → Watching activity sharing (also available inside Resume & sync devices). Each installation keeps its own persistent off choice; the owner cannot enable it remotely.
+
+While connected, devices running 0.28.0 or newer send title, movie/series/anime type, season/episode where applicable, and starting/buffering/playing/paused/stopped state. The latest snapshot stays only in memory on the device; it is sent over HTTPS separately from encrypted resume history. The server retains only the latest report per device for up to 24 hours. Reports contain no positions, torrent links or subtitle credentials. The dashboard owner can read these title-bearing reports.
+
+The dashboard refreshes displayed activity every 30 seconds. Active states older than two minutes are labelled last reported, rather than implying the device is still watching. Closing or losing connectivity can leave a last report until it expires. This is current/recent status, not a full viewing-history timeline. Turning sharing off stops new reports and requests deletion; offline reports expire within 24 hours. Update each device for this feature; old clients do not report watching activity.
+
+Deployment: apply `sync/owner-controls-schema.sql` before the updated Worker. Existing owner credentials remain unchanged. Do not bundle the owner key in applications.

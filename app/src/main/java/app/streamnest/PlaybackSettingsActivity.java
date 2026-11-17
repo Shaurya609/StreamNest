@@ -33,6 +33,8 @@ public class PlaybackSettingsActivity extends Activity {
     box.addView(diagnostics);
     label(box,"On by default; turn off here at any time. Reports upload after this device joins a sync group. Shares device specifications and technical playback/error events. No titles, media positions, credentials, pairing keys or file paths. The owner can read and export reports. Limited to 250 local events; server reports expire after seven days. Turning off clears local reports and requests server deletion when online.",14);
 
+    CheckBox watching=new CheckBox(this);watching.setText("Share watching activity with dashboard owner");watching.setTextColor(Color.WHITE);watching.setChecked(WatchingActivity.enabled(this));watching.setOnCheckedChangeListener((v,on)->WatchingActivity.setEnabled(this,on));box.addView(watching);
+    label(box,"On by default. The dashboard owner can see this device's current title, season/episode and playback state while connected to a sync group. This is separate from encrypted resume history and diagnostic logs. Only the latest report is retained, for up to 24 hours. Turning off stops new reports and requests server deletion. If offline, the last report expires within 24 hours.",14);
     Switch autoNext = new Switch(this);
     autoNext.setText("Play next episode automatically");
     autoNext.setTextColor(Color.WHITE);

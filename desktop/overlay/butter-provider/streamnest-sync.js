@@ -9,14 +9,14 @@ function call(method,code,payload,revision){return new Promise((resolve,reject)=
  const headers={Authorization:'Bearer '+C.auth(code),Accept:'application/json'};if(bytes){headers['Content-Type']='application/json';headers['Content-Length']=bytes.length;headers['If-Match']=String(revision);}
  const req=https.request(endpoint()+'/v1/progress',{method,headers},res=>{
   const chunks=[];let size=0;res.on('data',b=>{size+=b.length;if(size>180000)req.destroy(Error('Sync response too large'));else chunks.push(b);});res.on('error',reject);
-  res.on('end',()=>{if(res.statusCode===409)return resolve({conflict:true});if(res.statusCode!==200)return reject(Error('Sync service HTTP '+res.statusCode));try{resolve(JSON.parse(Buffer.concat(chunks)));}catch(e){reject(e);}});
+  res.on('end',()=>{if(res.statusCode===409)return resolve({conflict:true});if(res.statusCode!==200){const e=Error('Sync service HTTP '+res.statusCode);if(res.statusCode===410)e.code='GROUP_DELETED';return reject(e);}try{resolve(JSON.parse(Buffer.concat(chunks)));}catch(e){reject(e);}});
  });req.setTimeout(10000,()=>req.destroy(Error('Sync timed out')));req.on('error',reject);req.end(bytes);
 });}
 let group=null,groupError='',lastGroup=0,groupQueue=Promise.resolve();
 function saveConfig(value){fs.writeFileSync(configPath,JSON.stringify(value),{mode:0o600});}
 function device(){let value=config();if(!value.deviceId){value.deviceId=require('crypto').randomBytes(16).toString('hex');saveConfig(value);}return {deviceId:value.deviceId,deviceName:value.deviceName||require('os').hostname().slice(0,64)||'Windows'};}
 function groupUpdate(name){const code=config().code;groupQueue=groupQueue.catch(()=>{}).then(()=>performGroupUpdate(name,code));return groupQueue;}
-async function performGroupUpdate(name,code){if(!code||config().code!==code)return;const data=device();if(name!==undefined)data.groupName=name;try{const response=await require('./streamnest-group').call(endpoint(),C.auth(code),'PUT',data);if(config().code===code){group=response;groupError='';lastGroup=Date.now();}return response;}catch(e){groupError='Group details unavailable — watch sync still works';throw e;}}
+async function performGroupUpdate(name,code){if(!code||config().code!==code)return;const data=device();if(name!==undefined)data.groupName=name;try{const response=await require('./streamnest-group').call(endpoint(),C.auth(code),'PUT',data);if(config().code===code){group=response;groupError='';lastGroup=Date.now();}return response;}catch(e){if(e.code==='GROUP_DELETED')deleted(code);groupError='Group details unavailable — watch sync still works';throw e;}}
 function refreshGroup(){if(Date.now()-lastGroup<60000)return;lastGroup=Date.now();groupUpdate().catch(()=>{});}
 async function sync(code){
  const progress=require('./streamnest-progress');
@@ -30,12 +30,13 @@ async function sync(code){
 async function request(force=false){
  if(inFlight){if(force)followup=true;return inFlight;}
  const code=config().code;if(!code||!force&&Date.now()-last<10000)return;
- last=Date.now();inFlight=sync(code).then(()=>{if(config().code===code){status='Synced';refreshGroup();}},()=>{status='Offline — progress stays on this device';}).finally(()=>{inFlight=null;if(followup){followup=false;request(true);}});return inFlight;
+ last=Date.now();inFlight=sync(code).then(()=>{if(config().code===code){status='Synced';refreshGroup();}},error=>{if(error.code==='GROUP_DELETED')deleted(code);else status='Offline — progress stays on this device';}).finally(()=>{inFlight=null;if(followup){followup=false;request(true);}});return inFlight;
 }
 async function beforeSelection(){let timer;try{await Promise.race([request(true),new Promise(resolve=>{timer=setTimeout(resolve,2000);})]);}finally{clearTimeout(timer);}}
 
-async function connect(code){const P=require('./streamnest-pairing');code=P.input(code);if(code.length===8){code=P.open(code,(await P.call(endpoint(),code,'POST')).payload);}else if(code.length!==36)throw Error('Enter an eight-character pairing code or the complete recovery key');code=C.format(C.parse(code));if(config().code!==code)require('./streamnest-diagnostics').reset();saveConfig({...config(),code});require('./streamnest-diagnostics').connected().catch(()=>{});require('./streamnest-home-sync').changed();group=null;lastGroup=0;status='Connecting…';return request(true);}
-function disconnect(){require('./streamnest-diagnostics').reset();const previous=config();if(previous.code&&previous.deviceId)groupQueue=groupQueue.catch(()=>{}).then(()=>require('./streamnest-group').call(endpoint(),C.auth(previous.code),'DELETE',{deviceId:previous.deviceId})).catch(()=>{});saveConfig({deviceId:previous.deviceId,deviceName:previous.deviceName});require('./streamnest-home-sync').changed();group=null;status='Not connected';}
+async function connect(code){const P=require('./streamnest-pairing');code=P.input(code);if(code.length===8){code=P.open(code,(await P.call(endpoint(),code,'POST')).payload);}else if(code.length!==36)throw Error('Enter an eight-character pairing code or the complete recovery key');code=C.format(C.parse(code));if(config().code!==code){require('./streamnest-watching-activity').reset().catch(()=>{});require('./streamnest-diagnostics').reset();}saveConfig({...config(),code});require('./streamnest-diagnostics').connected().catch(()=>{});require('./streamnest-home-sync').changed();group=null;lastGroup=0;status='Connecting…';return request(true);}
+function disconnect(){require('./streamnest-watching-activity').reset().catch(()=>{});require('./streamnest-diagnostics').reset();const previous=config();if(previous.code&&previous.deviceId)groupQueue=groupQueue.catch(()=>{}).then(()=>require('./streamnest-group').call(endpoint(),C.auth(previous.code),'DELETE',{deviceId:previous.deviceId})).catch(()=>{});saveConfig({deviceId:previous.deviceId,deviceName:previous.deviceName});require('./streamnest-home-sync').changed();group=null;status='Not connected';}
+function deleted(expected){if(config().code!==expected)return;disconnect();status='Sync group deleted by owner. Create or join a new group.';}
 function show(win){
  const d=win.document;let old=d.getElementById('streamnest-sync-panel');if(old)old.remove();
  const panel=d.createElement('div');panel.id='streamnest-sync-panel';panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label','Resume across devices');panel.style.cssText='position:fixed;top:8%;right:12%;bottom:8%;left:12%;box-sizing:border-box;overflow:auto;z-index:99999;background:#20232b;color:#f3f4f6;padding:24px;border:1px solid #697080;border-radius:10px;font:16px/1.5 sans-serif';d.body.appendChild(panel);
@@ -61,7 +62,7 @@ function show(win){
   expiryTimer=setTimeout(()=>{if(panel.isConnected&&input.value===displayed){input.value='';error='Pairing code expired. Select Show pairing code again.';}},300000);
  });
  button('Show recovery key',()=>{input.value=config().code||'';});
- button('Sync now',()=>request(true));button('Disconnect this device',()=>{disconnect();input.value='';});button('Close',close);
+ button('Watching activity sharing',()=>require('./streamnest-watching-activity').show(win));button('Sync now',()=>request(true));button('Disconnect this device',()=>{disconnect();input.value='';});button('Close',close);
  panel.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close();}});
  const qr=d.createElement('img');qr.style.cssText='display:none;width:220px;height:220px;background:white;padding:10px;margin:10px';panel.appendChild(qr);
  let shown='';const timer=setInterval(()=>{if(!panel.isConnected){clearInterval(timer);return;}label.textContent=error||status;const connected=!!config().code;create.style.display=connected?'none':'inline-block';heading.textContent=connected?'Sync group: '+(group?group.name:'Sync group'):'Resume across devices';roster.textContent=connected?(group?group.devices.length+' devices · '+group.devices.map(x=>x.name).join(', '):groupError||'Loading group details…'):'';if(group&&d.activeElement!==groupName)groupName.value=group.name;if(input.value!==shown){shown=input.value;try{if(shown.replace(/[\s-]/g,'').length===8)require('./streamnest-pairing').normalize(shown);else C.parse(shown);const image=require('qrcode-generator')(0,'M');image.addData(shown.replace(/[\s-]/g,'').length===8?endpoint()+'/pair#'+encodeURIComponent(shown):'streamnest-watch://pair/'+encodeURIComponent(shown));image.make();qr.src=image.createDataURL(4);qr.style.display='block';}catch(e){qr.style.display='none';}}},700);
@@ -69,4 +70,4 @@ function show(win){
  if(config().code)groupUpdate().catch(()=>{});
  input.focus();
 }
-module.exports={device,groupUpdate,get group(){return group;},request,beforeSelection,connect,disconnect,show,config,get status(){return status;}};
+module.exports={deleted,device,groupUpdate,get group(){return group;},request,beforeSelection,connect,disconnect,show,config,get status(){return status;}};

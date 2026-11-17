@@ -77,7 +77,7 @@ public class MainActivity extends Activity {
 
   public void onCreate(Bundle state) {
     super.onCreate(state);
-    Diagnostics.install(this);
+    Diagnostics.install(this);WatchingActivity.install(this);
     PlaybackCache.enter(this);
     WatchSync.request(this,true);
     ui.postDelayed(() -> AppUpdateActivity.launchCheck(this), 4000);

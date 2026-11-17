@@ -19,6 +19,7 @@
 
         events: {
             'click #streamnestSyncOpen': 'openWatchSync',
+            'click #streamnestWatchingOpen': 'openWatchingActivity',
             'click #streamnestDiagnosticsOpen': 'openDiagnostics',
             'click .keyboard': 'showKeyboard',
             'click .help': 'showHelp',
@@ -830,6 +831,7 @@
         },
 
         openDiagnostics: function(){require('./butter-provider/streamnest-diagnostics').show(window);},
+        openWatchingActivity: function(){require('./butter-provider/streamnest-watching-activity').show(window);},
         openWatchSync: function(){require('./butter-provider/streamnest-sync').show(window);},
 
         anonymousOpensubtitles: function (e) {

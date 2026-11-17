@@ -1,5 +1,7 @@
 # Pending fixes and verification
 
+Owner group deletion and separate current watching activity are implemented for 0.28.0. See WATCH-SYNC.md for privacy, freshness and deletion scope. Release acceptance is recorded in VALIDATION.md.
+
 
 ## Planned additions — requested 12 November 2026
 

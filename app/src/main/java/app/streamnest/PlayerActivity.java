@@ -62,14 +62,14 @@ public class PlayerActivity extends Activity {
   boolean softwareDecoder;
   int videoOutputs;
   boolean diagnosticBuffering;
-  long diagnosticSampleAt;
+  long diagnosticSampleAt,watchingActivityAt;
   int diagnosticAudioOnlyVersion=-1;
   float diagnosticBufferPercent;
   ImageButton nextSource;
 
   public void onCreate(Bundle state) {
     super.onCreate(state);
-    Diagnostics.install(this);Diagnostics.event("player.open");
+    Diagnostics.install(this);Diagnostics.event("player.open");WatchingActivity.begin(this);
     if (DeviceProfile.lite(this)) {
       synchronized (SeriesIndex.class) {
         SeriesIndex.sessions.clear();
@@ -228,8 +228,8 @@ public class PlayerActivity extends Activity {
             diagnosticBuffering=waiting;
           }
           if (e.type == MediaPlayer.Event.Playing) Diagnostics.event("player.resumed");
-          if (e.type == MediaPlayer.Event.Paused) Diagnostics.event("player.paused");
-          if (e.type == MediaPlayer.Event.EndReached) Diagnostics.event("player.ended");
+          if (e.type == MediaPlayer.Event.Paused) {Diagnostics.event("player.paused");WatchingActivity.report(this,"paused");}
+          if (e.type == MediaPlayer.Event.EndReached) {Diagnostics.event("player.ended");WatchingActivity.report(this,"stopped");}
           if (e.type == MediaPlayer.Event.EncounteredError) Diagnostics.event("player.error");
           if (e.type == MediaPlayer.Event.Vout) { videoOutputs = e.getVoutCount();  }
           if (e.type == MediaPlayer.Event.EncounteredError) {
@@ -442,6 +442,7 @@ public class PlayerActivity extends Activity {
                           + " E"
                           + row.optInt("episode");
                   getIntent().putExtra("title", title);
+                  WatchingActivity.report(this,"starting");watchingActivityAt=0;
                   playingTitle.setText(title);
                   getSharedPreferences("library", 0)
                       .edit()
@@ -570,6 +571,7 @@ public class PlayerActivity extends Activity {
         new Intent(this, StreamService.class)
             .putExtra("source", source)
             .putExtra("episodeIdentity", getIntent().getStringExtra("episodeIdentity"))
+            .putExtra("activityTitle",getIntent().getStringExtra("activityTitle")).putExtra("activityKind",getIntent().getStringExtra("activityKind"))
             .putExtra("fileIndex", getIntent().getIntExtra("fileIndex", -1))
             .putExtra("filename", getIntent().getStringExtra("filename"))
             .putExtra("season", getIntent().getIntExtra("season", 0))
@@ -881,6 +883,7 @@ public class PlayerActivity extends Activity {
             EpisodePreload.consider(PlayerActivity.this,e,episodeQueue,neighbour(1));
           }
           long now = SystemClock.elapsedRealtime();
+          if(now-watchingActivityAt>=30000){watchingActivityAt=now;WatchingActivity.report(PlayerActivity.this,userPaused||!viewsAttached||opened&&!player.isPlaying()&&!diagnosticBuffering?"paused":playedVideo&&player.isPlaying()&&!diagnosticBuffering?"playing":mediaSet?"buffering":"starting");}
           if(mediaSet&&player.isPlaying()&&player.getTime()>1500&&videoOutputs==0&&diagnosticAudioOnlyVersion!=playbackVersion){diagnosticAudioOnlyVersion=playbackVersion;try{Diagnostics.event("player.audio_only",new org.json.JSONObject().put("attempt",attempt).put("decoder",softwareDecoder?"software":"auto"));}catch(Exception ignored){}}
           if(mediaSet&&now-diagnosticSampleAt>=30000){diagnosticSampleAt=now;DiagnosticPlayback.sample(PlayerActivity.this,player,currentEngine?e:null,softwareDecoder,diagnosticBufferPercent);}
           if (mediaSet
@@ -1064,7 +1067,7 @@ public class PlayerActivity extends Activity {
   }
 
   protected void onDestroy() {
-    Diagnostics.event("player.closed");
+    WatchingActivity.report(this,"stopped");Diagnostics.event("player.closed");
     TorrentEngine activeEngine = StreamService.engine;
     if (activeEngine != null) activeEngine.closed = true;
     stopService(new Intent(this, StreamService.class));

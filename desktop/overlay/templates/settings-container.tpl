@@ -14,7 +14,7 @@
     </section>
 
     <section><div class="title">Device diagnostics</div><div class="content"><p>Technical reports to help diagnose playback issues. On by default; turn off in Device diagnostics.</p><button type="button" id="streamnestDiagnosticsOpen" style="padding:12px;background:#99c5ff;color:#101827">Device diagnostics</button></div></section>
-    <section id="watch-sync"><div class="title">Resume watching</div><div class="content"><p>Connect devices using a private pairing code. Your watch progress is encrypted.</p><button type="button" id="streamnestSyncOpen" style="min-height:42px;padding:10px 16px;background:#99c5ff;color:#101827;border:1px solid #99c5ff;border-radius:6px;font:600 14px/20px sans-serif;cursor:pointer">Resume &amp; sync devices</button></div></section>
+    <section id="watch-sync"><div class="title">Resume watching</div><div class="content"><p>Connect devices using a private pairing code. Your watch progress is encrypted.</p><button type="button" id="streamnestSyncOpen" style="min-height:42px;padding:10px 16px;background:#99c5ff;color:#101827;border:1px solid #99c5ff;border-radius:6px;font:600 14px/20px sans-serif;cursor:pointer">Resume &amp; sync devices</button><button type="button" id="streamnestWatchingOpen" style="padding:12px;background:#99c5ff;color:#101827">Watching activity sharing</button></div></section>
     <section id="user-interface">
         <div class="title"><%= i18n.__("User Interface") %></div>
         <div class="content">
