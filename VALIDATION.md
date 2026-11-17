@@ -1,6 +1,6 @@
 ## 0.30.0 maintenance — 18 November 2026
 
-- Android unit/build/lint and 156 desktop/catalog/backend tests pass. Native disposable-tablet poster test: 30 stale requests, zero fetches, actual current-image decode succeeds. A test-harness barrier race was corrected; the rejected run was not counted as acceptance.
+- Android unit/build/lint and 157 desktop/catalog/backend tests pass. Native disposable-tablet poster test: 30 stale requests, zero fetches, actual current-image decode succeeds. A test-harness barrier race was corrected; the rejected run was not counted as acceptance.
 - Packaged Windows Home check passes across widths/themes, search, poster fallback, visible resume fill, detail navigation and next-episode selection. An initial deferred-artwork regression in the hidden renderer was rejected and fixed using post-insertion geometry fallback.
 - Live production timestamp chain: Black Clover S1E108 intro 103.860–193.834 seconds and outro1325.870–1415.823; Severance S1E1 validated outro3338.250–3434.720. Android native chain returns two anime and one series segment. This validates data selection/active intervals; release-specific visible playback timing across every source remains variable.
 - Windows anonymous OpenSubtitles: Squid Game S1E1 eight English matches, timed subtitle download72462 bytes; Parasite28 matches, timed download117881 bytes. Native Android Squid Game English search/download passes with four matches. Counts differ by service moment/client; English audio dub is not asserted.
