@@ -4,7 +4,10 @@ from pathlib import Path
 version=os.environ['VERSION']
 assert re.fullmatch(r'\d+\.\d+\.\d+',version),'Invalid version'
 def gh(*args):return subprocess.check_output(['gh',*args],text=True)
-def release(tag):return json.loads(gh('api','repos/'+os.environ['GH_REPO']+'/releases/tags/'+tag))
+ids={r['tag_name']:r['id'] for r in json.loads(gh('api','repos/'+os.environ['GH_REPO']+'/releases?per_page=100'))}
+def release(tag):
+ assert tag in ids,'Expected release is missing'
+ return json.loads(gh('api','repos/'+os.environ['GH_REPO']+'/releases/'+str(ids[tag])))
 preview='desktop-v'+version;target='v'+version
 source=release(preview);draft=release(target)
 assert not source['draft'] and source['prerelease'],'Expected published desktop preview'
