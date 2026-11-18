@@ -40,3 +40,5 @@ Memory comparison scope after isolation: Android `processMemoryMb` describes the
 ## Windows buffered playback recovery (0.36.1)
 
 Compatibility audio reports its own ready state, buffered milliseconds, absolute A/V drift, helper phase and decoded bytes. Native audio-track counts remain separate. Video readiness and document visibility distinguish buffering/background conditions. A bounded `player.recovery` event records a decoder reopen. Thirty-second samples continue while the video clock is stuck; player disposal removes the sampling timer. Measurements contain no source URLs, titles or raw clock positions and retain existing sharing controls.
+
+Windows0.36.2 samples startup before the player opens: metadata, local-server and video-buffer stage, elapsed time, attempt, peers and download rate. `torrent.stalled` records a bounded startup timeout. Metadata failures carry only an allowlisted provider label (Cinemeta, TVmaze, AniZip, regional or other), never the URL, query or title. Optional artwork/Home404 responses are cached misses; required requests and other service failures remain errors.

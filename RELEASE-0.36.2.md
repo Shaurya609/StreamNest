@@ -9,3 +9,5 @@ Windows startup and player-close reliability.
 - Android version alignment only; Android playback is unchanged. Existing resume sync, cache protection and buffered-playback recovery remain enabled.
 
 TheBeast showed repeated pre-player startup attempts on0.36.1. The disconnected watchdog and unsafe queued UI callback are confirmed code defects; the old diagnostic TypeError contains no stack, so its precise origin cannot be proven. Normal playback confirmation on TheBeast remains separate from isolated regression tests.
+
+Validation:210 desktop/catalog/backend tests;225 Android unit tests and lint/build; real Last of Us S1E1 stalled-source fallback at45 seconds followed by advancing video/audio; actual S1E2 first-source playback; repeated close and warm reopen; safe diagnostic fields verified through disposable Cloudflare upload/owner retrieval and cleanup. Packaged Windows checks and normal TheBeast confirmation are tracked in VALIDATION.md.
