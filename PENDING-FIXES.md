@@ -1,3 +1,9 @@
+# Current reliability cycle
+
+0.34.0 delivers Sprint 1's episode identity and audio checks. Sprint 2 (0.35.0) adds isolated Android torrent workers, bounded worker recovery, cache-writer leases, preserved warm preload adoption, bounded Windows stop/server waits and attempt ownership. Real frozen-worker recovery and episode handover passed on a tablet. Physical-projector/USB confirmation is still open; no universal filesystem or decoder-stall cure is claimed. Remaining planned development is Sprint 3 memory/sustained stability, Sprint 4 resume/subtitle/touch consistency and Sprint 5 browsing/cleanup. See SPRINTS.md and PERFORMANCE.md.
+
+## Earlier release notes and remaining verification
+
 0.32.0 content coverage: trusted batch-only fallback, independently mapped Black Clover/One Piece filler fallback, adjacent-episode skip identity and Korean English track preference implemented. Native tablet/Windows checks pass. Remaining source-dependent coverage: no validated skip data for checked One Piece1000, future/split-season mappings require explicit identity, Korean sources may lack English dubs, and release-specific subtitle timing needs playback verification. See VALIDATION.md.
 
 Owner backlog corrections: original-phone status-bar overlap is confirmed fixed. Cloudflare usage monitoring is routine operation, not a development backlog item.
