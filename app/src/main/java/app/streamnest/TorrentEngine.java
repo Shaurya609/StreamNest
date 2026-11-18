@@ -210,7 +210,7 @@ class TorrentEngine implements AutoCloseable {
               return res;
             }
             try {
-              if(req.getMethod()==Method.GET){if(range.start>0&&startupHints.compareAndSet(true,false))handle.clearPieceDeadlines();prioritize(range.start);}
+              if(req.getMethod()==Method.GET){if(startupHints.compareAndSet(true,false))handle.clearPieceDeadlines();prioritize(range.start);}
               InputStream input =
                   req.getMethod() == Method.HEAD
                       ? new ByteArrayInputStream(new byte[0])

@@ -252,7 +252,7 @@
     },
     {
       "path": "streamer.js",
-      "sha256": "d3a6e4da579ce72471c7efa8e21adbc2a3742af6aedaf1f067c5c61d11308daa"
+      "sha256": "b9a0a08ba40d6ec959e591e07457f2d8475d5a845bc8a40e844a7a6560573fff"
     },
     {
       "path": "templates/filter-bar.tpl",
@@ -308,7 +308,7 @@
     },
     {
       "path": "butter-provider/streamnest-startup-window.js",
-      "sha256": "b2ece1f0e8e023b60ff01dd87c4fb842da34b6d9e906c20f29e2f7e5727d8475"
+      "sha256": "6d0e16f27bbfeddc99fd55c82ae67c8cb84f5e5cfe0f6da85eebbe306417acb7"
     }
   ]
 }

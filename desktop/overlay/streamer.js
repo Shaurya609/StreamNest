@@ -615,7 +615,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
 
         createServer: function (port) {
             const generation=this._runGeneration,torrent=this.torrentModel.get('torrent'),index=this.torrentModel.get('video_file').index;
-            return require('./butter-provider/streamnest-recovery').listen(()=>{const server=torrent.createServer();server.on('request',req=>require('./butter-provider/streamnest-startup-window').preferExact(torrent,req.headers.range));return server;},parseInt(port||Settings.streamPort,10)||0,()=>generation===this._runGeneration&&!this.stopped).then(({port})=>{const url='http://127.0.0.1:'+port+'/'+index;this.streamInfo.set({src:url,type:'video/mp4'});return url;});
+            return require('./butter-provider/streamnest-recovery').listen(()=>{const server=torrent.createServer();server.on('request',req=>{if(req.method==='GET')require('./butter-provider/streamnest-startup-window').preferExact(torrent);});return server;},parseInt(port||Settings.streamPort,10)||0,()=>generation===this._runGeneration&&!this.stopped).then(({port})=>{const url='http://127.0.0.1:'+port+'/'+index;this.streamInfo.set({src:url,type:'video/mp4'});return url;});
         },
 
         createFileServer: function (file, port) {
