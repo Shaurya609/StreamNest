@@ -14,6 +14,7 @@ test('Auto deprioritizes unsupported English audio without treating subtitle lan
  assert.equal(E.rank(sources)[0].url,'good');
  assert.equal(P.audio({title:'AAC ITA DDP 5.1 ENG Sub.ENG'}).unsupported,true);
  assert.equal(P.audio({title:'AAC ITA Sub.ENG'}).english,false);
+ assert.equal(P.audio({title:'[Erai] Anime [Multiple Subtitle] [ENG][ITA]'}).english,false);
  assert.equal(P.audio({title:'DDPA5.1 H.264'}).unsupported,true);
  assert.equal(P.audio({title:'DD5.1 H.264'}).unsupported,true);
  assert.equal(P.audio({title:'DD+ H.264'}).unsupported,true);

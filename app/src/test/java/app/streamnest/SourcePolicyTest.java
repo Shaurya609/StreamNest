@@ -15,6 +15,7 @@ public class SourcePolicyTest {
  @Test public void nativeAudioDoesNotRejectSupportedAc3(){
   Catalog.Source s=new Catalog.Source("1080p","magnet:test",1);s.release="Show AC3 English\n1080p";assertEquals(0,SourcePolicy.audioRank(s));
   s.release="Show AAC ITA Sub.ENG";assertEquals(3,SourcePolicy.audioRank(s));
+  s.release="[Erai] Anime [Multiple Subtitle] [ENG][ITA]";assertEquals(1,SourcePolicy.audioRank(s));
  }
 }
 
