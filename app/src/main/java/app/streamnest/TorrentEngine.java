@@ -30,6 +30,7 @@ class TorrentEngine implements AutoCloseable {
   volatile int diagnosticPeers,diagnosticKbps,diagnosticPercent,diagnosticError;
   long diagnosticSampleAt;
   int pieceLength;
+  final java.util.concurrent.atomic.AtomicBoolean startupHints=new java.util.concurrent.atomic.AtomicBoolean(true);
   NanoHTTPD server;
   final java.util.concurrent.CountDownLatch resumeSaved =
       new java.util.concurrent.CountDownLatch(1);
@@ -209,7 +210,7 @@ class TorrentEngine implements AutoCloseable {
               return res;
             }
             try {
-              prioritize(range.start);
+              if(req.getMethod()==Method.GET){if(range.start>0&&startupHints.compareAndSet(true,false))handle.clearPieceDeadlines();prioritize(range.start);}
               InputStream input =
                   req.getMethod() == Method.HEAD
                       ? new ByteArrayInputStream(new byte[0])

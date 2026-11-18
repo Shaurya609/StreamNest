@@ -6,5 +6,6 @@ function ranges(length,offset,pieceLength,fraction=0){
  if(Number.isFinite(fraction)&&fraction>0&&fraction<0.98)add(Math.floor(length*fraction),4194304,5);
  return out;
 }
-function apply(torrent,index,fraction=0){const f=torrent.files[index];if(!f)return;for(const r of ranges(f.length,f.offset,torrent.pieceLength,fraction))torrent.select(r.first,r.last,r.priority);}
-module.exports={ranges,apply};
+function apply(torrent,index,fraction=0){const f=torrent.files[index];if(!f)return;const selected=ranges(f.length,f.offset,torrent.pieceLength,fraction);torrent.streamnestStartupHint=selected.find(r=>r.priority===5);for(const r of selected)torrent.select(r.first,r.last,r.priority);}
+function preferExact(torrent,range){if(/^bytes=[1-9][0-9]*-/i.test(String(range||''))&&torrent.streamnestStartupHint){const r=torrent.streamnestStartupHint;torrent.streamnestStartupHint=null;torrent.deselect(r.first,r.last,r.priority);}}
+module.exports={ranges,apply,preferExact};
