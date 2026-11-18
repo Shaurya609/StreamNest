@@ -24,7 +24,7 @@ test('audio detection distinguishes unsupported output from usable preferred aud
  assert.equal(A.assess({videoWidth:0,readyState:1,audioTracks:[],webkitAudioDecodedByteCount:0}),'');
 });
 test('external audio handoff uses separate arguments and only local media',()=>{
- const d={id:'VLC',get:()=> 'C:\\Program Files\\VideoLAN\\VLC\\vlc.exe'};let called;
+ const d={id:'VLC',get:()=> require('path').join('Program Files','VideoLAN','VLC','vlc.exe')};let called;
  X.launch(d,'http://127.0.0.1:1234/video',45,null,(...args)=>{called=args;return {}});
  assert.deepEqual(called[1],['--no-video-title-show','--start-time=45','http://127.0.0.1:1234/video']);
  assert.throws(()=>X.launch(d,'https://example.com/video',0));
