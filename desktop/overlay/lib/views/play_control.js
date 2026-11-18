@@ -284,6 +284,7 @@
         title: this.model.get('title'),
         quality: quality,
         lang: this.audio_selected,
+        streamnestOriginalLanguage: this.model.get('language'),
         type: this.model.get('animeRelease') ? 'episode' : 'movie',
         streamnestQuality: this.model.get('animeRelease') ? 'Auto' : undefined,
         streamnestSources: this.model.get('animeRelease') ? Object.values(this.model.get('torrents')||{}).filter(Boolean) : [],

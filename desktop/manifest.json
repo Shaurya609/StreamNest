@@ -1,5 +1,5 @@
 {
-  "version": "0.31.0",
+  "version": "0.32.0",
   "target": "Popcorn Time 0.5.1",
   "files": [
     {
@@ -84,7 +84,7 @@
     },
     {
       "path": "butter-provider/streamnest-discovery.js",
-      "sha256": "7d533112515506c226f60766d2216429dadd51f88c31eaf3c2fe759689549f7c"
+      "sha256": "6f48bb458c125366adcd316f30a49bc62e5de9a60aeca18e11de1c5b7517ede6"
     },
     {
       "path": "butter-provider/streamnest-episodes.js",
@@ -96,7 +96,7 @@
     },
     {
       "path": "butter-provider/streamnest-filler.js",
-      "sha256": "acccf809bbc72c681904276d603db381cadd2a42be9214fb8ecd5d799704cc96"
+      "sha256": "7a522f0113823bd2dc2cef3dc98377d886cc5b60ba16e5f0d9ea58f186463240"
     },
     {
       "path": "butter-provider/streamnest-fresh.js",
@@ -148,7 +148,7 @@
     },
     {
       "path": "butter-provider/streamnest-playback.js",
-      "sha256": "bb17c9eb110a3049d6b16be0ebd99d2588c2682957bff63b86a104fc4683179d"
+      "sha256": "10ada5476ada7920251353d5eb3b91d56e9699fba1e35334a802fd91c3d22ebd"
     },
     {
       "path": "butter-provider/streamnest-preload.js",
@@ -232,7 +232,7 @@
     },
     {
       "path": "lib/views/play_control.js",
-      "sha256": "b1a18bac72a21f8b5aac1370d72c90130a0bb4b5ff451b73366073eae1563cf7"
+      "sha256": "316dfb5bbe09060c6426cc1f434a1f7e9b2304d6f0e0ac229482239f04fa9ced"
     },
     {
       "path": "lib/views/player.js",
@@ -248,7 +248,7 @@
     },
     {
       "path": "lib/views/show_detail.js",
-      "sha256": "9a0880aceab668e485146a4f0ba82f21fc6c656366a9d4adc55f7e10e7a236b5"
+      "sha256": "25e81e957bd9e24e84b7c1b2981c521d197c4e10e08809549b06b0e6f8024dcf"
     },
     {
       "path": "streamer.js",
@@ -284,7 +284,11 @@
     },
     {
       "path": "butter-provider/streamnest-media-tracks.js",
-      "sha256": "1ec03334ef0af1b18dfd1390b2b49306fdaeb84c6df29aa435793eca08bb0cd8"
+      "sha256": "1ba2abe20b7f3c258ad5145872dad47119498f10e1c49cd685412597dbd01f3a"
+    },
+    {
+      "path": "butter-provider/streamnest-filler-fallback.js",
+      "sha256": "1dff0cdba1ae8e33ccf56a5128f1773217c6e262450e5ec859644cec983773b4"
     }
   ]
 }

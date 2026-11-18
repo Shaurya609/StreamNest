@@ -46,3 +46,5 @@ test('retry limit preserves independent fallback without changing explicit quali
  assert.equal(E.attempts(rows).length,6);assert.equal(E.attempts(rows)[5].provider,'Nyaa');
  assert.ok(E.attempts(rows,'1080p').every(s=>s.quality==='1080p'));
 });
+
+test('absolute-episode search retries a batch query only after no verified single source',async()=>{const queries=[];const d=D.create({series:async()=>[],get:async()=>({streams:[]}),text:async url=>{queries.push(decodeURIComponent(url));return '<rss/>';},parseXML:async()=>({rss:{channel:{item:queries.length===1?[]:item}}}),bytes:async()=>Buffer.from('fixture'),parseTorrent:()=>({infoHash:hash,files:[{path:'Black Clover - 01.mkv',length:123}]})});const rows=await d.find('tt7441658',1,1,row);assert.equal(rows.length,1);assert.equal(rows[0].fileIndex,0);assert.equal(queries.length,2);assert(queries[1].includes('batch'));});

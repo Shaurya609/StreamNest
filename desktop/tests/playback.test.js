@@ -59,3 +59,6 @@ test('series fallback survives IntroDB outage and keeps later scenes',async()=>{
  assert.equal(rows[0].end,3655);
  assert.equal(P.active(rows,3660),null);
 });
+
+test('episode continuation uses mapped MAL identity and never inherits a previous-season ID',async()=>{const source=async()=>[{url:'magnet:?xt=urn:btih:test',quality:'720p',seed:10}];const data={...attrs,malId:999,streamnestOriginalLanguage:'ko',auto_play_data:[{season:1,episode:2},{season:2,episode:1,skipMalId:34572}]};const next=await P.resolve(data,1,source);assert.equal(next.malId,34572);assert.equal(next.streamnestOriginalLanguage,'ko');data.auto_play_data[1].skipMalId=0;assert.equal((await P.resolve(data,1,source)).malId,0);});
+test('anime skip survives both IMDb provider failures with correct episode and duration',async()=>{const urls=[];const result=await P.segments({imdb_id:'tt7441658',season:1,episode:108,malId:34572},1440,async url=>{urls.push(url);if(!url.includes('aniskip'))throw Error('offline');assert(url.includes('/34572/108?'));return {found:true,results:[{skipType:'op',episodeLength:1440,interval:{startTime:30,endTime:120}},{skipType:'ed',episodeLength:1440,interval:{startTime:1290,endTime:1380}}]};});assert.equal(urls.length,3);assert.deepEqual(result.map(r=>r.type),['intro','outro']);});

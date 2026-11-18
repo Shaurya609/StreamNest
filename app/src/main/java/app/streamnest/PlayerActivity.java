@@ -569,7 +569,7 @@ public class PlayerActivity extends Activity {
         new Intent(this, StreamService.class)
             .putExtra("source", source)
             .putExtra("episodeIdentity", getIntent().getStringExtra("episodeIdentity"))
-            .putExtra("activityTitle",getIntent().getStringExtra("activityTitle")).putExtra("activityKind",getIntent().getStringExtra("activityKind"))
+            .putExtra("originalLanguage",getIntent().getStringExtra("originalLanguage")).putExtra("activityTitle",getIntent().getStringExtra("activityTitle")).putExtra("activityKind",getIntent().getStringExtra("activityKind"))
             .putExtra("fileIndex", getIntent().getIntExtra("fileIndex", -1))
             .putExtra("filename", getIntent().getStringExtra("filename"))
             .putExtra("season", getIntent().getIntExtra("season", 0))
@@ -726,7 +726,7 @@ public class PlayerActivity extends Activity {
   String trackLanguage(int id,boolean audio){org.videolan.libvlc.interfaces.IMedia media=player.getMedia();if(media==null)return "";try{for(int i=0;i<media.getTrackCount();i++){org.videolan.libvlc.interfaces.IMedia.Track t=media.getTrack(i);if(t.id==id&&(audio?t.type==org.videolan.libvlc.interfaces.IMedia.Track.Type.Audio:t.type==org.videolan.libvlc.interfaces.IMedia.Track.Type.Text))return t.language==null?"":t.language;}}finally{media.release();}return "";}
   int preferredTrack(boolean audio,String language){MediaPlayer.TrackDescription[] tracks=audio?player.getAudioTracks():player.getSpuTracks();if(tracks==null)return -1;for(MediaPlayer.TrackDescription t:tracks)if(t.id>=0&&MediaTracks.language(trackLanguage(t.id,audio),t.name,language)&&(audio?!MediaTracks.commentary(t.name):!MediaTracks.partial(t.name)))return t.id;return -1;}
   void prepareTracks(){if(player==null||automaticTracksVersion==playbackVersion)return;automaticTracksVersion=playbackVersion;
-    if(animePlayback()&&manualAudioVersion!=playbackVersion){String language=getSharedPreferences("playback",0).getString("audioLanguage","en");int id=preferredTrack(true,language);if(id>=0)player.setAudioTrack(id);else if(language.equals("en"))subtitleStatus.setText("English audio unavailable in this source. Choose another audio track or source.");}
+    if((animePlayback()||Arrays.asList("ko","kor","Korean").contains(getIntent().getStringExtra("originalLanguage")))&&manualAudioVersion!=playbackVersion){String language=getSharedPreferences("playback",0).getString("audioLanguage","en");int id=preferredTrack(true,language);if(id>=0)player.setAudioTrack(id);else if(language.equals("en"))subtitleStatus.setText("English audio unavailable in this source. Choose another audio track or source.");}
     if(!getIntent().getBooleanExtra("subtitlesEnabled",getSharedPreferences("subtitles",0).getBoolean("auto",true))){player.setSpuTrack(-1);return;}
     if(manualSubtitleVersion==playbackVersion)return;
     String language=getIntent().getStringExtra("subtitleLanguage");if(language==null)language=getSharedPreferences("subtitles",0).getString("language","en");int embedded=preferredTrack(false,language);if(embedded>=0){player.setSpuTrack(embedded);subtitleStatus.setText("Embedded "+(language.equals("hi")?"Hindi":"English")+" subtitles");}else findSubtitles(true);

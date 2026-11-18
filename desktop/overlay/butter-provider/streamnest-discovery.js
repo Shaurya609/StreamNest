@@ -35,6 +35,12 @@ function create(options={}){
   if(!doc.rss||!doc.rss.channel)throw Error('Invalid anime RSS');
   const raw=doc.rss.channel.item,items=raw?(Array.isArray(raw)?raw:[raw]):[],found=[];let failure;
   for(const c of candidates(items,title,row).slice(0,2))try{found.push(indexed(c,parseTorrent(await bytes(c.url,deadline,8388608)),row));}catch(e){failure=e;}
+  if(!found.length&&Date.now()+1500<deadline){
+   const batch=await text('https://nyaa.si/?page=rss&c=1_2&f=2&q='+encodeURIComponent('"'+title.replace(/"/g,'')+'" batch'),deadline);
+   if(/<!DOCTYPE|<!ENTITY/i.test(batch)||batch.includes('\0'))throw Error('Unsafe XML');const document=await parseXML(batch);
+   if(!document.rss||!document.rss.channel)throw Error('Invalid anime RSS');const raw=document.rss.channel.item,items=raw?(Array.isArray(raw)?raw:[raw]):[];
+   for(const c of candidates(items,title,row).filter(c=>c.pack).slice(0,2))try{found.push(indexed(c,parseTorrent(await bytes(c.url,deadline,8388608)),row));}catch(e){failure=e;}
+  }
   if(!found.length&&failure)throw failure;return found;
  }
  async function search(id,season,episode,context){

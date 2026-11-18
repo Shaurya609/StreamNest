@@ -4,10 +4,12 @@ final class HomeRegression {
  static void check(boolean value,String message){if(!value)throw new AssertionError(message);}
  static List<View> collect(View view){List<View> list=new ArrayList<>();list.add(view);if(view instanceof android.view.ViewGroup){android.view.ViewGroup g=(android.view.ViewGroup)view;for(int i=0;i<g.getChildCount();i++)list.addAll(collect(g.getChildAt(i)));}return list;}
  static Bundle filler()throws Exception{
-  android.util.Log.i("HomeRegression","phase: JSONObject page");
-  JSONObject page=CatalogHttp.object("https://api.jikan.moe/v4/anime/34572/episodes?page=2",null);JSONArray data=page.getJSONArray("data");check(data.length()>0&&data.getJSONObject(0).getInt("mal_id")>100,"Filler metadata second page missing");
-  JSONObject episode=new JSONObject().put("season",1).put("episode",data.getJSONObject(0).getInt("mal_id")).put("skipMalId",34572);EpisodeLibrary.attachFiller(Arrays.asList(episode),34572,data);check(episode.has("filler")&&episode.has("recap"),"Mapped second-page labels missing");
-  Bundle result=new Bundle();result.putString("result","PASS: mapped filler/recap labels on episode "+episode.optInt("episode"));return result;
+  JSONObject episode=new JSONObject().put("season",1).put("episode",123).put("skipMalId",34572);
+  java.util.concurrent.CountDownLatch updated=new java.util.concurrent.CountDownLatch(1);
+  FillerMetadata.request(Arrays.asList(episode),updated::countDown);
+  for(int n=0;n<200;n++){FillerMetadata.apply(Arrays.asList(episode));if(episode.has("filler"))break;Thread.sleep(100);}
+  check(episode.optBoolean("filler"),"Mapped filler label beyond 100 missing");
+  Bundle result=new Bundle();result.putString("result","PASS: live production filler pipeline episode 123; provider="+episode.optString("fillerSource"));return result;
  }
  static Bundle run(Instrumentation test)throws Exception{
   android.content.Context c=test.getTargetContext();WatchProgress.preferenceName="home-regression-history";c.getSharedPreferences(WatchProgress.preferenceName,0).edit().clear().commit();

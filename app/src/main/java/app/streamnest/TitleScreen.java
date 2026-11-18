@@ -456,6 +456,7 @@ final class TitleScreen extends Dialog {
   void refreshFiller(){
     if(!isShowing()||a.isDestroyed())return;FillerMetadata.apply(episodes);
     if(episodeAdapter!=null)episodeAdapter.notifyDataSetChanged();
+    if(selected!=null)heading.setTooltipText("Episode labels: "+selected.optString("fillerSource","Jikan"));
     if(selected!=null)heading.setText(selected.optString("title","Episode")+(selected.optBoolean("filler")?" · Filler":"")+(selected.optBoolean("recap")?" · Recap":""));
     FillerMetadata.request(episodes,()->a.ui.post(this::refreshFiller));
   }
@@ -637,7 +638,7 @@ final class TitleScreen extends Dialog {
         new Intent(a, PlayerActivity.class)
             .putExtra("episodeQueue", queueToken)
             .putExtra("title", playTitle)
-            .putExtra("activityTitle", title.title).putExtra("activityKind", title.kind)
+            .putExtra("activityTitle", title.title).putExtra("activityKind", title.kind).putExtra("originalLanguage", title.raw.optString("language"))
             .putExtra("source", best.url)
             .putExtra("fileIndex", best.fileIndex)
             .putExtra("filename", best.filename)

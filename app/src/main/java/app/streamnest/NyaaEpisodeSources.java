@@ -55,6 +55,11 @@ final class NyaaEpisodeSources {
     List<Candidate> candidates=parse(Net.catalogBytes("https://nyaa.si/?page=rss&c=1_2&f=2&q="+Net.q(search),2000000,deadline),title,row);
     List<Catalog.Source> results=new ArrayList<>();Exception failure=null;
     for(int i=0;i<Math.min(2,candidates.size());i++){if(Thread.currentThread().isInterrupted())throw new InterruptedException();Candidate c=candidates.get(i);try{results.add(indexed(c,Net.catalogBytes(c.url,8388608,deadline),row));}catch(Exception e){failure=e;}}
+    if(results.isEmpty()&&System.nanoTime()+1500000000L<deadline){
+      String batch="\""+title.replace("\"","")+"\" batch";
+      List<Candidate> packs=parse(Net.catalogBytes("https://nyaa.si/?page=rss&c=1_2&f=2&q="+Net.q(batch),2000000,deadline),title,row);int checked=0;
+      for(Candidate c:packs){if(!c.pack||checked++>=2)continue;try{results.add(indexed(c,Net.catalogBytes(c.url,8388608,deadline),row));}catch(Exception e){failure=e;}}
+    }
     if(results.isEmpty()&&failure!=null)throw new java.io.IOException("Anime torrent metadata could not be verified",failure);
     synchronized(cache){cache.put(key,results);ages.put(key,System.currentTimeMillis());while(cache.size()>12){String first=cache.keySet().iterator().next();cache.remove(first);ages.remove(first);}}
     return new ArrayList<>(results);

@@ -1,3 +1,5 @@
+Owner backlog corrections: original-phone status-bar overlap is confirmed fixed. Cloudflare usage monitoring is routine operation, not a development backlog item.
+
 0.31.0 optimization: fewer piece-deadline calls, native-free UI completion checks, nonblocking Low Memory catalog setup/trim, cached hardware profile, released background Home caches, worker-side memory sampling and unchanged desktop-history write elimination are implemented. Controlled native pause/navigation and CPU/IO workloads pass; see PERFORMANCE.md. The physical projector ANR and engine-start hang are still open for retest with sanitized OS ANR locations. No device-specific cure is claimed from the fixture alone.
 
 0.30.0 maintenance: targeted artwork optimization, guarded Windows launch/restart, and repeatable live content checks. Live Android/Windows validated timestamps and Korean English subtitle downloads pass for the checked titles; later-page Jikan requests still time out. English dub coverage is not inferred from metadata. The projector native engine-start hang remains open; no engine-process recovery fix is claimed.
@@ -11,7 +13,7 @@ Owner group deletion and separate current watching activity are implemented for 
 
 ## Mobile status-bar overlap — reported 17 November 2026
 
-Implemented for Android 0.28.1 after the owner requested the fix. The supplied screenshot showed the StreamNest logo, title and top navigation overlapping Android's notification/status bar in the mobile Home screen. Shared browsing/settings safe-area handling now reserves system-bar, display-cutout and keyboard space. Fullscreen player remains separate. Tablet and synthetic-inset acceptance is tracked in VALIDATION.md; the original physical phone is not connected for exact-device confirmation.
+Implemented for Android 0.28.1 after the owner requested the fix. The supplied screenshot showed the StreamNest logo, title and top navigation overlapping Android's notification/status bar in the mobile Home screen. Shared browsing/settings safe-area handling now reserves system-bar, display-cutout and keyboard space. Fullscreen player remains separate. Tablet and synthetic-inset acceptance is tracked in VALIDATION.md. The owner has now confirmed the original physical phone issue is fixed; this item is closed.
 
 ## Cross-platform app optimization — first maintenance pass 0.30.0
 

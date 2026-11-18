@@ -191,7 +191,7 @@
 
         refreshFiller: function(){
             if(this.isDestroyed())return;const F=require('./butter-provider/streamnest-filler'),rows=this.model.get('episodes')||[];F.apply(rows);
-            for(const row of rows){const label=this.$('.tab-episode[data-season="'+row.season+'"][data-episode="'+row.episode+'"] .episodeData > div');label.text(this.localizeEpisode(row).listTitle+(row.filler?' · Filler':'')+(row.recap?' · Recap':''));}
+            for(const row of rows){const label=this.$('.tab-episode[data-season="'+row.season+'"][data-episode="'+row.episode+'"] .episodeData > div');label.attr('title','Episode labels: '+(row.fillerSource||'Jikan'));label.text(this.localizeEpisode(row).listTitle+(row.filler?' · Filler':'')+(row.recap?' · Recap':''));}
             F.request(rows);
         },
         onAttach: function () {
@@ -569,7 +569,7 @@
                         torrents: value.torrents,
                         streamnestSources: value.streamnestSources || [],
                         absolute: value.absolute || 0,
-                        animeMapped:value.animeMapped===true,animeTitle:value.animeTitle,kitsuId:value.kitsuId||0,kitsuEpisode:value.kitsuEpisode||0,streamnestSeriesTitle:that.model.get('title'),streamnestActivityKind:that.model.get('animeSeries')?'animes':'shows',
+                        animeMapped:value.animeMapped===true,animeTitle:value.animeTitle,kitsuId:value.kitsuId||0,kitsuEpisode:value.kitsuEpisode||0,streamnestSeriesTitle:that.model.get('title'),streamnestActivityKind:that.model.get('animeSeries')?'animes':'shows',streamnestOriginalLanguage:that.model.get('language'),
                         malId: value.skipMalId || 0,
                         first_aired: value.first_aired || 0,
                         airdate: value.airdate || '',
@@ -623,7 +623,7 @@
                 fileIndex: Number($(e.currentTarget).attr('data-fileindex')),
                 absolute: (that.model.get('selectedEpisode')||{}).absolute || 0,
                 malId: (that.model.get('selectedEpisode')||{}).skipMalId || 0,
-                animeMapped:(that.model.get('selectedEpisode')||{}).animeMapped===true,animeTitle:(that.model.get('selectedEpisode')||{}).animeTitle,kitsuId:(that.model.get('selectedEpisode')||{}).kitsuId||0,kitsuEpisode:(that.model.get('selectedEpisode')||{}).kitsuEpisode||0,streamnestSeriesTitle:that.model.get('title'),streamnestActivityKind:that.model.get('animeSeries')?'animes':'shows',
+                animeMapped:(that.model.get('selectedEpisode')||{}).animeMapped===true,animeTitle:(that.model.get('selectedEpisode')||{}).animeTitle,kitsuId:(that.model.get('selectedEpisode')||{}).kitsuId||0,kitsuEpisode:(that.model.get('selectedEpisode')||{}).kitsuEpisode||0,streamnestSeriesTitle:that.model.get('title'),streamnestActivityKind:that.model.get('animeSeries')?'animes':'shows',streamnestOriginalLanguage:that.model.get('language'),
                 streamnestQuality: that.model.get('streamnestQuality') || 'Auto',
                 streamnestSources: (that.model.get('selectedEpisode')||{}).streamnestSources || [],
                 auto_play: auto_play,

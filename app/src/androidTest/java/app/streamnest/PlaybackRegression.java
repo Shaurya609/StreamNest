@@ -53,6 +53,7 @@ public class PlaybackRegression extends Instrumentation {
     contentVerification=args!=null&&"true".equals(args.getString("contentVerification"));
     posters=args!=null&&"true".equals(args.getString("posters"));
     AnimePlaybackRegression.pauseStress=args!=null&&"true".equals(args.getString("pauseStress"));
+    AnimePlaybackRegression.korean=args!=null&&"true".equals(args.getString("koreanTracks"));
     animePlayback=args!=null&&"true".equals(args.getString("animePlayback"));
     start();
   }

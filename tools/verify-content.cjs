@@ -15,8 +15,9 @@ async function check(name,run){const start=Date.now();try{const details=await ru
   return {segments:rows.map(r=>({type:r.type,start:r.start,end:r.end})),identityValidated:true};
  }));
  results.push(await check('filler episodes beyond 100',async()=>{
-  const doc=await get('https://api.jikan.moe/v4/anime/34572/episodes?page=2',Date.now()+8000),rows=F.clean(doc.data,2);
-  if(!rows.length)throw Error('No page-two labels');return {episodes:rows.length,first:rows[0].mal_id,last:rows.at(-1).mal_id,flagged:rows.filter(r=>r.filler||r.recap).length};
+  const rows=Array.from({length:70},(_,i)=>({episode:101+i,skipMalId:34572}));
+  F.request(rows);for(let n=0;n<200;n++){F.apply(rows);if(rows.some(r=>typeof r.filler==='boolean'))break;await new Promise(r=>setTimeout(r,100));}
+  const labelled=rows.filter(r=>typeof r.filler==='boolean');if(!labelled.length)throw Error('No page-two labels');return {episodes:labelled.length,provider:labelled[0].fillerSource,first:labelled[0].episode,last:labelled.at(-1).episode,flagged:labelled.filter(r=>r.filler||r.recap).length};
  }));
  for(const [name,imdb,season,episode]of [['Squid Game','tt10919420',1,1],['Parasite','tt6751668',null,null]])results.push(await check(name+' English subtitles',async()=>{
   const result=await Org.search({imdbid:imdb,season,episode}),rows=result.en||result.eng||[];
