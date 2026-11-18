@@ -1,5 +1,11 @@
 # Current reliability cycle
 
+## New report: next episode repeats the current episode
+
+Reported 19 November 2026 after the owner confirmed the TheBeast startup fix works. After The Last of Us S1E2 finished, playback restarted S1E2 instead of advancing to S1E3. Open backlog item: verify next-episode preloading, automatic episode selection and preload handoff; determine whether the repeated episode comes from navigation, source/member selection, resume state or preload reuse. The cause and preload involvement are unconfirmed. Acceptance: S1E2 completion starts S1E3, adopts its preload when enabled, and preserves previous-cache cleanup until the next episode actually renders. Verify with preload on and off. Recording only; no implementation or playback tests requested in this turn.
+
+Owner confirmation: the reported TheBeast startup issue is resolved on0.36.2. This does not establish that every historical buffered stall or catalog failure is resolved.
+
 0.36.2 follow-up arms the missing Windows source-startup watchdog, waits for reused-torrent metadata, guards disposed player controls and reduces optional metadata404 retry noise. Actual TheBeast startup/normal buffered-recovery confirmation is still pending.
 
 0.36.1 adds bounded Windows buffered-stall recovery and compatibility-audio pause/seek/buffering coordination. The observed TheBeast S1E1 stall is addressed through same-source, same-cache reopening with saved position, not an assertion that its original decoder interruption is fully explained. Physical TheBeast confirmation remains pending; its current playback is not interrupted.
