@@ -8,3 +8,5 @@ Windows buffered-playback recovery and compatibility-audio reliability.
 - Android version alignment only; Android playback behavior is unchanged.
 
 Validation and source-dependent limitations are recorded in VALIDATION.md. Windows remains unsigned for this personal project. These changes address the observed buffered-stall failure mode; they do not guarantee peer availability or establish the original decoder interruption’s underlying cause.
+
+Validation: 200 desktop/catalog/backend tests; 225 Android unit tests and lint/build; controlled real Last of Us S1E1 buffered-freeze and AbortError recovery with the same cache/member; ten-minute real playback with pause/seek, no unintended reopens and 47 ms final A/V drift. Packaged Windows checks include settings, Home, diagnostics, update/restart and clean-host installation. Production sync-group history was not modified. Physical TheBeast confirmation remains pending.
