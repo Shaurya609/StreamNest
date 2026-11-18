@@ -1,3 +1,13 @@
+## 0.32.0 content coverage — 18 November 2026
+
+- 210 Android unit tests, lint and APK build pass; 165 desktop/catalog/backend tests pass.
+- Bounded trusted batch search runs when numbered search has no verified candidate. Both platforms retain exact torrent hash/member checks and the shared deadline; at most two additional packs are inspected. Tests reject wrong members, hashes and related titles. This improves discovery, not peer availability.
+- Jikan timed out here. Production AnimeFillerList fallback returned Black Clover labels101–170:70 labels,14 pure filler. Tablet production pipeline labels episode123. Canonical URL, heading, bounds and duplicate checks reject mismatched documents. Independently mapped fallback covers Black Clover original run and One Piece only. Mixed/anime canon are not pure filler; recap stays unknown. Cache24h, primary cooldown15min.
+- Adjacent desktop episode retains its own skipMalId, never the previous season’s identity. Injected IMDb-provider failures reach duration-validated AniSkip. Live Black Clover108 intro103.860–193.834s/credits1325.870–1415.823s, Severance1x1 credits3338.250–3434.720s, Squid Game1x1 credits3312–3582s. One Piece1000/1440s returned no validated data. API probes do not confirm timing for every release.
+- Korean original language reaches initial/continued playback. Prefer exposed English dialogue, exclude commentary; no track means no claimed dub. Tablet synthetic MKV renders video, real English audio/full ASS, visible subtitles and manual Japanese/English switching. Windows native MKV chooses English with Korean title context, allows manual switching, renders a real cue and downloads424 exact-source anonymous English cues. Fixture Japanese/English tracks test preference, not a Korean title’s dub availability.
+- Desktop anonymous English subtitles: Squid Game8 matches/72462 bytes; Parasite28/117881 bytes. Android Squid Game4 matches and timed cues. Anime SHA256-validated exact-source download passes on both. More public-title dub coverage and per-release timing remain unverified.
+- Owner closes original-phone status-bar issue; Cloudflare monitoring is not development backlog. Physical-projector ANR/startup retests and website remain separate work.
+
 ## 0.31.0 playback/startup optimization — 18 November 2026
 
 - 208 Android unit tests, lint and APK build pass; 158 desktop/catalog/backend tests pass.
