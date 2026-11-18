@@ -31,7 +31,8 @@ final class TitleScreen extends Dialog {
   boolean manualEpisodeSelection;
   String sourceLookupError;
   Spinner episodeQualityPicker;
-  java.util.concurrent.Future<?> alternateJob,trailerJob;
+  java.util.concurrent.Future<?> alternateJob,trailerJob,launchJob;
+  int launchGeneration;
   Trailers.Result trailerResult;
 
   boolean episodeMode() {
@@ -613,55 +614,78 @@ final class TitleScreen extends Dialog {
   @Override
   public void dismiss() {
     if (alternateJob != null) alternateJob.cancel(true);
+    if (launchJob != null) launchJob.cancel(true);
+    launchGeneration++;
     super.dismiss();
     a.ui.post(()->{if(a.homeTab&&!a.isDestroyed()&&a.hasWindowFocus())a.refreshHomeProgress();});
   }
 
   void watch() {
     manualEpisodeSelection = true;
-    Catalog.Source best = chosenSource();
-    if (best == null) return;
+    if (launchJob != null && !launchJob.isDone()) return;
+    final int generation = ++launchGeneration;
+    final List<Catalog.Source> playSources = new ArrayList<>(sources);
+    final List<JSONObject> playEpisodes = new ArrayList<>(episodes);
+    final JSONObject playEpisode = selected;
+    final String playQuality = selectedQuality, playLanguage = subtitleLanguage;
+    final boolean playSubtitles = subtitlesEnabled, lite = DeviceProfile.lite(a);
+    watch.setEnabled(false);
+    health.setText("Preparing episode sources...");
+    java.util.concurrent.FutureTask<Void> launchTask = new java.util.concurrent.FutureTask<>(() -> {
+    try {
+    Catalog.Source best = episodeMode() ? PlaybackPlan.episodeBest(playSources, playQuality, lite) : PlaybackPlan.best(playSources, playQuality, lite);
+    if (best == null) { a.ui.post(() -> { if (isShowing() && generation == launchGeneration) updateControls(); }); return; }
     String playTitle =
         series
-            ? title.title + " · S" + selected.optInt("season") + " E" + selected.optInt("episode")
+            ? title.title + " · S" + playEpisode.optInt("season") + " E" + playEpisode.optInt("episode")
             : title.title;
     String queueToken = null;
     if (series)
       try {
-        queueToken = EpisodeQueue.create(a, title, episodes, selectedQuality);
+        queueToken = EpisodeQueue.create(a, title, playEpisodes, playQuality);
       } catch (Exception error) {
-        Toast.makeText(
-                a, "Episode navigation unavailable: " + error.getMessage(), Toast.LENGTH_LONG)
-            .show();
+        a.ui.post(() -> Toast.makeText(a, "Episode navigation unavailable: " + error.getMessage(), Toast.LENGTH_LONG).show());
       }
-    a.startActivity(
-        new Intent(a, PlayerActivity.class)
+    Intent intent = new Intent(a, PlayerActivity.class)
             .putExtra("episodeQueue", queueToken)
             .putExtra("title", playTitle)
             .putExtra("activityTitle", title.title).putExtra("activityKind", title.kind).putExtra("originalLanguage", title.raw.optString("language"))
             .putExtra("source", best.url)
             .putExtra("fileIndex", best.fileIndex)
             .putExtra("filename", best.filename)
-            .putExtra("absolute", series ? selected.optInt("absolute") : 0)
+            .putExtra("absolute", series ? playEpisode.optInt("absolute") : 0)
             .putExtra(
                 "alternatives",
                 episodeMode()
                     ? AlternateEpisodes.encode(
-                        AlternateEpisodes.attempts(sources, selectedQuality, DeviceProfile.lite(a)))
+                        AlternateEpisodes.attempts(playSources, playQuality, lite))
                     : "[]")
             .putExtra("imdb", title.id)
             .putExtra(
                 "episodeIdentity",
                 series
-                    ? title.id + ":" + EpisodeLibrary.key(selected)
+                    ? title.id + ":" + EpisodeLibrary.key(playEpisode)
                     : title.raw.optBoolean("animeRelease") ? title.id : "")
-            .putExtra("season", series ? selected.optInt("season") : 0)
-            .putExtra("episode", series ? selected.optInt("episode") : 0)
-            .putExtra("subtitleLanguage", subtitleLanguage)
-            .putExtra("subtitlesEnabled", subtitlesEnabled)
+            .putExtra("season", series ? playEpisode.optInt("season") : 0)
+            .putExtra("episode", series ? playEpisode.optInt("episode") : 0)
+            .putExtra("subtitleLanguage", playLanguage)
+            .putExtra("subtitlesEnabled", playSubtitles)
             .putExtra(
                 "embeddedFirst",
                 title.raw.optBoolean("animeRelease")
-                    || series && selected.optBoolean("liveRelease")));
+                    || series && playEpisode.optBoolean("liveRelease"));
+    a.ui.post(() -> {
+      if (!isShowing() || a.isDestroyed() || generation != launchGeneration) return;
+      // Selection may have changed while its source plan was built.
+      if (selected != playEpisode || !selectedQuality.equals(playQuality)) { updateControls(); return; }
+      watch.setEnabled(true);
+      a.startActivity(intent);
+    });
+    } catch (Exception error) {
+      a.ui.post(() -> { if (isShowing() && generation == launchGeneration) { updateControls(); Toast.makeText(a, "Could not prepare playback. Please try again.", Toast.LENGTH_LONG).show(); } });
+    }
+    }, null);
+    launchJob = launchTask;
+    new Thread(launchTask, "StreamNest-playback-plan").start();
   }
 }

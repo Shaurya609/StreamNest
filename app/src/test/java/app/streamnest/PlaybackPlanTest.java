@@ -69,4 +69,29 @@ public class PlaybackPlanTest {
     assertEquals(h264, PlaybackPlan.best(a, "1080p", true));
     assertEquals(h265, PlaybackPlan.best(a, "1080p", false));
   }
+  @Test
+  public void rankingPreservesLanguageCodecAndTieBreakAcrossLargeSourceLists() {
+    List<Catalog.Source> rows = new ArrayList<>();
+    for (int n = 0; n < 2000; n++) {
+      Catalog.Source s = new Catalog.Source("1080p HEVC", "source" + n, 100);
+      s.release = "Episode AAC ITA Sub.ENG";
+      rows.add(s);
+    }
+    Catalog.Source english = new Catalog.Source("1080p H264", "english", 1);
+    english.release = "Episode AAC ENG";
+    rows.add(english);
+    assertSame(english, PlaybackPlan.episodeBest(rows, "Auto", true));
+    assertSame(english, PlaybackPlan.best(rows, "1080p", true));
+  }
+
+  @Test
+  public void seededTierDoesNotOverrideLanguagePreferenceWithinThatTier() {
+    Catalog.Source foreign = new Catalog.Source("1080p", "foreign", 5);
+    foreign.release = "ITA";
+    Catalog.Source english = new Catalog.Source("1080p", "english", 0);
+    english.release = "ENG";
+    assertSame(english, PlaybackPlan.episodeBest(Arrays.asList(foreign, english), "Auto", true));
+    assertEquals("2160p", PlaybackPlan.episodeQuality(new Catalog.Source("1080p / 2160p", "mixed", 1)));
+    assertEquals("720p", PlaybackPlan.episodeQuality(new Catalog.Source("HDTV\n720p", "multiline", 1)));
+  }
 }

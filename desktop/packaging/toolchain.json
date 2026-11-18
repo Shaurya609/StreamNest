@@ -24,6 +24,24 @@
       "file": "ffmpeg-0.119.2-win-x64.zip",
       "url": "https://github.com/nwjs-ffmpeg-prebuilt/nwjs-ffmpeg-prebuilt/releases/download/0.119.2/0.119.2-win-x64.zip",
       "sha256": "5c173adcebb48f7796233c34b6c9339923ef5909b045824c8d411e871dcb40ac"
+    },
+    "mediaDecoder": {
+      "file": "ffmpeg-n8.1.3-win64-lgpl-shared.zip",
+      "url": "https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/download/autobuild-2026-11-17-12-40/ffmpeg-n8.1.3-35-gf1acb0a266-win64-lgpl-shared-8.1.zip",
+      "sha256": "52e288515dfa02709336f541ff17edf1f59be38b3e714bd1861fcfd06c09c6e5",
+      "license": "LGPL-3.0-or-later",
+      "source": "https://github.com/FFmpeg/FFmpeg/tree/f1acb0a266",
+      "buildRecipe": "https://github.com/FFmpeg-Builds/FFmpeg-Builds/tree/c9fe5114060e507409f7ee07edfd82efaf25d767"
+    },
+    "mediaDecoderSource": {
+      "file": "ffmpeg-f1acb0a266-source.tar.gz",
+      "url": "https://codeload.github.com/FFmpeg/FFmpeg/tar.gz/f1acb0a266",
+      "sha256": "a6c7bc6217fd1b27fcadc5619673b03e9e68d44e00fed335f1dcad37df208c6b"
+    },
+    "mediaDecoderBuildSource": {
+      "file": "ffmpeg-build-c9fe511-source.tar.gz",
+      "url": "https://codeload.github.com/FFmpeg-Builds/FFmpeg-Builds/tar.gz/c9fe5114060e507409f7ee07edfd82efaf25d767",
+      "sha256": "fb708487f587ffbf6c80c8d34fe0f96f7da8a1f88b8b6b5d1b27d91715fa2595"
     }
   },
   "runtimeVersion": "0.119.2"

@@ -1,5 +1,5 @@
 {
-  "version": "0.35.0",
+  "version": "0.36.0",
   "target": "Popcorn Time 0.5.1",
   "files": [
     {
@@ -236,7 +236,7 @@
     },
     {
       "path": "lib/views/player.js",
-      "sha256": "d5c90b0ff5d3725165de63de3c0e42a4e548a3dc8d150f11db28b5790e6d5cdc"
+      "sha256": "72a8d03b9d0e3452d3ce6e561b4373381e30443b4694d24a878b5f62a39611c4"
     },
     {
       "path": "lib/views/quality_selector.js",
@@ -284,7 +284,7 @@
     },
     {
       "path": "butter-provider/streamnest-media-tracks.js",
-      "sha256": "97b2fb2e9bf608627df9f65139efc0807fc4d7fb301eee78f89f4aabfb8f9eb5"
+      "sha256": "c1b7904b817fb2f6a6253c76a10d3c85d3a53a6a0ec68f560df3cc7a8c49e5f3"
     },
     {
       "path": "butter-provider/streamnest-filler-fallback.js",
@@ -309,6 +309,18 @@
     {
       "path": "butter-provider/streamnest-startup-window.js",
       "sha256": "6d0e16f27bbfeddc99fd55c82ae67c8cb84f5e5cfe0f6da85eebbe306417acb7"
+    },
+    {
+      "path": "butter-provider/streamnest-media-decoder.js",
+      "sha256": "b34bf4897a51bf0dd430c612e456e5dac4d7f8d73207bc16b5021f7a9ed94ab4"
+    },
+    {
+      "path": "butter-provider/streamnest-decoded-audio.js",
+      "sha256": "884e8ee2bb1388c150ba9d605ab8da63d6fea6976d8a43dc99b275d9130db2cd"
+    },
+    {
+      "path": "butter-provider/streamnest-embedded-subtitles.js",
+      "sha256": "0611a12e4a2f14f118caa22880950d86425af0211352c63f48f1ebdca50649b0"
     }
   ]
 }

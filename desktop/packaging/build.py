@@ -80,6 +80,17 @@ def assemble(skip_install=False):
     codec_dir=BUILD/'codecs'
     safe_extract(download('codecs'),codec_dir)
     shutil.copyfile(next(codec_dir.rglob('ffmpeg.dll')),app/'ffmpeg.dll')
+    decoder_dir = BUILD / 'media-decoder'
+    safe_extract(download('mediaDecoder'), decoder_dir)
+    decoder = next(p.parent for p in decoder_dir.rglob('ffprobe.exe'))
+    decoder_target = app / 'media-decoder'
+    decoder_target.mkdir()
+    for file in decoder.iterdir():
+        if file.suffix == '.dll' or file.name in ('ffmpeg.exe', 'ffprobe.exe'):
+            shutil.copyfile(file, decoder_target / file.name)
+    shutil.copyfile(decoder.parent / 'LICENSE.txt', decoder_target / 'LICENSE.txt')
+    (decoder_target / 'SOURCE-ORIGINS.json').write_text(json.dumps(LOCK['assets']['mediaDecoder'], indent=2)+'\n', encoding='utf8')
+
     shutil.copytree(UPSTREAM / 'src', app / 'src', ignore=shutil.ignore_patterns('styl', '.jshintrc'))
     for file in ('LICENSE.txt', 'CHANGELOG.md'): shutil.copyfile(UPSTREAM / file, app / file)
     inventory = json.loads((DESKTOP / 'manifest.json').read_text(encoding='utf8'))
@@ -187,6 +198,11 @@ def source_archive(app):
         for file in sorted(app.rglob('*')):
             if file.is_file() and (file.relative_to(app).parts[0] in ('src','node_modules','third-party') or file.name in ('package.json','BUILD-INFO.json','LICENSE.txt','README.txt')):
                 out.write(file,prefix+'generated-app/'+file.relative_to(app).as_posix())
+        for name in ('LICENSE.txt', 'SOURCE-ORIGINS.json'):
+            out.write(app/'media-decoder'/name, prefix+'third-party/media-decoder/'+name)
+        for component in ('mediaDecoderSource', 'mediaDecoderBuildSource'):
+            source = download(component)
+            out.write(source, prefix+'third-party/media-decoder/'+source.name)
         out.write(ROOT/'branding/streamnest-icon.svg',prefix+'branding/streamnest-icon.svg')
     return target
 

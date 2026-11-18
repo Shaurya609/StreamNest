@@ -62,3 +62,9 @@ python desktop/packaging/smoke.py --app reference/standalone-build/0.12.0/Stream
 ```
 
 The loopback diagnostic temporarily substitutes only the generated app's opt-in smoke helper, restores it afterward and refuses to modify a real installed application. Normal product files and user profiles are not used for test state.
+
+## Missing audio and embedded text subtitles (0.36.0)
+
+Standalone Windows includes a pinned LGPL FFmpeg/FFprobe helper in `media-decoder/`. It reads only the selected local torrent stream. Native supported audio keeps its existing path; otherwise the helper produces compatible audio while the native video and resume clock remain in place. Seeking/pause/volume and player disposal control the helper. Embedded text subtitle windows retain original file timestamps and use the existing subtitle display/preferences. ASS/SRT text can be converted; bitmap subtitle OCR is not provided.
+
+The helper is separate from NW.js's `ffmpeg.dll` and its DLLs can be replaced independently. `media-decoder/LICENSE.txt` and `SOURCE-ORIGINS.json` identify its license, pinned binary and build recipe. The application-source archive also includes the matching FFmpeg source archive and pinned build-recipe source; dependency download/build instructions are in that recipe. An overlay-only installation without the helper retains native tracks/online subtitles and the external-player fallback.

@@ -22,6 +22,8 @@ assert (app/'node_modules/butter-settings-popcorntime.app/index.js').read_text(e
 assert 'updateDHTOld:()=>Promise.resolve()' in (app/'src/app/updater.js').read_text(encoding='utf8')
 assert (app/'src/app/update-public-key.pem').is_file()
 assert (app/'src/app/update-download.js').is_file()
+assert (app/'media-decoder/ffmpeg.exe').is_file() and (app/'media-decoder/ffprobe.exe').is_file()
+assert (app/'media-decoder/LICENSE.txt').is_file() and (app/'media-decoder/SOURCE-ORIGINS.json').is_file()
 assert (app/'LICENSE.txt').is_file() and (app/'third-party/npm-inventory.json').is_file()
 assert (app/'node_modules/webtorrent/package.json').is_file()
 assert (app/'src/app/themes/Official_-_Dark_theme.css').is_file()

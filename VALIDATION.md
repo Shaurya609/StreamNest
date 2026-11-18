@@ -1,3 +1,10 @@
+## 0.36.0 reported playback regressions
+
+- Android unit tests: 225; lint/build passed. Separate tablet clone: 2,000-source ranking preserved the old winner while taking 224 ms instead of 8,110 ms. Cached real Black Clover S1E108 title-dialog launch passed with a 1 ms watch-handler duration. Source planning and queue serialization no longer run on the UI thread or wait behind browsing work. The isolated test initially selected before its asynchronous episode list had initialized; the stale-selection guard correctly declined that launch. The final test waited for episode-list initialization.
+- Windows real content in a separate profile, never connected to the production sync group: Last of Us S1E1 NTb English E-AC-3 decoded through the bundled audio helper; pause stopped audio; seeking rebuilt the audio clock at the new position; sustained native video and decoded audio advanced together. Black Clover S1E108 WIKIRIP English embedded SRT was extracted at original source timestamps and visibly rendered. Text formats supported by FFmpeg can be converted; bitmap subtitles still require another subtitle source.
+- JavaScript tests: 188, including local-stream/argument validation, helper cancellation/response limits, timestamp-window bounds, legacy-player subtitle compatibility and audio pause/seek/cleanup.
+- Physical projector retest is pending. The reported OS ANR stack identified `PlaybackPlan.episodeBest`/regular-expression parsing on the main thread; this is separate from the native worker startup failure handled in 0.35.0. No direct TheBeast test or universal freeze fix is claimed.
+
 ## 0.33.0 group-wide Continue Watching removal — 18 November 2026
 
 - Android/TV and Windows Home cards expose a separate × Remove button with an accessible title-specific label describing all synced devices. Desktop action is a sibling of the title button; wrapping preserves card geometry and directional navigation. Android button is focusable for TV remotes.

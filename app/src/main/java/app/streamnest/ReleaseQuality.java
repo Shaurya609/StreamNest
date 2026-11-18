@@ -4,11 +4,9 @@ import java.util.*;
 import org.json.*;
 
 final class ReleaseQuality {
-  static boolean camera(String name) {
-    return name.toLowerCase(Locale.ROOT)
-        .matches(
-            ".*(?:\\bcam\\b|\\btelesync\\b|\\bhdcam\\b|\\bcamrip\\b|\\btelesync\\b|\\bhdts\\b|\\btsrip\\b).*");
-  }
+  private static final java.util.regex.Pattern CAMERA = java.util.regex.Pattern.compile(
+      "\\b(?:cam|telesync|hdcam|camrip|hdts|tsrip)\\b", java.util.regex.Pattern.CASE_INSENSITIVE);
+  static boolean camera(String name) { return CAMERA.matcher(name).find(); }
 
   static boolean hd(String quality, String name) {
     return (quality.equals("1080p") || quality.equals("2160p")) && !camera(name);

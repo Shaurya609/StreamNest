@@ -1,6 +1,8 @@
 # Current reliability cycle
 
-0.34.0 delivers Sprint 1's episode identity and audio checks. Sprint 2 (0.35.0) adds isolated Android torrent workers, bounded worker recovery, cache-writer leases, preserved warm preload adoption, bounded Windows stop/server waits and attempt ownership. Real frozen-worker recovery and episode handover passed on a tablet. Physical-projector/USB confirmation is still open; no universal filesystem or decoder-stall cure is claimed. Remaining planned development is Sprint 3 memory/sustained stability, Sprint 4 resume/subtitle/touch consistency and Sprint 5 browsing/cleanup. See SPRINTS.md and PERFORMANCE.md.
+0.36.0 addresses the reported 0.34.0 episode-selection freeze with compiled release matching, linear source selection and background playback planning. A tablet 2,000-source comparison measured 8,110 ms before versus 224 ms after, with the same selected source; title-dialog launch handled the click in 1 ms. It also adds Windows missing-audio decoding and embedded text subtitle extraction/display. Real Last of Us English E-AC-3 audio and Black Clover English embedded subtitle playback passed in an isolated Windows profile. Physical-projector/USB confirmation remains pending.
+
+0.35.0 already added isolated Android torrent workers, bounded worker recovery, cache-writer leases, preserved warm preload adoption and bounded Windows stop/server waits. The new ranking ANR happened outside those workers and needed the separate 0.36.0 fix. Remaining planned development is Sprint 3 memory/sustained stability, Sprint 4 resume/subtitle/touch consistency and Sprint 5 browsing/cleanup. See SPRINTS.md and PERFORMANCE.md.
 
 ## Earlier release notes and remaining verification
 

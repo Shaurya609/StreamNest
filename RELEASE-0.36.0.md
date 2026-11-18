@@ -1,0 +1,12 @@
+# StreamNest 0.36.0
+
+Fixes for the reported 0.34.0 playback regressions, including the isolated torrent-worker recovery from 0.35.0.
+
+- Android: source ranking no longer compiles regular expressions for each comparator call or sorts whole lists to choose one source. Camera/quality matching uses compiled patterns. Episode source planning and navigation-session writes run outside the main thread on their own short-lived task, independent of catalog requests. Dismissed dialogs and changed episode/quality selections cannot launch stale results.
+- Windows: automatically decode missing audio from the selected local stream with a bundled, pinned LGPL FFmpeg helper. Native video, player controls, pause/resume, seeking, volume and saved progress remain in StreamNest. Only audio is converted; the video is not transcoded. Native supported audio keeps its existing path. Source 1 on Android is unchanged.
+- Windows anime: discover embedded subtitle tracks directly in the selected file, extract timed text and draw it through the desktop subtitle display with the configured font/size. Original cue timestamps survive seeking; bounded reading windows refresh as playback advances. Manual subtitle selection/off overrides automatic embedded selection. Bitmap subtitle OCR is not included.
+- Decoder helpers accept local StreamNest streams only, use validated process arguments, bounded probes and cancellable subtitle work, and stop with the player. Their archives are checksum-pinned; licenses, origins, FFmpeg source and the pinned build recipe accompany the desktop build/source archive.
+
+Validation: 225 Android unit tests, Android lint/build, 188 JavaScript tests; tablet 2,000-source ranking comparison (8,110 ms before, 224 ms after, same winner); real Black Clover episode launch through the title dialog (1 ms button handler). Isolated Windows real-content playback decoded the previously silent Last of Us S1E1 English E-AC-3 track, sustained video/audio, passed pause and seek checks, and rendered Black Clover S1E108 English embedded subtitle cues. Production sync-group history was not used for test writes.
+
+Physical-projector confirmation remains pending. These changes address the reported main-thread ranking ANR and the older engine-worker hang separately; no universal USB/filesystem or decoder-stall cure is claimed. Windows remains unsigned, as requested for this personal project.
