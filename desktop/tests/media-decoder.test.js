@@ -47,8 +47,42 @@ test('compatible audio follows native pause, volume, seeking and disposal', asyn
   t.mock.method(D, 'audioServer', async () => ({url(index, at) { requests.push({index, at}); return 'http://127.0.0.1:2/audio'; }, close() { closed = true; }}));
   const video = new Media(), audio = new Media(), bridge = new DecodedAudio(video, {document: {createElement: () => audio}});
   await bridge.start({index: 1}); assert.equal(bridge.ready, true); assert.equal(audio.paused, false); assert.equal(audio.muted, true); assert.equal(requests[0].at, 70);
-  video.pause(); assert.equal(audio.paused, true); await video.play(); assert.equal(audio.paused, false);
+  video.pause(); assert.equal(audio.paused, true); await video.play(); assert.equal(audio.paused, false); assert.equal(bridge.phase, 'playing');
   video.volume = 0.3; video.dispatchEvent(new Event('volumechange')); assert.equal(audio.volume, 0.3);
   video.currentTime = 300; await bridge.restart(); assert.equal(requests.at(-1).at, 300);
   bridge.dispose(); assert.equal(closed, true); assert.equal(audio.paused, true);
 });
+
+test('video waiting is not treated as audio drift and does not restart helpers', async t => {
+  let opens=0;t.mock.method(D,'audioServer',async()=>({url(){opens++;return 'http://127.0.0.1:2/audio';},close(){}}));
+  const video=new Media(),audio=new Media(),bridge=new DecodedAudio(video,{document:{createElement:()=>audio}});
+  await bridge.start({index:1});bridge.startedAt=performance.now()-5000;video.readyState=2;audio.readyState=4;video.currentTime+=50;
+  video.dispatchEvent(new Event('waiting'));for(let i=0;i<10;i++)bridge.correct();
+  assert.equal(opens,1);assert.equal(bridge.wantPlaying,true);bridge.dispose();
+});
+test('audio-buffer holds preserve intent and resume both clocks when data returns', async t => {
+  t.mock.method(D,'audioServer',async()=>({url(){return 'http://127.0.0.1:2/audio';},close(){}}));
+  const video=new Media(),audio=new Media(),bridge=new DecodedAudio(video,{document:{createElement:()=>audio}});
+  await bridge.start({index:1});audio.dispatchEvent(new Event('waiting'));
+  assert.equal(video.paused,true);assert.equal(bridge.wantPlaying,true);assert.equal(bridge.phase,'buffering');
+  audio.dispatchEvent(new Event('canplay'));await new Promise(r=>setImmediate(r));
+  assert.equal(video.paused,false);assert.equal(audio.paused,false);
+  video.pause();audio.dispatchEvent(new Event('canplay'));await new Promise(r=>setImmediate(r));assert.equal(video.paused,true);bridge.dispose();
+});
+test('failed play cannot leave compatibility audio running alone', async t => {
+  t.mock.method(D,'audioServer',async()=>({url(){return 'http://127.0.0.1:2/audio';},close(){}}));
+  const video=new Media(),audio=new Media();video.play=async()=>{throw Object.assign(Error('Interrupted'),{name:'AbortError'});};let failures=0;
+  const bridge=new DecodedAudio(video,{document:{createElement:()=>audio}},()=>{},{onFailure:()=>failures++});
+  await bridge.start({index:1});assert.equal(bridge.phase,'failed');assert.equal(audio.paused,true);assert.equal(video.paused,true);assert.equal(failures,1);bridge.dispose();
+});
+test('compatibility diagnostic counters use the actual decoded audio element', async t => {
+  t.mock.method(D,'audioServer',async()=>({url(){return 'http://127.0.0.1:2/audio';},close(){}}));
+  const video=new Media(),audio=new Media(),bridge=new DecodedAudio(video,{document:{createElement:()=>audio}});await bridge.start({index:1});
+  audio.webkitAudioDecodedByteCount=10000;audio.readyState=4;const data=bridge.diagnostic();assert.equal(data.audioDecodedBytes,10000);assert.equal(data.audioPath,'compatibility');assert.equal(data.audioTracks,1);
+  assert(!JSON.stringify(data).includes('http'));bridge.dispose();assert.equal(video.streamnestCompatibilityAudio,undefined);
+});
+
+test('Pause during audio preparation is preserved after late canplay',async t=>{t.mock.method(D,'audioServer',async()=>({url(){return 'http://127.0.0.1:2/audio';},close(){}}));const video=new Media(),audio=new Media();audio.load=()=>{};const bridge=new DecodedAudio(video,{document:{createElement:()=>audio}});const pending=bridge.start({index:1});await new Promise(r=>setImmediate(r));assert.equal(bridge.freezing,true);video.pause();audio.dispatchEvent(new Event('canplay'));await pending;assert.equal(video.paused,true);assert.equal(audio.paused,true);assert.equal(bridge.wantPlaying,false);bridge.dispose();});
+test('automatic audio corrections cannot create an unbounded restart loop',async t=>{let opens=0,failures=0;t.mock.method(D,'audioServer',async()=>({url(){opens++;return 'http://127.0.0.1:2/audio';},close(){}}));const video=new Media(),audio=new Media(),bridge=new DecodedAudio(video,{document:{createElement:()=>audio}},()=>{},{onFailure:()=>failures++});await bridge.start({index:1});await bridge.restart('sync');await bridge.restart('sync');await bridge.restart('sync');assert.equal(opens,3);assert.equal(failures,1);assert.equal(bridge.phase,'failed');bridge.dispose();});
+
+test('unexpected helper EOF stops playback instead of leaving silent video running',async t=>{t.mock.method(D,'audioServer',async()=>({url(){return 'http://127.0.0.1:2/audio';},close(){}}));const video=new Media(),audio=new Media();video.duration=4000;let failures=0;const bridge=new DecodedAudio(video,{document:{createElement:()=>audio}},()=>{},{onFailure:()=>failures++});await bridge.start({index:1});audio.dispatchEvent(new Event('ended'));assert.equal(failures,1);assert.equal(video.paused,true);assert.equal(bridge.phase,'failed');bridge.dispose();});

@@ -187,6 +187,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                 this.torrent = null;
                 return this.createFileServer(fileForServer).then(() => { App.vent.trigger('system:openFileSelector', this.streamInfo); });
             }
+            if(typeof this.torrentModel.get('torrent')==='string')this.torrentModel.set('streamnestSourceUri',this.torrentModel.get('torrent'));
             if (!this.downloadOnly && !this.preload) {
                 this.fetchTorrent(this.torrentModel.get('torrent'), location, model.get('title')).then(function (torrent) {
                     if(this._runGeneration!==generation||this.stopped)throw Error('Cancelled');

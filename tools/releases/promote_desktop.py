@@ -27,7 +27,7 @@ with tempfile.TemporaryDirectory() as temp:
  assert set(checks)==names-{f'SHA256SUMS-Desktop-{version}.txt'}
  for name,digest in checks.items():assert hashlib.sha256((root/name).read_bytes()).hexdigest()==digest,name
  with zipfile.ZipFile(root/f'StreamNest-Desktop-{version}-application-source.zip') as z:
-  paths=['streamer.js']+['butter-provider/'+n for n in ['streamnest-recovery.js','streamnest-startup-window.js','streamnest-preload.js','streamnest-diagnostics.js','streamnest-source-policy.js','streamnest-episodes.js','streamnest-media-decoder.js','streamnest-decoded-audio.js','streamnest-embedded-subtitles.js','streamnest-media-tracks.js']]+['lib/views/player.js']
+  paths=['streamer.js']+['butter-provider/'+n for n in ['streamnest-recovery.js','streamnest-startup-window.js','streamnest-preload.js','streamnest-diagnostics.js','streamnest-source-policy.js','streamnest-episodes.js','streamnest-media-decoder.js','streamnest-decoded-audio.js','streamnest-embedded-subtitles.js','streamnest-media-tracks.js','streamnest-buffered-recovery.js']]+['lib/views/player.js']
   for path in paths:
    expected=(Path('desktop/overlay')/path).read_bytes().decode('utf8',errors='replace').replace('\r\n','\n')
    for prefix in ['desktop/overlay/','generated-app/src/app/']:

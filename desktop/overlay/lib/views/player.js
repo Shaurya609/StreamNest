@@ -213,7 +213,7 @@
             if (type === 'episode') {
                 type = 'show';
             }
-            if (this.video.currentTime() / this.video.duration() >= 0.8 && type !== undefined && this.model.get('metadataCheckRequired') !== false) {
+            if (!this._streamnestRecovering && this.video.currentTime() / this.video.duration() >= 0.8 && type !== undefined && this.model.get('metadataCheckRequired') !== false) {
                 App.vent.trigger(type + ':watched', this.model.attributes, 'database');
             }
 
@@ -341,7 +341,9 @@
 
             this.setupEpisodeControls();
             // resume position
-            const savedPosition=require('./butter-provider/streamnest-progress').read(tm?tm.attributes:this.model.attributes,Settings.lastWatchedTitle===this.model.get('title')?Settings.lastWatchedTime:0);
+            const recoveryPosition=tm&&tm.get('streamnestRecoveryPosition');
+            const savedPosition=Number.isFinite(recoveryPosition)&&recoveryPosition>=0?recoveryPosition:require('./butter-provider/streamnest-progress').read(tm?tm.attributes:this.model.attributes,Settings.lastWatchedTitle===this.model.get('title')?Settings.lastWatchedTime:0);
+            if(tm)tm.unset('streamnestRecoveryPosition');
             if (!(tm&&tm.get('streamnestFromBeginning')) && savedPosition > 0) {
                 var position = savedPosition;
                 win.info('Resuming position to', position.toFixed(), 'secs');
@@ -572,7 +574,7 @@
 
             require('./butter-provider/streamnest-diagnostics').attachPlayer(this.player,this.el,this.model);
             require('./butter-provider/streamnest-watching-activity').attachPlayer(this.player,this.el,this.model);
-            this.streamnestMediaTracks=require('./butter-provider/streamnest-media-tracks').attach(this.player,this.el,this.model,window,Settings,{retry:()=>{const tm=this.model.get('torrentModel'),attrs=tm&&require('./butter-provider/streamnest-episodes').nextAttempt(tm.attributes);if(!attrs)return false;this.dontTouchFS=true;this.closePlayer();App.vent.trigger('stream:start',new Backbone.Model(attrs));return true;}});
+            this.streamnestMediaTracks=require('./butter-provider/streamnest-media-tracks').attach(this.player,this.el,this.model,window,Settings,{recover:()=>{const tm=this.model.get('torrentModel'),attrs=tm&&require('./butter-provider/streamnest-buffered-recovery').sameSource(tm.attributes,this.video.currentTime());if(!attrs)return false;this.persistProgress(false);this._streamnestRecovering=true;this.dontTouchFS=true;this.closePlayer();App.vent.trigger('stream:start',new Backbone.Model(attrs));return true;},retry:()=>{const tm=this.model.get('torrentModel'),attrs=tm&&require('./butter-provider/streamnest-episodes').nextAttempt(tm.attributes);if(!attrs)return false;this.dontTouchFS=true;this.closePlayer();App.vent.trigger('stream:start',new Backbone.Model(attrs));return true;}});
             this.player.on('ended', this.onPlayerEnded.bind(this));
             this.player.one('play', this.onPlayerFirstPlay.bind(this));
             this.player.on('loadeddata', this.onPlayerReady.bind(this));

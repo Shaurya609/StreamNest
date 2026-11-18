@@ -1,5 +1,5 @@
 {
-  "version": "0.36.0",
+  "version": "0.36.1",
   "target": "Popcorn Time 0.5.1",
   "files": [
     {
@@ -236,7 +236,7 @@
     },
     {
       "path": "lib/views/player.js",
-      "sha256": "72a8d03b9d0e3452d3ce6e561b4373381e30443b4694d24a878b5f62a39611c4"
+      "sha256": "09c85761c75974e4f19bc4cbac87cf65fe9dc82991b2a869c9a2c3e7265bde2a"
     },
     {
       "path": "lib/views/quality_selector.js",
@@ -252,7 +252,7 @@
     },
     {
       "path": "streamer.js",
-      "sha256": "b9a0a08ba40d6ec959e591e07457f2d8475d5a845bc8a40e844a7a6560573fff"
+      "sha256": "784d6e99b78df964fb03778a04418861f005f914f7a647e8c557ec3ce82bda55"
     },
     {
       "path": "templates/filter-bar.tpl",
@@ -272,7 +272,7 @@
     },
     {
       "path": "butter-provider/streamnest-diagnostics.js",
-      "sha256": "9e743dc54f684994b8c5235a0658ba1da784b780e71afb75770d13f15cc92dfd"
+      "sha256": "89009b6cd29a98c37f1bb0360d7109b6fe56de35f737198f1b38cfd045b1bae8"
     },
     {
       "path": "butter-provider/streamnest-watching-activity.js",
@@ -284,7 +284,7 @@
     },
     {
       "path": "butter-provider/streamnest-media-tracks.js",
-      "sha256": "c1b7904b817fb2f6a6253c76a10d3c85d3a53a6a0ec68f560df3cc7a8c49e5f3"
+      "sha256": "76be1f00533d09c0ffa0e55075da78016609b288827fb068a5430a6282587305"
     },
     {
       "path": "butter-provider/streamnest-filler-fallback.js",
@@ -316,11 +316,15 @@
     },
     {
       "path": "butter-provider/streamnest-decoded-audio.js",
-      "sha256": "884e8ee2bb1388c150ba9d605ab8da63d6fea6976d8a43dc99b275d9130db2cd"
+      "sha256": "4efe2acbc19b756cdff8fd71d97094fb8f37287fed7caa292bbe18629a8209ef"
     },
     {
       "path": "butter-provider/streamnest-embedded-subtitles.js",
       "sha256": "0611a12e4a2f14f118caa22880950d86425af0211352c63f48f1ebdca50649b0"
+    },
+    {
+      "path": "butter-provider/streamnest-buffered-recovery.js",
+      "sha256": "e56e5e7e65e350526517a6728b346e6bdd767661efdf6bae84ed909ec603979d"
     }
   ]
 }
