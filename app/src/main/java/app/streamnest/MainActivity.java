@@ -120,7 +120,7 @@ public class MainActivity extends Activity {
     CatalogHttp.configure(catalogFolder);
     MovieRepository repository = MovieRepository.shared(getApplicationContext());
     MovieProvider.store = repository;
-    MovieIndex.configure(getAssets(), catalogFolder);
+    MovieIndex.prepare(getAssets(), catalogFolder);
     SeriesIndex.configure(getAssets(), catalogFolder);
     AnimeCatalog.configure(getAssets(), catalogFolder);
     AnimeReleases.configure(catalogFolder, getAssets());
@@ -1287,10 +1287,21 @@ public class MainActivity extends Activity {
     getSharedPreferences(WatchProgress.preferenceName,0).registerOnSharedPreferenceChangeListener(homeProgressListener);
     getSharedPreferences("group-home",0).registerOnSharedPreferenceChangeListener(homeProgressListener);
     ui.removeCallbacks(homeSyncPulse);ui.post(homeSyncPulse);
-    if(homeTab && content!=null) refreshHomeProgress();
+    if(resumeCancelledBrowse&&content!=null){resumeCancelledBrowse=false;load();}else if(homeTab && content!=null) refreshHomeProgress();
     if (posters != null && activeLite != DeviceProfile.lite(this)) {
       recreate();
     }
+  }
+
+  boolean resumeCancelledBrowse;
+  @Override
+  protected void onStop() {
+    if(DeviceProfile.lite(this)){
+      if(browseJob!=null&&!browseJob.isDone()){browseJob.cancel(true);generation++;resumeCancelledBrowse=true;}
+      HomeLibrary.clear();
+      if(posters!=null)posters.trim();
+    }
+    super.onStop();
   }
 
   @Override

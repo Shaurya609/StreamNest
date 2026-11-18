@@ -26,3 +26,7 @@ The journal remains capped at 250 events and roughly 110 KB. Routine samples are
 ## Separate watching-activity sharing
 
 Version 0.28.0 adds an independent default-on switch for title/episode/state reports to the owner dashboard. Diagnostic events still exclude content identity. Turning off diagnostics does not turn off watching activity, or vice versa. See [watching activity and owner controls](WATCH-SYNC.md#owner-controls-and-watching-activity-0280) for privacy, retention and deletion behavior.
+
+## Android ANR locations — 0.31.0
+
+With diagnostic sharing enabled and a paired group, a subsequent launch may read up to the first 256 KiB of an OS-provided ANR report from the last seven days. Only up to 12 allowlisted main-thread Java method/line locations survive sanitization; native Java entry methods may use line 0 when the OS provides no line number. Raw reports, thread names, native addresses, process metadata, filenames, content titles, URLs and credentials are not saved or uploaded. Missing OS traces are allowed. The same disable switch and seven-day server retention apply.

@@ -14,7 +14,7 @@ import org.videolan.libvlc.Media;
 /** Device-only regression; fixture is supplied locally, never bundled in the app. */
 public class PlaybackRegression extends Instrumentation {
   PlayerActivity activity;
-  boolean contentVerification, posters, animePlayback, safeArea, watchingActivity, preload, discovery, home, fillerLive, groupHome, homeLayout, artwork, homeSearch, watchedStartup, trailers, diagnostics;
+  boolean performance, contentVerification, posters, animePlayback, safeArea, watchingActivity, preload, discovery, home, fillerLive, groupHome, homeLayout, artwork, homeSearch, watchedStartup, trailers, diagnostics;
   String watchSyncCode, shortPairingCode, expectedPairingAuth,manualSyncCode;
   boolean pairingUiDirect, skipLive, catalog, subtitles, storage, resilience, episodes, appUpdates, watchSyncUi, resumeUi;
 
@@ -49,14 +49,17 @@ public class PlaybackRegression extends Instrumentation {
     diagnostics=args!=null&&"true".equals(args.getString("diagnostics"));
     watchingActivity=args!=null&&"true".equals(args.getString("watchingActivity"));
     safeArea=args!=null&&"true".equals(args.getString("safeArea"));
+    performance=args!=null&&"true".equals(args.getString("performance"));
     contentVerification=args!=null&&"true".equals(args.getString("contentVerification"));
     posters=args!=null&&"true".equals(args.getString("posters"));
+    AnimePlaybackRegression.pauseStress=args!=null&&"true".equals(args.getString("pauseStress"));
     animePlayback=args!=null&&"true".equals(args.getString("animePlayback"));
     start();
   }
 
   @Override
   public void onStart() {
+    if(performance){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,PerformanceRegression.run(this));}catch(Throwable error){result.putString("result","FAIL: "+error);finish(Activity.RESULT_CANCELED,result);}return;}
     if(contentVerification){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,ContentRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
     if(posters){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,PosterRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
     if(animePlayback){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,AnimePlaybackRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}

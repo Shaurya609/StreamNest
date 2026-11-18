@@ -74,10 +74,8 @@ public class PlayerActivity extends Activity {
     super.onCreate(state);
     Diagnostics.install(this);Diagnostics.event("player.open");WatchingActivity.begin(this);
     if (DeviceProfile.lite(this)) {
-      synchronized (SeriesIndex.class) {
-        SeriesIndex.sessions.clear();
-        SeriesIndex.snapshot = null;
-      }
+      HomeLibrary.clear();
+      SeriesIndex.trimForPlayback();
     }
     setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);

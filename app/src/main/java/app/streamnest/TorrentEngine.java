@@ -12,7 +12,7 @@ final class TorrentEngine implements AutoCloseable {
   final EngineStartup startup=new EngineStartup(System::nanoTime,s->{android.util.Log.i("StreamNestStartup",s);Diagnostics.startup(s);});
   boolean lite, publicMetadataLookup, episodeRequest;
   volatile boolean preloadOnly;
-  boolean verifiedComplete;
+  volatile boolean verifiedComplete;
   int fileIndex = -1, requestedSeason, requestedEpisode, absoluteEpisode;
   String expectedFilename = "", sourceUrl, episodeIdentity;
   volatile TorrentHandle handle;
@@ -244,15 +244,14 @@ final class TorrentEngine implements AutoCloseable {
     }
   }
 
-  boolean complete() {
-    try {
-    if(closed||handle==null||!handle.isValid()||size<=0||pieceLength<=0)return false;
-    if(verifiedComplete)return true;
-    if(handle.status().progress()<1)return false;
-    int first=(int)(offset/pieceLength),last=(int)((offset+size-1)/pieceLength);
-    for(int i=first;i<=last;i++)if(!handle.havePiece(i))return false;
-    return verifiedComplete=true;
-    }catch(Exception stopped){return false;}
+  // Only the engine worker checks native handles. UI/preload reads this published result.
+  boolean complete() { return !closed && verifiedComplete; }
+
+  void verifyCompletion(float progress) {
+    if (verifiedComplete || closed || size <= 0 || pieceLength <= 0 || !Float.isFinite(progress) || progress < 1) return;
+    int first=(int)(offset/pieceLength), last=(int)((offset+size-1)/pieceLength);
+    for(int piece=first;piece<=last;piece++)if(!handle.havePiece(piece))return;
+    verifiedComplete=true;
   }
 
   boolean startupReady() {
@@ -276,6 +275,7 @@ final class TorrentEngine implements AutoCloseable {
     try {
       if (handle != null && handle.isValid()) {
         TorrentStatus s = handle.status(true);
+        verifyCompletion(s.progress());
         receivedBytes = s.totalWantedDone();
         diagnosticPeers=Math.max(0,s.numPeers());diagnosticKbps=Math.max(0,s.downloadRate()/1024);diagnosticPercent=Math.max(0,Math.min(100,Math.round(s.progress()*100)));diagnosticError=s.errorCode().getValue();
         if (s.errorCode().getValue() != 0) return "Torrent error: " + s.errorCode().getMessage();
@@ -339,7 +339,8 @@ final class TorrentEngine implements AutoCloseable {
   final class PieceStream extends InputStream {
     long pos, end;
     RandomAccessFile file;
-    boolean ended;
+    volatile boolean ended;
+    int priorityPiece = -1;
 
     PieceStream(long s, long e) {
       pos = s;
@@ -357,10 +358,11 @@ final class TorrentEngine implements AutoCloseable {
       if (pos > end || ended) return -1;
       if (closed) throw new IOException("Stream stopped");
       int piece = (int) ((offset + pos) / pieceLength);
-      long waitUntil = System.currentTimeMillis() + 60000;
-      prioritize(pos);
+      long waitUntil = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(60);
+      // Hundreds of small HTTP reads can belong to one piece; set its window once.
+      if (piece != priorityPiece) { prioritize(pos); priorityPiece = piece; }
       while (!closed && !ended && !handle.havePiece(piece)) {
-        if (System.currentTimeMillis() > waitUntil)
+        if (System.nanoTime() > waitUntil)
           throw new IOException("Timed out buffering video");
         try {
           Thread.sleep(100);

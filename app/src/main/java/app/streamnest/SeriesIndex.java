@@ -5,6 +5,12 @@ import org.json.*;
 
 final class SeriesIndex {
   static List<JSONObject> snapshot;
+  private static final java.util.concurrent.atomic.AtomicBoolean trimming=new java.util.concurrent.atomic.AtomicBoolean();
+  static void trimForPlayback(){
+    if(!trimming.compareAndSet(false,true))return;
+    Thread task=new Thread(()->{try{synchronized(SeriesIndex.class){sessions.clear();snapshot=null;}}finally{trimming.set(false);}},"catalog-memory-trim");
+    task.setDaemon(true);task.setPriority(Thread.MIN_PRIORITY);task.start();
+  }
   static long refreshed;
 
   static long popularity(JSONObject m) {

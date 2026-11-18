@@ -17,10 +17,14 @@ final class EpisodePreload {
   static Slot slot;
   static final Set<TorrentEngine> inFlight=new HashSet<>();
   static synchronized void released(TorrentEngine e){inFlight.remove(e);}
-  static synchronized boolean protects(File path) throws IOException {
-    for(TorrentEngine e:inFlight)if(e.root!=null&&e.root.getCanonicalFile().equals(path.getCanonicalFile()))return true;
-    TorrentEngine old=StreamService.retiring;
-    return old!=null&&old.root!=null&&old.root.getCanonicalFile().equals(path.getCanonicalFile());
+  static boolean protects(File path) throws IOException {
+    List<File> roots=new ArrayList<>();
+    synchronized(EpisodePreload.class){for(TorrentEngine e:inFlight)if(e.root!=null)roots.add(e.root);}
+    TorrentEngine old=StreamService.retiring;if(old!=null&&old.root!=null)roots.add(old.root);
+    // USB filesystem operations must not hold the monitor used by the UI's preload check.
+    File target=path.getCanonicalFile();
+    for(File root:roots)if(root.getCanonicalFile().equals(target))return true;
+    return false;
   }
   static String attempted="",message="";
   static boolean enabled(Context c){return c.getSharedPreferences("playback",0).getBoolean("preloadNext",false);}

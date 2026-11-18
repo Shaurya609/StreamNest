@@ -8,7 +8,13 @@ import org.json.*;
 final class MovieIndex {
   static List<JSONObject> snapshot;
   static long refreshed;
-  static File disk;
+  static volatile File disk;
+  static volatile android.content.res.AssetManager deferredAssets;
+
+  static void prepare(android.content.res.AssetManager assets, File folder) {
+    deferredAssets = assets;
+    disk = new File(folder, "movies-index-v7.json");
+  }
 
   static synchronized void configure(android.content.res.AssetManager assets, File folder) {
     configure(folder);
@@ -66,6 +72,8 @@ final class MovieIndex {
   static boolean refreshing;
 
   static synchronized List<JSONObject> pool() throws Exception {
+    if (snapshot == null && deferredAssets != null && disk != null)
+      configure(deferredAssets, disk.getParentFile());
     if (snapshot != null) {
       if (System.currentTimeMillis() - refreshed >= 21600000 && !refreshing) {
         refreshing = true;

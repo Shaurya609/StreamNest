@@ -4,6 +4,7 @@ import android.app.ActivityManager;
 import android.content.Context;
 
 final class DeviceProfile {
+  private static volatile Boolean automaticLite;
   static boolean projector(Context c) {
     return c.getSharedPreferences("performance", 0).getString("mode", "auto").equals("lite")
         || (c.getResources().getConfiguration().uiMode
@@ -14,9 +15,16 @@ final class DeviceProfile {
   static boolean lite(Context c) {
     String mode = c.getSharedPreferences("performance", 0).getString("mode", "auto");
     if (!mode.equals("auto")) return mode.equals("lite");
-    ActivityManager a = (ActivityManager) c.getSystemService(Context.ACTIVITY_SERVICE);
-    ActivityManager.MemoryInfo m = new ActivityManager.MemoryInfo();
-    a.getMemoryInfo(m);
-    return a.isLowRamDevice() || m.totalMem <= 1536L * 1024 * 1024;
+    Boolean known = automaticLite;
+    if (known == null) synchronized (DeviceProfile.class) {
+      known = automaticLite;
+      if (known == null) {
+        ActivityManager a = (ActivityManager) c.getSystemService(Context.ACTIVITY_SERVICE);
+        ActivityManager.MemoryInfo m = new ActivityManager.MemoryInfo();
+        a.getMemoryInfo(m);
+        automaticLite = known = a.isLowRamDevice() || m.totalMem <= 1536L * 1024 * 1024;
+      }
+    }
+    return known;
   }
 }

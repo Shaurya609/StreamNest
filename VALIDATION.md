@@ -1,3 +1,15 @@
+## 0.31.0 playback/startup optimization — 18 November 2026
+
+- 208 Android unit tests, lint and APK build pass; 158 desktop/catalog/backend tests pass.
+- Native PerformanceRegression delivered identical 4 MB bytes with 10 deadline updates (previous policy640 in the same read workload), published completion only after every selected piece was available, and made1,000 UI completion checks without querying native handles. This uses a controlled torrent-handle adapter, not public peer transfer.
+- Under held initialized catalog monitors, UI setup/trim returned in2 ms. The first cold-class-initialization harness attempt was rejected and corrected before acceptance.
+- Same-tablet comparison changing only DeviceProfile:2,000 checks397→13 ms. Bundled866-title cache heap4→2 MB after clearing/explicit GC. These are scoped fixture measurements, not guaranteed process RSS reductions.
+- Native 31-second local-video pause:302 UI heartbeats, max117 ms gap, paused timestamp retained and playback resumed. English/Japanese audio selection, visible embedded ASS and exact-source anonymous subtitle download still pass. This is not a low-peer USB playback reproduction.
+- Forced Low Memory Home startup/cards, remote focus, synced progress refresh, known-next selection and navigation pass; fixture Java heap36 MB. Live regular/anime segment fallback also returned validated results.
+- Desktop100 unchanged merges with200 episode records:100→0 synchronous writes, wall145→51 ms and CPU203→62 ms in recorded runs. A changed record still persisted immediately. No sync interval or progress accuracy reduction was introduced.
+- ANR parser tests cover main-thread/package allowlisting, absence of raw content/credentials/other-thread data and a256 KiB read bound. New OS types are isolated behind an API30 helper; API28 remains supported. Optional reports can augment a recent earlier ANR after upgrade, when Android still retains its trace.
+- Physical-projector pause/buffering and long native-start retests remain necessary. Identified bottlenecks are removed; the exact prior ANR location is not inferred from peer count or memory samples alone. Release acceptance follows after packaging.
+
 ## 0.30.0 maintenance — 18 November 2026
 
 - Android unit/build/lint and 157 desktop/catalog/backend tests pass. Native disposable-tablet poster test: 30 stale requests, zero fetches, actual current-image decode succeeds. A test-harness barrier race was corrected; the rejected run was not counted as acceptance.
