@@ -567,8 +567,9 @@ public class PlayerActivity extends Activity {
   }
 
   void startStream() {
+    double fraction=0;try{org.json.JSONObject row=WatchProgress.records(this).optJSONObject(WatchProgress.identity(getIntent(),key));long p=resumeAfterSwitch>0?resumeAfterSwitch:getIntent().getBooleanExtra("startFromBeginning",false)?0:WatchProgress.read(this,WatchProgress.identity(getIntent(),key),0);if(row!=null&&row.optLong("durationMs")>0)fraction=(double)p/row.optLong("durationMs");}catch(Exception ignored){}
     startForegroundService(
-        new Intent(this, StreamService.class)
+        new Intent(this, StreamService.class).putExtra("resumeFraction",fraction)
             .putExtra("source", source)
             .putExtra("episodeIdentity", getIntent().getStringExtra("episodeIdentity"))
             .putExtra("originalLanguage",getIntent().getStringExtra("originalLanguage")).putExtra("activityTitle",getIntent().getStringExtra("activityTitle")).putExtra("activityKind",getIntent().getStringExtra("activityKind"))
@@ -585,7 +586,7 @@ public class PlayerActivity extends Activity {
 
   void switchSource(boolean automatic) {
     TorrentEngine starting=StreamService.engine;
-    if(StreamService.startupBlocked()||starting!=null&&starting.startup.active){if(!automatic)Toast.makeText(this,starting==null?"Waiting for engine cleanup":starting.status(),Toast.LENGTH_LONG).show();return;}
+    if(StreamService.startupBlocked()||starting!=null&&!(starting instanceof RemoteTorrentEngine)&&starting.startup.active){if(!automatic)Toast.makeText(this,starting==null?"Waiting for engine cleanup":starting.status(),Toast.LENGTH_LONG).show();return;}
     if (changingEpisode) return;
     if (attempt + 1 >= alternatives.size()) {
       if (!automatic)
@@ -767,7 +768,7 @@ public class PlayerActivity extends Activity {
             String hash = engine == null ? "" : engine.movieHash();
             java.util.List<SubtitleQuery.Result> results = new ArrayList<>();
             Exception lookupFailure=null;
-            if(animePlayback()&&engine!=null&&engine.info!=null)try{results.addAll(AnimeSubtitles.search(engine.info.infoHash().toHex(),engine.video==null?"":engine.video.getName(),language));}catch(Exception error){lookupFailure=error;}
+            if(animePlayback()&&engine!=null&&!engine.fingerprint().isEmpty())try{results.addAll(AnimeSubtitles.search(engine.fingerprint(),engine.video==null?"":engine.video.getName(),language));}catch(Exception error){lookupFailure=error;}
             if(results.isEmpty()&&api.configured())try{results.addAll(api.search(imdb,season,episode,title,language,hash,engine==null?0:engine.size));}catch(Exception error){lookupFailure=error;}
             if(results.isEmpty()&&lookupFailure!=null)throw lookupFailure;
             ui.post(
@@ -861,6 +862,7 @@ public class PlayerActivity extends Activity {
             if(cacheCommitted!=e&&StreamService.retiring==null&&hasRenderedVideo()){cacheCommitted=e;StreamService.playing(getApplicationContext(),e,getIntent().getStringExtra("episodeIdentity"));}
             EpisodePreload.consider(PlayerActivity.this,e,episodeQueue,neighbour(1));
           }
+          if(currentEngine&&e.closed&&!playedVideo)sourceFailed=true;
           long now = SystemClock.elapsedRealtime();
           if(player!=null&&playbackStall.sample(now,Math.max(0,player.getTime()),Math.max(0,player.getLength()),playedVideo&&!userPaused&&!dragging&&pendingSeek<0&&viewsAttached&&hasWindowFocus())){Diagnostics.event("torrent.stalled");DiagnosticPlayback.sample(PlayerActivity.this,player,currentEngine?e:null,softwareDecoder,diagnosticBufferPercent);episodeMessage="Playback has stalled. Try another source or a lower quality.";setControlsVisible(true);}else if(playbackStall.advancedAt==now&&episodeMessage!=null&&episodeMessage.startsWith("Playback has stalled"))episodeMessage=null;
           if(now-watchingActivityAt>=30000){watchingActivityAt=now;WatchingActivity.report(PlayerActivity.this,userPaused||!viewsAttached||opened&&!player.isPlaying()&&!diagnosticBuffering?"paused":playedVideo&&player.isPlaying()&&!diagnosticBuffering?"playing":mediaSet?"buffering":"starting");}

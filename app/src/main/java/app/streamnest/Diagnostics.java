@@ -56,7 +56,7 @@ final class Diagnostics {
     else if(completed.contains("Checking cache"))stage="cache_check";
     else if(completed.contains("Preparing episode"))stage="cache_prepare";
     else if(completed.contains("Cleaning"))stage="cleanup";
-    else if(completed.contains("Waiting for engine"))stage="worker";
+    else if(completed.contains("Waiting for engine")||completed.contains("torrent worker"))stage="worker";
     final String safeStage=stage,scoped=scope(c);
     submit(()->{if(!enabled(c)||!scoped.equals(scope(c)))return;try{JSONObject data=new JSONObject().put("stage",safeStage);java.util.regex.Matcher m=java.util.regex.Pattern.compile("after ([0-9]{1,12})ms").matcher(reportMessage);if(m.find())data.put("elapsedMs",Long.parseLong(m.group(1)));events.add(new JSONObject().put("id",UUID.randomUUID().toString()).put("session",session).put("at",System.currentTimeMillis()).put("type",type).put("level",type.equals("torrent.stalled")?"error":"info").put("data",data));while(events.size()>250)events.remove(0);save();}catch(Exception ignored){}});
     int next=message.indexOf("; ");if(next>=0)startup(message.substring(next+2));

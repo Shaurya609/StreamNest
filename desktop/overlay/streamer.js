@@ -115,7 +115,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
             if(state==='preload')return; // Never evict the currently playing episode for prefetch.
             if(this.torrentModel && !this.stopped)this.stop();
             const generation=(this._runGeneration||0)+1;this._runGeneration=generation;
-            await (App.streamnestStop || Promise.resolve());
+            try{await require('./butter-provider/streamnest-recovery').wait();}catch(error){if(this._runGeneration===generation){this.setModels(model,state);this.stateModel.set({state:'error',error:error.message});}return;}
             if(this._runGeneration!==generation)return;
 
             if (App.WebTorrent.destroyed) {
@@ -137,13 +137,13 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                     if(!model.get('torrent'))throw Error('No source available for the selected episode');
                     if(!this.downloadOnly) {
                         for(const old of App.WebTorrent.torrents.slice())if(old.streamnestEpisode && old.streamnestEpisode!==identity)
-                            await new Promise(resolve=>old.destroy(()=>{require('./butter-provider/streamnest-preload').releasedTorrent(old);resolve();}));
+                            await require('./butter-provider/streamnest-recovery').track(done=>old.destroy(error=>{if(!error)require('./butter-provider/streamnest-preload').releasedTorrent(old);done(error);}));
                         if(this._runGeneration!==generation)return;
                         location=require('./butter-provider/streamnest-preload').directory(model.attributes,location);
                         model.set('streamnestEpisode',identity);
                     }
-                    this.armRecovery(generation);
-                } catch(error) {this.handleErrors(error);return;}
+
+                } catch(error) {if(this._runGeneration===generation)this.handleErrors(error);return;}
             }
             if (this.isLocalFile) {
                 if (this.torrentModel.get('isReady')) {
@@ -198,7 +198,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                     this.watchState();
                     this.saveCoverToFile(location);
                     return this.createServer();
-                }.bind(this)).then(this.waitForBuffer.bind(this)).catch(this.handleErrors.bind(this));
+                }.bind(this)).then(url=>{if(this._runGeneration===generation&&!this.stopped)return this.waitForBuffer(url);}).catch(error=>{if(this._runGeneration===generation)this.handleErrors(error);});
             } else {
                 this.fetchTorrent(this.torrentModel.get('torrent'), location, model.get('title')).then(function (torrent) {
                     this.torrentModel.set('torrent', torrent);
@@ -214,7 +214,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
             clearInterval(this._sourceRecovery);this._sourceRecovery=null;
             if(this.pendingTorrent && this.pendingTorrent!==this.torrent) {
                 const pending=this.pendingTorrent;this.pendingTorrent=null;
-                App.streamnestStop=new Promise(resolve=>pending.destroy(()=>resolve()));
+                App.streamnestStop=require('./butter-provider/streamnest-recovery').track(done=>pending.destroy(done));
             }
 
             if (this.torrent) {
@@ -244,7 +244,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                     }
                 } else {
                     const closingClient=App.WebTorrent;
-                    App.streamnestStop=new Promise(resolve=>closingClient.destroy(()=>{require('./butter-provider/streamnest-preload').released(closingClient);resolve();}));
+                    App.streamnestStop=require('./butter-provider/streamnest-recovery').track(done=>closingClient.destroy(error=>{if(!error)require('./butter-provider/streamnest-preload').released(closingClient);done(error);}));
                     App.WebTorrent = new WebTorrent({
                         maxConns     : parseInt(Settings.connectionLimit, 10) || 55,
                         downloadLimit: parseInt(parseFloat(Settings.downloadLimit, 10) * parseInt(Settings.maxLimitMult, 10)) || -1,
@@ -361,7 +361,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                 const progress=this.torrent ? this.torrent.downloaded||0 : 0;
                 if(progress>received){received=progress;lastProgress=Date.now();}
                 if(Date.now()-lastProgress>=45000||Date.now()-started>=180000){
-                    if(!this.retrySource()){clearInterval(this._sourceRecovery);if(this.stateModel)this.stateModel.set({state:'error',error:'No active source found. Return to details and change quality.'});}
+                    if(!this.retrySource()){const failed=this.stateModel;this.stop();if(failed)failed.set({state:'error',error:'No active source found. Return to details and change quality.'});}
                 }
             },1000);
         },
@@ -482,12 +482,14 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
         },
 
         lookForImages: function (metadatas) {
+            const generation=this._runGeneration;
             App.Trakt.client.images.get({
                 type: metadatas.type === 'movie' ? 'movie' : 'show',
                 imdb: metadatas.type === 'movie' ? metadatas.movie.ids.imdb : metadatas.show.ids.imdb,
                 tvdb: metadatas.type === 'movie' ? false : metadatas.show.ids.tvdb,
                 tmdb: metadatas.type === 'movie' ? metadatas.movie.ids.tmdb : false
             }).then(function (img) {
+                if(this._runGeneration!==generation||this.stopped)return;
                 if (this.torrentModel) {
                     !this.torrentModel.get('backdrop') ? this.torrentModel.set('backdrop', img.background) : null;
                     !this.torrentModel.get('poster') ? this.torrentModel.set('poster', img.poster) : null;
@@ -497,6 +499,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
 
         // try to gather media metadata and manipulate torrentModel
         lookForMetadata: function (torrent) {
+            const generation=this._runGeneration;
             if (this.stopped) {
                 return;
             }
@@ -511,6 +514,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                 filename: fileName,
                 torrent: torrent.name
             }).then(function(metadatas) {
+                if(this._runGeneration!==generation||this.stopped)return;
                 var props = {};
 
                 var qualities = {
@@ -550,7 +554,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                 }
                 this.handleSubtitles();
             }.bind(this));
-            setTimeout(() => { if (!this.subtitleReady) { this.handleSubtitles(); }}, 20000);
+            setTimeout(() => { if (this._runGeneration===generation&&!this.stopped&&!this.subtitleReady) { this.handleSubtitles(); }}, 20000);
         },
 
         // set video file name & index
@@ -576,6 +580,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                 const file=torrent.files[index];file.deselect();
                 if(index===Number(fileIndex)){file.select();file.hidden=false;fileSize=file.length;}
             }
+            try{const P=require('./butter-provider/streamnest-progress'),a=this.torrentModel.attributes,row=P.records()[P.identity(a)],fraction=a.streamnestFromBeginning?0:row&&row.durationMs>0?P.read(a)*1000/row.durationMs:0;require('./butter-provider/streamnest-startup-window').apply(torrent,Number(fileIndex),fraction);}catch(error){win.warn('Startup piece priority unavailable');}
             if (!fileName.startsWith(torrent.path)) {
                 fileName = path.join(torrent.path, fileName);
             }
@@ -609,58 +614,13 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
         },
 
         createServer: function (port) {
-            return new Promise(function (resolve) {
-                var serverPort = parseInt((port || Settings.streamPort), 10);
-
-
-                if (!serverPort) {
-                    serverPort = this.generatePortNumber();
-                }
-
-                try {
-                    this.torrentModel.get('torrent').createServer().listen(serverPort);
-
-                    var url = 'http://127.0.0.1:' + serverPort + '/' + this.torrentModel.get('video_file').index;
-
-                    this.streamInfo.set('src', url);
-                    this.streamInfo.set('type', 'video/mp4');
-
-                    resolve(url);
-                } catch (e) {
-                    setTimeout(function () {
-                        return this.createServer(0).then(resolve);
-                    }.bind(this), 100);
-                }
-            }.bind(this));
+            const generation=this._runGeneration,torrent=this.torrentModel.get('torrent'),index=this.torrentModel.get('video_file').index;
+            return require('./butter-provider/streamnest-recovery').listen(()=>torrent.createServer(),parseInt(port||Settings.streamPort,10)||0,()=>generation===this._runGeneration&&!this.stopped).then(({port})=>{const url='http://127.0.0.1:'+port+'/'+index;this.streamInfo.set({src:url,type:'video/mp4'});return url;});
         },
 
         createFileServer: function (file, port) {
-            return new Promise(function (resolve) {
-                var serverPort = parseInt((port || Settings.streamPort), 10);
-
-
-                if (!serverPort) {
-                    serverPort = this.generatePortNumber();
-                }
-
-                try {
-                    const server = new FileServer(file, serverPort);
-                    server.listen(serverPort);
-
-                    this.torrentModel.get('torrent').set('server', server);
-
-                    var url = 'http://127.0.0.1:' + serverPort + '/' + file.index;
-
-                    this.streamInfo.set('src', url);
-                    this.streamInfo.set('type', 'video/mp4');
-
-                    resolve(url);
-                } catch (e) {
-                    setTimeout(function () {
-                        return this.createFileServer(file, 0).then(resolve);
-                    }.bind(this), 100);
-                }
-            }.bind(this));
+            const generation=this._runGeneration;
+            return require('./butter-provider/streamnest-recovery').listen(()=>new FileServer(file),parseInt(port||Settings.streamPort,10)||0,()=>generation===this._runGeneration&&!this.stopped).then(({server,port})=>{this.torrentModel.get('torrent').set('server',server);const url='http://127.0.0.1:'+port+'/'+file.index;this.streamInfo.set({src:url,type:'video/mp4'});return url;});
         },
 
         handleStreamInfo: function () {

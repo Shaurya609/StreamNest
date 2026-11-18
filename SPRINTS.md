@@ -62,3 +62,13 @@ Desktop Home has a persistent search field. Android Home search opens directly w
 ## Manual watched preferences and Android startup resilience — 0.24.0
 
 Manual Watched preferences use their own domain-derived encrypted room with bounded metadata and timestamped undo tombstones. Recommendations consume them separately from playback history; old progress clients cannot erase them. Both Android title toggles and desktop Watched actions publish changes. Native startup now gets low-memory settings before session creation, staged monotonic watchdog status and busy-start suppression. A thread-specific guard handles only the pinned torrent library's known pop_alerts null-session exception during intentional shutdown. The projector-specific symptom is not claimed reproduced on the tablet.
+
+## Playback reliability cycle — November 2026
+
+This is the new five-sprint evaluation follow-up, distinct from the earlier 0.17/0.18 sprint names above.
+
+1. Correct, audible playback — delivered in 0.34.0.
+2. Engine recovery and startup — 0.35.0: isolated Android native workers, bounded cancellation, writer-lease protection, warm preload adoption, targeted startup/resume piece windows; bounded Windows shutdown/server waits and stale-attempt guards. Real native frozen-worker recovery and warm-cache handover passed; original physical-projector/USB confirmation remains distinct.
+3. Memory and sustained stability — pending. Profile native/mapped/graphics memory, Low Memory budgets, repeated transitions and the anime responsiveness case.
+4. Resume, subtitles and interaction — pending. Consolidate legacy anime history, accurate subtitle status, touch versus remote behavior and Continue Watching polish.
+5. Efficient browsing and cleanup — pending. Metadata deduplication/negative caching, measured Home rendering, safe regression-history cleanup and text normalization.

@@ -8,17 +8,17 @@ import org.json.*;
 /** At most one speculative engine. A claimed engine becomes the foreground stream. */
 final class EpisodePreload {
   static final class Slot {
-    final TorrentEngine engine=new TorrentEngine();
+    final TorrentEngine engine;
     final String identity;
     volatile List<Catalog.Source> choices;
     volatile boolean claimed,readyToClaim;
-    Slot(String identity){this.identity=identity;}
+    Slot(Context c,String identity){this.identity=identity;engine=new RemoteTorrentEngine(c);}
   }
   static Slot slot;
   static final Set<TorrentEngine> inFlight=new HashSet<>();
   static synchronized void released(TorrentEngine e){inFlight.remove(e);}
   static boolean protects(File path) throws IOException {
-    List<File> roots=new ArrayList<>();
+    List<File> roots=new ArrayList<>(RemoteTorrentEngine.protectedRoots());
     synchronized(EpisodePreload.class){for(TorrentEngine e:inFlight)if(e.root!=null)roots.add(e.root);}
     TorrentEngine old=StreamService.retiring;if(old!=null&&old.root!=null)roots.add(old.root);
     // USB filesystem operations must not hold the monitor used by the UI's preload check.
@@ -34,7 +34,7 @@ final class EpisodePreload {
     if(value!=null&&value.readyToClaim&&enabled(c)&&value.identity.equals(request.getStringExtra("episodeIdentity"))
         &&Objects.equals(value.engine.sourceUrl,request.getStringExtra("source"))
         &&value.engine.fileIndex==request.getIntExtra("fileIndex",-1)&&!value.engine.closed){
-      slot=null;value.claimed=true;value.engine.preloadOnly=false;message="";return value.engine;
+      slot=null;value.claimed=true;value.engine.promote();message="";return value.engine;
     }
     cancel();return null;
   }
@@ -47,11 +47,11 @@ final class EpisodePreload {
     String attempt=active.sourceUrl+"|"+identity;
     if(attempt.equals(attempted))return;
     cancel();attempted=attempt;
-    Slot value=new Slot(identity);slot=value;inFlight.add(value.engine);
+    Slot value=new Slot(context.getApplicationContext(),identity);slot=value;inFlight.add(value.engine);
     Context c=context.getApplicationContext();
     new Thread(()->{
       try {
-        if(CacheLocation.freeSpace(CacheLocation.current(c))<512L*1024*1024)throw new IOException("Not enough free storage");
+        // Storage probing runs in the isolated worker, not this preload coordinator.
         List<Catalog.Source> found=EpisodeQueue.resolve(queue,next,DeviceProfile.lite(c));
         synchronized(EpisodePreload.class){if(slot!=value||value.engine.closed)return;value.choices=found;}
         Catalog.Source best=found.get(0);

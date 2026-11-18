@@ -7,6 +7,7 @@ final class ExitReports {
   SharedPreferences prefs=c.getSharedPreferences("diagnostics",0);long seen=prefs.getLong("exitAt",0),now=System.currentTimeMillis();
   ActivityManager manager=(ActivityManager)c.getSystemService(Context.ACTIVITY_SERVICE);
   for(ApplicationExitInfo info:manager.getHistoricalProcessExitReasons(c.getPackageName(),0,8)){
+   if(!c.getPackageName().equals(info.getProcessName()))continue; // Recoverable torrent-worker exits are not player crashes.
    boolean unseen=info.getTimestamp()>seen;
    boolean trace=info.getReason()==ApplicationExitInfo.REASON_ANR&&info.getTimestamp()>prefs.getLong("traceAt",0)&&now-info.getTimestamp()<604800000L;
    if(!unseen&&!trace)continue;

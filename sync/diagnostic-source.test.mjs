@@ -1,0 +1,2 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {cleanData} from './diagnostics.mjs';
+test('diagnostics accept opaque source comparison and sample age without raw content identifiers',()=>{const id='a'.repeat(64);assert.deepEqual(cleanData({mediaId:id,telemetryAgeMs:500,infoHash:'b'.repeat(40),url:'https://private'}),{mediaId:id,telemetryAgeMs:500});assert.deepEqual(cleanData({mediaId:'a'.repeat(65),telemetryAgeMs:-1}),{});});

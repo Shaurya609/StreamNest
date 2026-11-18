@@ -8,7 +8,7 @@ import java.util.concurrent.*;
 
 public class StreamService extends Service {
   static volatile TorrentEngine engine,retiring,startupOwner;
-  static boolean startupBlocked(){TorrentEngine owner=startupOwner;return owner!=null&&owner.startup.active;}
+  static boolean startupBlocked(){TorrentEngine owner=startupOwner;return owner!=null&&!(owner instanceof RemoteTorrentEngine)&&owner.startup.active;}
   static final ExecutorService worker = Executors.newSingleThreadExecutor();
 
   public IBinder onBind(Intent i) {
@@ -54,11 +54,11 @@ public class StreamService extends Service {
     }
     promote();
     TorrentEngine busy=startupOwner;
-    if(busy!=null&&busy.startup.active){
+    if(busy!=null&&!(busy instanceof RemoteTorrentEngine)&&busy.startup.active){
       TorrentEngine rejected=new TorrentEngine();configure(rejected,i);rejected.startup.done();rejected.closed=true;rejected.message="Previous torrent operation is still finishing. "+busy.status();busy.closed=true;engine=rejected;return START_NOT_STICKY;
     }
     TorrentEngine warm=EpisodePreload.claim(this,i);
-    TorrentEngine next = warm==null?new TorrentEngine():warm;
+    TorrentEngine next = warm==null?new RemoteTorrentEngine(getApplicationContext()):warm;
     if(warm==null)configure(next,i);
     TorrentEngine previous = engine;
     if (previous != null) previous.closed = true;
@@ -78,7 +78,7 @@ public class StreamService extends Service {
             File dir = directory(this,i);
             next.root=dir; // Reserve the destination before cancellation cleanup can inspect it.
             next.lite = DeviceProfile.lite(this);
-            CacheLocation.writable(CacheLocation.current(this));
+            // Writable storage is probed inside the recoverable worker process.
             if (next.closed) return;
             next.startup.enter("Preparing episode cache",20000);
             PlaybackCache.prepareEpisode(this, i.getStringExtra("episodeIdentity"), dir, false);
@@ -107,6 +107,7 @@ public class StreamService extends Service {
   static void configure(TorrentEngine next,Intent i) {
     String source=i.getStringExtra("source");
     next.sourceUrl = source;
+    next.resumeFraction=i.getDoubleExtra("resumeFraction",0);
     next.episodeIdentity=i.getStringExtra("episodeIdentity");
     next.fileIndex = i.getIntExtra("fileIndex", -1);
     next.expectedFilename =

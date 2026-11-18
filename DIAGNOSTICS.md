@@ -30,3 +30,7 @@ Version 0.28.0 adds an independent default-on switch for title/episode/state rep
 ## Android ANR locations — 0.31.0
 
 With diagnostic sharing enabled and a paired group, a subsequent launch may read up to the first 256 KiB of an OS-provided ANR report from the last seven days. Only up to 12 allowlisted main-thread Java method/line locations survive sanitization; native Java entry methods may use line 0 when the OS provides no line number. Raw reports, thread names, native addresses, process metadata, filenames, content titles, URLs and credentials are not saved or uploaded. Missing OS traces are allowed. The same disable switch and seven-day server retention apply.
+
+## 0.35.0 source correlation and worker freshness
+
+`mediaId` is an opaque HMAC-SHA256 of a validated v1 torrent infohash using a separate key derived from the sync-group secret. Identical sources can be compared within a group, but the ID differs across groups and cannot be looked up using only a public torrent hash. Raw hashes, magnets, title/episode IDs and positions are not added to technical reports. Android reports `telemetryAgeMs` so a responsive control process cannot make stalled native counters look fresh. Existing event frequency, retention limits and off controls are unchanged. Worker recovery is reported by the main app; planned child-worker exits are not counted as main-player crashes. No schema migration is required for these additive allowlisted fields.

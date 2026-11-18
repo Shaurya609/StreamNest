@@ -6,7 +6,7 @@ import java.util.*;
 import org.libtorrent4j.*;
 import org.libtorrent4j.alerts.*;
 
-final class TorrentEngine implements AutoCloseable {
+class TorrentEngine implements AutoCloseable {
   volatile String message = "Starting torrent engine…", url;
   volatile boolean closed;
   final EngineStartup startup=new EngineStartup(System::nanoTime,s->{android.util.Log.i("StreamNestStartup",s);Diagnostics.startup(s);});
@@ -19,7 +19,13 @@ final class TorrentEngine implements AutoCloseable {
   SessionManager session;
   TorrentInfo info;
   File root, video;
-  long size, offset;
+  volatile long size, offset;
+  volatile long workerPulse=System.nanoTime();
+  volatile String torrentFingerprint="",cachedMovieHash="";
+  double resumeFraction;
+  void pulse(){workerPulse=System.nanoTime();}
+  String fingerprint(){return torrentFingerprint;}
+  void promote(){preloadOnly=false;}
   volatile long receivedBytes;
   volatile int diagnosticPeers,diagnosticKbps,diagnosticPercent,diagnosticError;
   long diagnosticSampleAt;
@@ -30,6 +36,7 @@ final class TorrentEngine implements AutoCloseable {
 
   void start(String source, File directory) throws Exception {
     startup.enter("Preparing torrent folder",20000);
+    pulse();
     root = directory;
     if (!root.exists() && !root.mkdirs()) throw new IOException("Cannot create download folder");
     startup.enter("Creating torrent session",30000);
@@ -139,11 +146,12 @@ final class TorrentEngine implements AutoCloseable {
               + elapsed
               + "s"
               + (elapsed >= 30 ? " · waiting for peers; try another source if this continues" : "");
-      Thread.sleep(250);
+      pulse();Thread.sleep(250);
     }
     if (closed) return;
     info = handle.torrentFile();
     if (info == null) throw new IOException("Torrent metadata unavailable");
+    torrentFingerprint=info.infoHash().toHex();
     FileStorage files = info.files();
     List<String> paths = new ArrayList<>();
     List<Long> sizes = new ArrayList<>();
@@ -178,14 +186,8 @@ final class TorrentEngine implements AutoCloseable {
     handle.unsetFlags(TorrentFlags.PAUSED);
     handle.setFlags(TorrentFlags.SEQUENTIAL_DOWNLOAD);
     handle.resume();
-    prioritize(0);
-    long startupWindow = Math.min(size, 1024 * 1024);
-    for (long edge : new long[] {0, size - startupWindow}) {
-      int first = (int) ((offset + edge) / pieceLength);
-      int last = (int) ((offset + edge + startupWindow - 1) / pieceLength);
-      for (int piece = first; piece <= last; piece++)
-        handle.setPieceDeadline(piece, (piece - first) * 150);
-    }
+    for(int[] range:StartupPieces.ranges(size,offset,pieceLength,resumeFraction))
+      for(int piece=range[0];piece<=range[1];piece++)handle.setPieceDeadline(piece,range[2]+(piece-range[0])*150);
     String token = "/" + UUID.randomUUID();
     server =
         new NanoHTTPD("127.0.0.1", 0) {
@@ -238,6 +240,8 @@ final class TorrentEngine implements AutoCloseable {
     while (!closed) {
       if (url == null && startupReady()) url = readyUrl;
       message = updateStatus();
+      if(cachedMovieHash.isEmpty()&&url!=null)cachedMovieHash=movieHash();
+      pulse();
       if(preloadOnly && root.getUsableSpace()<256L*1024*1024)
         throw new IOException("Preloading stopped to keep storage available");
       Thread.sleep(1000);
