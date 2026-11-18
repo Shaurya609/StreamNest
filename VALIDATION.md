@@ -8,6 +8,8 @@
 
 - Final source checks:211 Android unit tests plus lint/APK build;169 desktop/catalog/backend tests. Live Cloudflare round trip in a disposable encrypted scope: upload old episode, upload deletion, merge/upload an offline device’s stale copy, confirm a third read has no episode timestamp, then confirm new playback can return. DELETE cleanup succeeded and GET returned null. No owner/group credentials or real user histories were used. Repeatable probe: tools/verify-continue-removal.cjs.
 
+- Release: source942aaa3505fd0142a1b44811456a0aabee55a02d passed Android CI44266904748 and Windows CI44266904778; publisher44267030561 succeeded. Public v0.33.0 has8 assets/712381719 bytes with GitHub digest/size and local checksums verified. Packaged progress, encrypted merge and Home UI modules match source. Android code46 retains existing signer. Signed feed44269252391 succeeded; ordinary production URL signature verified Android0.33.0/code46 and Windows0.33.0. Installed Windows was0.31.0; used its own Check for updates, verified automatic download and Install and restart. It installed0.33.0 and relaunched. Read-only background UI observation after the owner restored the minimized window shows a separate accessible Remove button on each of the same7 Continue Watching titles, with the same timestamps and recommendations retained. No real history-removal button was clicked. Production Android awaits normal on-device update confirmation; only disposable clone testing used ADB.
+
 ## 0.32.0 content coverage — 18 November 2026
 
 - 210 Android unit tests, lint and APK build pass; 165 desktop/catalog/backend tests pass.
