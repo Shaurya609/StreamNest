@@ -28,7 +28,7 @@ test('episode Auto fallback and explicit resolution',()=>{
 test('pack selects smaller requested episode and rejects wrong indexed filename',()=>{
  const files=[{name:'Show.S01E04.mkv',path:'Show/Show.S01E04.mkv',length:1000},{name:'Show.S01E05.mkv',path:'Show/Show.S01E05.mkv',length:100}];
  assert.equal(E.selectFile(files,{season:1,episode:5}),1);
- assert.equal(E.selectFile(files,{fileIndex:1,file_name:'Show.S01E05.mkv'}),1);
+ assert.equal(E.selectFile(files,{fileIndex:1,file_name:'Show.S01E05.mkv',season:1,episode:5}),1);
  assert.throws(()=>E.selectFile(files,{fileIndex:1,file_name:'Show.S01E04.mkv'}));
  assert.throws(()=>E.selectFile(files,{season:1,episode:6}));
  assert.throws(()=>E.selectFile(files,{fileIndex:10}));

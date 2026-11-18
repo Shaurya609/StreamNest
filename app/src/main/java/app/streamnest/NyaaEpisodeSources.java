@@ -46,7 +46,7 @@ final class NyaaEpisodeSources {
     if(c.pack&&!matched)throw new java.io.IOException("Pack has no exact episode member");
     int index=EpisodeFiles.select(paths,sizes,-1,"",true,row.optInt("season"),row.optInt("episode"),row.optInt("absolute"));
     Catalog.Source result=new Catalog.Source(c.quality+" · Nyaa"+(c.title.toLowerCase(Locale.ROOT).matches(".*(hevc|265|av1).*" )?" · HEVC/AV1":""),c.url,c.seeds);
-    result.fileIndex=index;result.filename=new java.io.File(paths.get(index).replace('\\','/')).getName();return result;}finally{info.swig().delete();}
+    result.release=c.title;result.fileIndex=index;result.filename=new java.io.File(paths.get(index).replace('\\','/')).getName();return result;}finally{info.swig().delete();}
   }
   static List<Catalog.Source> find(String title,JSONObject row,long deadline)throws Exception {
     String key=title+":"+row.optInt("season")+":"+row.optInt("episode")+":"+row.optInt("absolute");

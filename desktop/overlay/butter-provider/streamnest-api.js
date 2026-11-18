@@ -16,7 +16,7 @@ function items(movie) {
  let list=[...(movie.items||[])];for(const group of Object.values(movie.items_lang||{})){if(Array.isArray(group))list=list.concat(group);}
  return list.map(item=>({url:item.torrent_magnet||item.torrent_url,magnet:item.torrent_magnet,quality:item.quality||'unknown',title:item.file||movie.title,seed:Number(item.torrent_seeds)||0,peer:Number(item.torrent_peers)||0,size:Number(item.size_bytes)||0,filesize:((Number(item.size_bytes)||0)/1073741824).toFixed(2)+' GB',provider:'Catalog',source:''})).filter(item=>item.url);
 }
-function qualities(movie,episode) {if(episode)return Episodes.qualities(items(movie));const result={};items(movie).filter(item=>["1080p","2160p"].includes(item.quality)&&!/(?:\bhdcam\b|\bcamrip\b|\btelesync\b|\bhdts\b|\btsrip\b)/i.test(item.title)).forEach(item=>{if(!result[item.quality]||item.seed>result[item.quality].seed)result[item.quality]=item;});return result;}
+function qualities(movie,episode) {if(episode)return Episodes.qualities(items(movie));const result={};Episodes.rank(items(movie)).filter(item=>["1080p","2160p"].includes(item.quality)&&!/(?:\bhdcam\b|\bcamrip\b|\btelesync\b|\bhdts\b|\btsrip\b)/i.test(item.title)).forEach(item=>{if(!result[item.quality])result[item.quality]=item;});return result;}
 function isHindi(id){return seeds.some(s=>s.imdb===id);}
 function movie(o,show,hindi) {
  const id=o.imdb||o.imdb_id, audio=o.language==='ja'?'ja':(hindi||isHindi(id))?'hi':'en',torrents=qualities(o,!!o.animeRelease),poster=o.poster_big||o.poster_med||'';

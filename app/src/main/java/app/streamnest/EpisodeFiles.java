@@ -13,6 +13,7 @@ final class EpisodeFiles {
 
   static boolean matches(String path, int season, int episode, int absolute) {
     path=path.replace('\\','/');path=path.substring(path.lastIndexOf('/')+1);
+    if(Pattern.compile("(?i)s[0-9]+e[0-9]+[ -]*(?:e[0-9]+|s[0-9]+e[0-9]+)").matcher(path).find())return false;
     Matcher m = Pattern.compile("(?i)(?:^|[^a-z0-9])s(\\d{1,2})e(\\d{1,4})(?!\\d)").matcher(path);
     if (m.find())
       return Integer.parseInt(m.group(1)) == season && Integer.parseInt(m.group(2)) == episode;
@@ -25,6 +26,8 @@ final class EpisodeFiles {
     }
     return false;
   }
+
+  static boolean hasNumber(String name){String member=new java.io.File(name.replace('\\','/')).getName();return Pattern.compile("(?i)(?:s[0-9]{1,2}e[0-9]{1,4}|[0-9]{1,2}x[0-9]{1,4}| - [0-9]{1,4})").matcher(member).find();}
 
   static int select(
       List<String> paths,
@@ -40,8 +43,10 @@ final class EpisodeFiles {
       if (explicit >= paths.size() || !video(paths.get(explicit)))
         throw new IOException("Episode file index is invalid");
       if (!expectedName.isEmpty()
-          && !new java.io.File(paths.get(explicit)).getName().equals(expectedName))
+          && !new java.io.File(paths.get(explicit).replace('\\','/')).getName().equals(new java.io.File(expectedName.replace('\\','/')).getName()))
         throw new IOException("Episode file does not match the selected source");
+      boolean named=matches(paths.get(explicit),season,episode,absolute);
+      if(episodeRequest&&(!named&&hasNumber(paths.get(explicit))||!named&&paths.stream().filter(EpisodeFiles::video).count()>1))throw new IOException("Selected file does not identify the requested episode");
       return explicit;
     }
     List<Integer> videos = new ArrayList<>(), matched = new ArrayList<>();

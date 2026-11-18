@@ -49,7 +49,7 @@ function create(options={}){
   if(!all.length&&context.kitsuId>0&&context.kitsuEpisode>0)try{const doc=await get('https://torrentio.strem.fun/stream/series/kitsu:'+context.kitsuId+':'+context.kitsuEpisode+'.json',Math.min(deadline,Date.now()+4000));if(!Array.isArray(doc.streams))throw Error('Invalid index response');all.push(...require('./streamnest-episodes').parseStreams(doc));}catch(e){failure=e;}
   if(context.animeMapped===true&&season>0&&context.absolute>0&&context.streamnestSeriesTitle)try{all.push(...await anime(context.animeTitle||context.streamnestSeriesTitle,Object.assign({},context,{season,episode}),deadline));}catch(e){failure=e;}
   if(context.animeMapped!==true)try{all.push(...await series(id,season,episode,Math.min(deadline,Date.now()+6000)));}catch(e){failure=e;}
-  const unique=new Map();for(const s of all)if(!unique.has(key(s)))unique.set(key(s),s);
+  const unique=new Map();for(const s of all)if(require('./streamnest-source-policy').validSource(s,{...context,season,episode})&&!unique.has(key(s)))unique.set(key(s),s);
   if(!unique.size&&failure)throw Error('Source lookup incomplete. A provider is unavailable; retry source lookup.');
   return [...unique.values()];
  }

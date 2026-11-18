@@ -15,7 +15,7 @@ final class EztvEpisodes {
    if(!m.find()||Integer.parseInt(m.group(1))!=season||Integer.parseInt(m.group(2))!=episode||Pattern.compile("(?i)s[0-9]{1,2}e[0-9]{1,4}(?:e[0-9]|[-+]e?[0-9])").matcher(title).find()||quality.isEmpty()||!hash.matches("[a-f0-9]{40}")||row.optInt("seeds")<=0||!seen.add(hash))continue;
    String url="magnet:?xt=urn:btih:"+hash;
    try{java.net.URI old=new java.net.URI(row.optString("magnet_url"));String q=old.getRawSchemeSpecificPart();if("magnet".equals(old.getScheme())){int count=0;for(String part:q.replaceFirst("^\\?","").split("&"))if(part.startsWith("tr=")&&count++<12){String tracker=java.net.URLDecoder.decode(part.substring(3),"UTF-8");if(tracker.matches("(?:https?|udp)://[^\\s]+"))url+="&tr="+Net.q(tracker);}}}catch(Exception ignored){}
-   Catalog.Source source=new Catalog.Source(quality+" · EZTV"+(title.toLowerCase(Locale.ROOT).matches(".*(hevc|265|av1).*" )?" · HEVC/AV1":""),url,row.optInt("seeds"));result.add(source);
+   Catalog.Source source=new Catalog.Source(quality+" · EZTV"+(title.toLowerCase(Locale.ROOT).matches(".*(hevc|265|av1).*" )?" · HEVC/AV1":""),url,row.optInt("seeds"));source.release=title;result.add(source);
   }return result;
  }
  static void retry(){synchronized(scans){for(Scan scan:scans.values()){scan.pages.remove(1);scan.pages.remove(scan.lastPage);}}}

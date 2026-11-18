@@ -572,7 +572,7 @@
 
             require('./butter-provider/streamnest-diagnostics').attachPlayer(this.player,this.el,this.model);
             require('./butter-provider/streamnest-watching-activity').attachPlayer(this.player,this.el,this.model);
-            require('./butter-provider/streamnest-media-tracks').attach(this.player,this.el,this.model,window,Settings);
+            require('./butter-provider/streamnest-media-tracks').attach(this.player,this.el,this.model,window,Settings,{retry:()=>{const tm=this.model.get('torrentModel'),attrs=tm&&require('./butter-provider/streamnest-episodes').nextAttempt(tm.attributes);if(!attrs)return false;this.dontTouchFS=true;this.closePlayer();App.vent.trigger('stream:start',new Backbone.Model(attrs));return true;}});
             this.player.on('ended', this.onPlayerEnded.bind(this));
             this.player.one('play', this.onPlayerFirstPlay.bind(this));
             this.player.on('loadeddata', this.onPlayerReady.bind(this));

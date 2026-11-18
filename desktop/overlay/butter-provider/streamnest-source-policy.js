@@ -1,0 +1,8 @@
+'use strict';
+// Release names are ranking hints. Only exposed decoder tracks confirm audio availability.
+function text(s){return String([s.file,s.file_name,s.filename,s.title,s.release,s.label].filter(Boolean).join(' '));}
+function audio(s){const t=text(s).replace(/\bsubs?(?:titles?)?[ ._-]*(?:eng(?:lish)?|ita|jpn|kor)\b/ig,' '),bad=/\b(?:e-?ac-?3|ac-?3|ddp(?:a)?(?:[ .]?\d)?|ddpa|dd\+|dts(?:hd)?|truehd)\b/i.test(t),good=/\b(?:aac|opus|mp3|vorbis|flac|pcm)\b/i.test(t),english=/\b(?:eng|english)\b/i.test(t),foreign=/\b(?:ita|italian|rus|russian|french|fra|ger|german|spa|spanish)\b/i.test(t),englishBad=/(?:ddp|eac3|ac3|dts)[\w ._-]{0,18}\b(?:eng|english)\b/i.test(t);return {unsupported:bad&&(!good||englishBad),supported:good&&!englishBad,foreignOnly:foreign&&!english,english};}
+function score(s){const a=audio(s);return a.foreignOnly?3:a.unsupported?4:a.supported?0:1;}
+function episodeName(name,m){const member=String(name||'').replace(/\\/g,'/').split('/').pop();const matches=[...member.matchAll(/(?:^|[^a-z0-9])(?:s(\d{1,2})e(\d{1,4})|(\d{1,2})x(\d{1,4}))(?!\d)/gi)];if(matches.length)return matches.length===1&&Number(matches[0][1]||matches[0][3])===Number(m.season)&&Number(matches[0][2]||matches[0][4])===Number(m.episode)&&!/(?:s\d+e\d+|\d+x\d+)[ -]*(?:e\d+|s\d+e\d+)/i.test(member);const absolute=member.match(/\s-\s(\d{1,4})(?:v\d+)?(?=\s|\[|\(|\.)/);if(absolute&&m.absolute>0)return Number(absolute[1])===Number(m.absolute);return null;}
+function validSource(s,m){return episodeName(s.file||s.filename||s.file_name||String(s.title||s.release||'').split('\n')[0],m)!==false;}
+module.exports={audio,score,episodeName,validSource};

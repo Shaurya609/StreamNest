@@ -9,6 +9,7 @@ final class Catalog {
     int seeds;
     int fileIndex = -1;
     String filename = "";
+    String release = "";
 
     Source(String l, String u, int s) {
       label = l;

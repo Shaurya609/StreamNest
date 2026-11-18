@@ -54,7 +54,7 @@ final class AlternateEpisodes {
                       : codec.contains("265") || codec.contains("hevc") ? " · HEVC" : ""),
               magnet,
               seeds);
-      source.fileIndex = index;
+      source.fileIndex = index;source.release=title;
       JSONObject hints = row.optJSONObject("behaviorHints");
       if (hints != null) source.filename = new java.io.File(hints.optString("filename").replace((char)92,'/')).getName();
       out.add(source);
@@ -98,7 +98,7 @@ final class AlternateEpisodes {
                 .put("url", s.url)
                 .put("seeds", s.seeds)
                 .put("fileIndex", s.fileIndex)
-                .put("filename", s.filename));
+                .put("filename", s.filename).put("release",s.release));
       } catch (Exception ignored) {
       }
     return out.toString();
@@ -113,7 +113,7 @@ final class AlternateEpisodes {
         Catalog.Source s =
             new Catalog.Source(o.getString("label"), o.getString("url"), o.optInt("seeds"));
         s.fileIndex = o.optInt("fileIndex", -1);
-        s.filename = o.optString("filename");
+        s.filename = o.optString("filename");s.release=o.optString("release");
         out.add(s);
       }
     } catch (Exception ignored) {

@@ -43,7 +43,7 @@ final class PlaybackPlan {
     for (Catalog.Source source : sources)
       if (!exact.isEmpty() && episodeQuality(source).equals(exact)) matches.add(source);
     matches.sort(
-        Comparator.<Catalog.Source>comparingInt(
+        Comparator.<Catalog.Source>comparingInt(SourcePolicy::audioRank).thenComparingInt(
                 s -> lite && s.label.toLowerCase(Locale.ROOT).matches(".*(265|hevc|av1).*") ? 1 : 0)
             .thenComparing(Comparator.comparingInt((Catalog.Source s) -> s.seeds).reversed())
             .thenComparing(s -> s.url));
@@ -68,7 +68,7 @@ final class PlaybackPlan {
     return sources.stream()
         .filter(s -> quality(s).equals(quality))
         .sorted(
-            Comparator.<Catalog.Source>comparingInt(
+            Comparator.<Catalog.Source>comparingInt(SourcePolicy::audioRank).thenComparingInt(
                     s ->
                         lite
                                 && (s.label.toLowerCase(Locale.ROOT).contains("265")

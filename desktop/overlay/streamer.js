@@ -127,7 +127,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                 try {
                     const identity=model.get('imdb_id')+':'+model.get('season')+':'+model.get('episode');
                     if(!model.get('streamnestRetry')&&!model.get('streamnestPrepared')) {
-                        let rows=(model.get('streamnestSources')||[]).slice();
+                        let rows=(model.get('streamnestSources')||[]).filter(s=>require('./butter-provider/streamnest-source-policy').validSource(s,model.attributes));
                         if(!rows.length)rows=Object.values(model.get('torrents')||{}).filter(Boolean);
                         if(!rows.some(row=>row.fileIndex>=0))try{rows.push(...await StreamNestEpisodes.alternatives(model.get('imdb_id'),Number(model.get('season')),Number(model.get('episode')),model.attributes));}catch(e){}
                         if(this._runGeneration!==generation)return;

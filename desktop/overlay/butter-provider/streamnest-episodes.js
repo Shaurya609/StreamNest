@@ -8,6 +8,7 @@ const get = url=>require('./streamnest-resilience').metadata(url,value=>{
   return Array.isArray(value);
 });
 const path = require('path');
+const Policy=require('./streamnest-source-policy');
 const cache = new Map();
 const camera = name => /\b(cam|hdcam|camrip|telesync|hdts|tsrip)\b/i.test(name || '');
 function quality(value) {
@@ -20,7 +21,7 @@ function rank(rows, selected = 'Auto') {
   let remaining = rows.filter(s => s && s.url && !camera(s.title) && quality(s.quality || s.title));
   if (selected !== 'Auto' && selected !== 'All') remaining = remaining.filter(s => quality(s.quality || s.title) === selected);
   const order = ['1080p','720p','576p','480p','360p','SD','2160p'];
-  return remaining.slice().sort((a,b) => (Number(b.seed > 0) - Number(a.seed > 0)) ||
+  return remaining.slice().sort((a,b) => Policy.score(a)-Policy.score(b) || (Number(b.seed > 0) - Number(a.seed > 0)) ||
     order.indexOf(quality(a.quality || a.title)) - order.indexOf(quality(b.quality || b.title)) ||
     Number(/265|hevc|av1/i.test(a.title || '')) - Number(/265|hevc|av1/i.test(b.title || '')) ||
     (Number(b.seed) || 0) - (Number(a.seed) || 0));
@@ -133,17 +134,13 @@ function selectFile(files, model) {
   const index=model.fileIndex;
   if (Number.isInteger(index) && index>=0) {
     const file=files[index]; if (!file || !video(file.name)) throw Error('Invalid episode file index');
-    if (model.file_name && path.basename(file.path) !== model.file_name) throw Error('Episode filename mismatch');
+    if (model.file_name && path.basename(String(file.path).replace(/\\/g,'/')) !== path.basename(String(model.file_name).replace(/\\/g,'/'))) throw Error('Episode filename mismatch');
+    const match=Policy.episodeName(file.path||file.name,model);
+    if(match===false||match===null&&files.filter(f=>video(f.name)).length>1)throw Error('Selected file does not identify the requested episode');
     return index;
   }
   const videos=files.map((file,index)=>({file,index})).filter(x=>video(x.file.name));
-  const matched=videos.filter(({file})=>{
-    const member=path.basename(String(file.path).replace(/\\/g,'/'));
-    let m=member.match(/(?:^|[^a-z0-9])s(\d{1,2})e(\d{1,4})(?!\d)/i) || member.match(/(?:^|[^a-z0-9])(\d{1,2})x(\d{1,4})(?!\d)/i);
-    if (m) return Number(m[1])===Number(model.season) && Number(m[2])===Number(model.episode);
-    m=member.match(/\s-\s(\d{1,4})(?:v\d+)?(?=\s|\[|\(|\.)/);
-    return m && model.absolute>0 && Number(m[1])===Number(model.absolute);
-  });
+  const matched=videos.filter(({file})=>Policy.episodeName(file.path||file.name,model)===true);
   if (matched.length===1) return matched[0].index;
   if (!model.streamnestStrictEpisode&&!matched.length&&videos.length===1&&!/(?:^|[^a-z0-9])(?:s[0-9]{1,2}e[0-9]{1,4}|[0-9]{1,2}x[0-9]{1,4}|- \d{1,4})(?!\d)/i.test(videos[0].file.path)) return videos[0].index;
   throw Error('Cannot uniquely identify the requested episode in this pack');
@@ -153,7 +150,7 @@ function nextAttempt(attrs) {
   if(next>=candidates.length)return null;
   const source=candidates[next];
   return Object.assign({},attrs,{torrent:source.url,file_name:source.file||'',fileIndex:source.fileIndex,
-      streamnestAttempt:next,streamnestRetry:true});
+      quality:source.quality,streamnestFromBeginning:false,streamnestAttempt:next,streamnestRetry:true});
 }
 function compareId(a,b){const x=String(a).split(':').map(Number),y=String(b).split(':').map(Number);return (x[0]===0?9999:x[0])-(y[0]===0?9999:y[0])||x[1]-y[1];}
 function nextUnwatched(episodes,watched,mode){

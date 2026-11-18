@@ -20,7 +20,7 @@ final class EpisodeDiscovery {
     }catch(Exception e){failure=e;}
     if(row.optBoolean("animeMapped")&&row.optInt("season")>0&&row.optInt("absolute")>0&&!title.isBlank())try{all.addAll(anime.get(row.optString("animeTitle").isBlank()?title:row.optString("animeTitle"),row,deadline));}catch(Exception e){failure=e;}
     if(!row.optBoolean("animeMapped"))try{all.addAll(series.get(id,row.optInt("season"),row.optInt("episode"),Math.min(deadline,System.nanoTime()+6000000000L)));}catch(Exception e){failure=e;}
-    LinkedHashMap<String,Catalog.Source> unique=new LinkedHashMap<>();for(Catalog.Source s:all)unique.putIfAbsent(key(s),s);
+    LinkedHashMap<String,Catalog.Source> unique=new LinkedHashMap<>();for(Catalog.Source s:all)if(SourcePolicy.valid(s,row))unique.putIfAbsent(key(s),s);
     if(unique.isEmpty()&&failure!=null)throw new java.io.IOException("Source lookup incomplete. A provider could not be reached; tap to retry.",failure);
     return new ArrayList<>(unique.values());
   }

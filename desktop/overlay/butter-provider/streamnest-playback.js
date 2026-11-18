@@ -7,7 +7,7 @@ async function resolve(attrs,direction,lookup=E.alternatives){
  const row=neighbour(attrs,direction);if(!row)throw Error('No adjacent episode');if(future(row))throw Error('This episode has not aired yet');
  let lookupFailure;
  const sources=(row.streamnestSources||Object.values(row.torrents||{})).slice();try{sources.push(...await lookup(attrs.imdb_id,Number(row.season),Number(row.episode),Object.assign({},row,{streamnestSeriesTitle:attrs.streamnestSeriesTitle})));}catch(e){lookupFailure=e;}
- const quality=attrs.streamnestQuality||'Auto',ranked=E.rank(sources,quality),seen=new Set(),candidates=E.attempts(ranked,quality);
+ const quality=attrs.streamnestQuality||'Auto',ranked=E.rank(sources.filter(s=>require('./streamnest-source-policy').validSource(s,row)),quality),seen=new Set(),candidates=E.attempts(ranked,quality);
  if(!candidates.length)throw lookupFailure||Error('No matching source found. Try another quality or retry source lookup.');const source=candidates[0];
  return Object.assign({},row,{type:'episode',torrent:source.url,file_name:source.file||'',fileIndex:source.fileIndex,streamnestSources:candidates,streamnestCandidates:candidates,streamnestAttempt:0,streamnestRetry:false,streamnestQuality:quality,quality:source.quality,imdb_id:attrs.imdb_id,tvdb_id:attrs.tvdb_id,auto_id:row.season+':'+row.episode,auto_play_data:attrs.auto_play_data,episodes:attrs.episodes,auto_play:attrs.auto_play,streamnestFromBeginning:true,streamnestSeriesTitle:attrs.streamnestSeriesTitle,streamnestActivityKind:attrs.streamnestActivityKind,streamnestOriginalLanguage:attrs.streamnestOriginalLanguage,malId:row.skipMalId||row.malId||0});
 }

@@ -1,0 +1,5 @@
+'use strict';
+const fs=require('fs'),path=require('path'),cp=require('child_process');
+function available(App){return (App?.Device?.Collection?.models||[]).filter(d=>/^(VLC|mpv|mpvnet)$/i.test(String(d.id))&&typeof d.get('path')==='string'&&fs.existsSync(d.get('path'))&&/^(vlc|mpv|mpvnet)(\.exe)?$/i.test(path.basename(d.get('path'))));}
+function launch(device,src,position,subtitle,spawn=cp.spawn){if(!/^(VLC|mpv|mpvnet)$/i.test(String(device.id))||!/^(vlc|mpv|mpvnet)(\.exe)?$/i.test(path.basename(device.get('path'))))throw Error('Unsupported external player');const url=new URL(src);if(url.protocol!=='http:'||!['127.0.0.1','localhost','[::1]'].includes(url.hostname)||url.username||url.password)throw Error('External playback requires the local StreamNest stream');const vlc=/^VLC$/i.test(String(device.id)),at=Math.max(0,Number.isFinite(position)?position:0),args=vlc?['--no-video-title-show','--start-time='+at]:['--no-terminal','--start='+at];if(subtitle&&fs.existsSync(subtitle))args.push(vlc?'--sub-file='+subtitle:'--sub-file='+subtitle);args.push(url.href);return spawn(device.get('path'),args,{windowsHide:true,stdio:'ignore'});}
+module.exports={available,launch};
