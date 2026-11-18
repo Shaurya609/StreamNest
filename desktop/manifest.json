@@ -292,7 +292,7 @@
     },
     {
       "path": "butter-provider/streamnest-source-policy.js",
-      "sha256": "889638ca0a379f076ce58c4699d7080c8b1dfeaf2aa3d7513a945b1eb0c256ee"
+      "sha256": "eedf708d7777c5a9f3f98895f1431ac1b96f7a2e6592f16ea97a7bac8049b11c"
     },
     {
       "path": "butter-provider/streamnest-audio-check.js",

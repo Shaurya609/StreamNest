@@ -15,6 +15,8 @@ test('Auto deprioritizes unsupported English audio without treating subtitle lan
  assert.equal(P.audio({title:'AAC ITA DDP 5.1 ENG Sub.ENG'}).unsupported,true);
  assert.equal(P.audio({title:'AAC ITA Sub.ENG'}).english,false);
  assert.equal(P.audio({title:'DDPA5.1 H.264'}).unsupported,true);
+ assert.equal(P.audio({title:'DD5.1 H.264'}).unsupported,true);
+ assert.equal(P.audio({title:'DD+ H.264'}).unsupported,true);
  assert.equal(E.rank(sources,'720p').length,0);
 });
 test('audio detection distinguishes unsupported output from usable preferred audio',()=>{
