@@ -9,6 +9,8 @@
 - Further live metadata lookup returned62 Black Clover158 candidates (Alternative/Nyaa) and2 independently indexed Nyaa candidates for One Piece1000. This is discovery/file selection, not sustained media transfer. Native Windows countdown/disable/intro/credits seeks passed on decoded local video, including following scenes and integrated controls. One Piece later-page filler HTTP fetch hit its6s deadline; no live page11 success is claimed.
 - Owner closes original-phone status-bar issue; Cloudflare monitoring is not development backlog. Physical-projector ANR/startup retests and website remain separate work.
 
+- Release verification: source318c6fee59972458c2319008d9979f16fbcecdd4 passed Android CI44263356525 and Windows CI44263356523. Publisher44263476674 succeeded. Public v0.32.0 contains8 assets,712421876 bytes total, verified against GitHub digests and local SHA256 files. Packaged fallback, skip identity and Korean audio modules match source. Android applicationId app.streamnest/code45 retains signer SHA2561269337c400725a1db05ab7443b76d59c67f9165333d4e87118e1ca182d8b269. Signed-feed workflows44265296829/44265298801 succeeded; ordinary production manifest URL verified signature and returned Android0.32.0/code45 and Windows0.32.0. No production Android ADB installation or installed Windows replacement was used for these checks.
+
 ## 0.31.0 playback/startup optimization — 18 November 2026
 
 - 208 Android unit tests, lint and APK build pass; 158 desktop/catalog/backend tests pass.
