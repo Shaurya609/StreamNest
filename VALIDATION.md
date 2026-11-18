@@ -6,6 +6,8 @@
 - Disposable tablet: actual Home Remove button clears every stored episode timestamp, legacy read returns0, a stale incoming merge cannot restore Continue Watching and fresh playback resumes again. No production install or user history mutation was performed.
 - Native Windows Home: accessible separate Remove control, persisted JSON cleared, legacy position cleared, stale incoming merge rejected, fresh playback returns, keyboard focus/navigation preserved; existing Home layouts, search, progress bars, title/trailer and Up next checks pass.
 
+- Final source checks:211 Android unit tests plus lint/APK build;169 desktop/catalog/backend tests. Live Cloudflare round trip in a disposable encrypted scope: upload old episode, upload deletion, merge/upload an offline device’s stale copy, confirm a third read has no episode timestamp, then confirm new playback can return. DELETE cleanup succeeded and GET returned null. No owner/group credentials or real user histories were used. Repeatable probe: tools/verify-continue-removal.cjs.
+
 ## 0.32.0 content coverage — 18 November 2026
 
 - 210 Android unit tests, lint and APK build pass; 165 desktop/catalog/backend tests pass.
