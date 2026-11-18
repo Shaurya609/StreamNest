@@ -6,10 +6,10 @@ const attrs={type:'episode',imdb_id:'tt1',season:1,episode:1,torrent:'magnet:one
 const next={...attrs,episode:2,torrent:'magnet:two'};
 const full={ready:true,files:[{length:100,progress:1}]};
 const turn=()=>new Promise(r=>setImmediate(r));
-function harness(space=10**10){
+function harness(space=10**10,options={}){
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'streamnest-preload-')),clients=[],removed=[];
  class Client extends EventEmitter{constructor(){super();clients.push(this);}add(url,options,ready){this.dir=options.path;const file={name:'S01E02.mp4',path:'S01E02.mp4',length:100,progress:0.5,select(){this.selected=true;}};this.torrent=new EventEmitter();Object.assign(this.torrent,{pieces:[1,2],files:[file],deselect(){}});setImmediate(()=>ready(this.torrent));return this.torrent;}destroy(done){this.destroyed=true;setImmediate(done);}}
- const manager=P.create({Client,space:async()=>space,remove:dir=>removed.push(dir),resolve:async()=>next});
+ const manager=P.create({...options,Client,space:async()=>space,remove:dir=>removed.push(dir),resolve:async()=>next});
  return {root,clients,removed,manager,async cleanup(){await manager.cancel();fs.rmSync(root,{recursive:true,force:true});}};
 }
 test('preloading is opt-in and waits for a fully verified selected file',async()=>{const h=harness();try{
@@ -50,3 +50,5 @@ test('a second cancellation waits for an already closing preload before exit cle
   await turn();assert.equal(released,false);finish();await first;await second;assert.equal(released,true);
  }finally{await h.cleanup();}
 });
+
+test('late real preload closure releases its cache and permits another preload after a UI timeout',async()=>{const h=harness(10**10,{closeMs:15});try{h.manager.consider(attrs,full,0,true,h.root);await turn();await turn();let finish;h.clients[0].destroy=done=>{finish=done;};await assert.rejects(h.manager.cancel(),/still stopping/);assert.equal(h.removed.length,0);h.manager.consider(attrs,full,0,true,h.root);assert.equal(h.clients.length,1);finish();await turn();await turn();assert.equal(h.removed.length,1);h.manager.consider(attrs,full,0,true,h.root);await turn();await turn();assert.equal(h.clients.length,2);}finally{await h.cleanup();}});

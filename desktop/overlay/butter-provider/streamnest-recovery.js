@@ -3,7 +3,7 @@
 function create(defaultMs=6000){
  const pending=new Set();
  const bounded=(promise,ms)=>new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('Previous stream is still stopping. Its cache is protected; wait and try again.')),ms);promise.then(v=>{clearTimeout(timer);resolve(v);},e=>{clearTimeout(timer);reject(e);});});
- function track(operation,ms=defaultMs){let done;const item={};item.promise=new Promise((resolve,reject)=>{done=error=>{if(item.finished)return;item.finished=true;if(error){item.error=error;reject(error);}else{pending.delete(item);resolve();}};});pending.add(item);item.promise.catch(()=>{});try{operation(done);}catch(e){done(e);}const result=bounded(item.promise,ms);result.catch(()=>{});return result;}
+ function track(operation,ms=defaultMs){let done;const item={};item.promise=new Promise((resolve,reject)=>{done=error=>{if(item.finished)return;item.finished=true;if(error){item.error=error;reject(error);}else{pending.delete(item);resolve();}};});pending.add(item);item.promise.catch(()=>{});try{operation(done);}catch(e){done(e);}const result=bounded(item.promise,ms);result.completion=item.promise;result.catch(()=>{});return result;}
  function wait(ms=defaultMs){return bounded(Promise.all(Array.from(pending,item=>item.promise)),ms);}
  return {track,wait,get pending(){return pending.size;}};
 }

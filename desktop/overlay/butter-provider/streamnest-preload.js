@@ -23,9 +23,9 @@ function create(options={}){
  const resolve=options.resolve||((a,d)=>require('./streamnest-playback').resolve(a,d));
  const storage=options.space||space,erase=options.remove||remove;
  let slot=null,attempted='',retired=[],activeDir='',lastError='';const closing=new Set();
- const destroy=state=>{if(state.timer)clearInterval(state.timer);if(!state.client)return Promise.resolve();return require('./streamnest-recovery').track(done=>state.client.destroy(done));};
+ const destroy=state=>{if(state.timer)clearInterval(state.timer);if(!state.client)return Promise.resolve();return require('./streamnest-recovery').track(done=>state.client.destroy(done),options.closeMs||6000);};
  const discard=dir=>{if(!dir||dir===activeDir||slot&&slot.dir===dir)return;try{erase(dir);}catch(e){lastError='Episode cache cleanup will retry';}};
- async function cancel(keep=false){const state=slot;slot=null;attempted='';if(!state)return Promise.all(Array.from(closing,s=>s.closing));state.cancelled=true;state.closing=destroy(state).then(()=>{if(!keep)discard(state.dir);}).then(()=>closing.delete(state));closing.add(state);return state.closing;}
+ async function cancel(keep=false){const state=slot;slot=null;attempted='';if(!state)return Promise.all(Array.from(closing,s=>s.closing));state.cancelled=true;state.closing=destroy(state);closing.add(state);(state.closing.completion||state.closing).then(()=>{if(!keep)discard(state.dir);closing.delete(state);}).catch(()=>{});return state.closing;}
  function consider(a,torrent,index,enabled,base){
   if(!enabled){if(slot)cancel().catch(()=>{});return;}
   const file=torrent&&torrent.files&&torrent.files[index];
