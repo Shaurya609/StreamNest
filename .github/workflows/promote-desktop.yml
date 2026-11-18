@@ -1,0 +1,23 @@
+name: Copy verified desktop files to draft release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Matching published desktop preview and main draft version
+        required: true
+permissions:
+  contents: write
+jobs:
+  copy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify and copy assets to draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ inputs.version }}
+        run: python tools/releases/promote_desktop.py
