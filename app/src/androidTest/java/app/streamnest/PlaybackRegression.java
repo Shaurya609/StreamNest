@@ -55,6 +55,7 @@ public class PlaybackRegression extends Instrumentation {
     AnimePlaybackRegression.pauseStress=args!=null&&"true".equals(args.getString("pauseStress"));
     AnimePlaybackRegression.korean=args!=null&&"true".equals(args.getString("koreanTracks"));
     animePlayback=args!=null&&"true".equals(args.getString("animePlayback"));
+    if(args!=null&&"true".equals(args.getString("removeContinue"))){new Thread(()->{Bundle result=new Bundle();try{finish(Activity.RESULT_OK,RemoveContinueRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}}).start();return;}
     start();
   }
 

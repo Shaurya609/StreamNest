@@ -118,7 +118,7 @@ final class WatchSyncCrypto {
     for (Iterator<String> it = records.keys(); it.hasNext(); ) {
       String key = it.next();
       JSONObject row = records.optJSONObject(key);
-      if (!key.matches("(movie:tt[0-9]+|episode:tt[0-9]+:[0-9]+:[0-9]+)")
+      if (!key.matches("(movie:tt[0-9]+|episode:tt[0-9]+:[0-9]+:[0-9]+|removed:tt[0-9]+)")
           || row == null
           || !integer(row, "positionMs")
           || !integer(row, "durationMs")
@@ -127,7 +127,7 @@ final class WatchSyncCrypto {
           duration = row.getLong("durationMs"),
           updated = row.getLong("updatedAt");
       if (position < 0
-          || duration <= 0
+          || (key.startsWith("removed:") ? duration != 0 || position != 0 : duration <= 0)
           || position > duration
           || duration > 172800000
           || updated < 1
@@ -141,6 +141,7 @@ final class WatchSyncCrypto {
       if (Boolean.TRUE.equals(row.opt("completed"))) out.getJSONObject(key).put("completed", true);
       keys.add(key);
     }
+    for(String key:new ArrayList<>(keys)){JSONObject removed=out.optJSONObject("removed:"+key.split(":")[1]);if(!key.startsWith("removed:")&&removed!=null&&removed.getLong("updatedAt")>=out.getJSONObject(key).getLong("updatedAt")){out.remove(key);keys.remove(key);}}
     keys.sort(
         (a, b) ->
             Long.compare(

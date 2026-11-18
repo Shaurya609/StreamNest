@@ -13,7 +13,7 @@ final class HomeSync {
   static final Set<String> NAMES=new HashSet<>(Arrays.asList("Picked for you","Discover something new","Recently added","Movies","Series","Anime","Hindi picks","Korean picks"));
   static Map<String,Long> latest(JSONObject history)throws Exception{
     Map<String,Long> result=new HashMap<>();JSONObject clean=WatchSyncCrypto.clean(history);
-    for(Iterator<String> it=clean.keys();it.hasNext();){String key=it.next(),id=key.split(":")[1];result.put(id,Math.max(result.getOrDefault(id,0L),clean.getJSONObject(key).getLong("updatedAt")));}return result;
+    for(Iterator<String> it=clean.keys();it.hasNext();){String key=it.next();if(key.startsWith("removed:"))continue;String id=key.split(":")[1];result.put(id,Math.max(result.getOrDefault(id,0L),clean.getJSONObject(key).getLong("updatedAt")));}return result;
   }
   static JSONObject union(JSONObject history,JSONObject previous)throws Exception{
     Map<String,Long> times=latest(history);if(previous!=null)for(Iterator<String> it=previous.keys();it.hasNext();){String id=it.next();times.put(id,Math.max(times.getOrDefault(id,0L),previous.optLong(id)));}

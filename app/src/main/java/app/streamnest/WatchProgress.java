@@ -32,6 +32,7 @@ final class WatchProgress {
 
   static synchronized long read(Context c, String key, long legacy) {
     Object value = c.getSharedPreferences(preferenceName, 0).getAll().get(key);
+    try{String marker=c.getSharedPreferences(preferenceName,0).getString("removed:"+key.split(":")[1],null);if(marker!=null){JSONObject removed=new JSONObject(marker),row=value instanceof String?new JSONObject((String)value):null;if(row==null||removed.optLong("updatedAt")>=row.optLong("updatedAt"))return 0;}}catch(Exception ignored){}
     try {
       if (value instanceof String) {
         JSONObject row = new JSONObject((String) value);
@@ -66,6 +67,13 @@ final class WatchProgress {
     }
   }
 
+  static synchronized void removeTitle(Context c,String imdb)throws Exception{
+    if(!imdb.matches("tt[0-9]+"))throw new IllegalArgumentException("Invalid title");
+    long clock=Math.max(System.currentTimeMillis(),c.getSharedPreferences(preferenceName,0).getLong("_clock",0)+1);JSONObject rows=records(c);
+    for(Iterator<String> it=rows.keys();it.hasNext();)clock=Math.max(clock,rows.getJSONObject(it.next()).getLong("updatedAt")+1);
+    merge(c,new JSONObject().put("removed:"+imdb,new JSONObject().put("positionMs",0).put("durationMs",0).put("updatedAt",clock)));WatchSync.request(c,true);
+  }
+
   static synchronized JSONObject records(Context c) throws Exception {
     JSONObject out = new JSONObject();
     for (Map.Entry<String, ?> entry : c.getSharedPreferences(preferenceName, 0).getAll().entrySet())
@@ -80,6 +88,7 @@ final class WatchProgress {
   static synchronized void merge(Context c, JSONObject incoming) throws Exception {
     JSONObject merged = WatchSyncCrypto.merge(records(c), incoming);
     SharedPreferences.Editor edit = c.getSharedPreferences(preferenceName, 0).edit();
+    for(String key:c.getSharedPreferences(preferenceName,0).getAll().keySet())if(key.matches("(movie|episode|removed):tt[0-9]+.*")&&!merged.has(key))edit.remove(key);
     long observed = c.getSharedPreferences(preferenceName, 0).getLong("_clock", 0);
     for (Iterator<String> it = merged.keys(); it.hasNext(); ) {
       String key = it.next();

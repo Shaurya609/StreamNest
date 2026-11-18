@@ -71,4 +71,11 @@ public class WatchProgressTest {
     assertEquals(
         0, WatchSyncCrypto.merge(old, rewind).getJSONObject("movie:tt123").getLong("positionMs"));
   }
+  @Test public void titleRemovalSurvivesStaleMergeAndNewPlaybackRestarts()throws Exception{
+    JSONObject old=new JSONObject().put("episode:tt123:1:1",new JSONObject().put("positionMs",12000).put("durationMs",120000).put("updatedAt",100)).put("episode:tt123:2:3",new JSONObject().put("positionMs",20000).put("durationMs",120000).put("updatedAt",200));
+    JSONObject removed=new JSONObject().put("removed:tt123",new JSONObject().put("positionMs",0).put("durationMs",0).put("updatedAt",300));
+    for(JSONObject result:new JSONObject[]{WatchSyncCrypto.merge(old,removed),WatchSyncCrypto.merge(removed,old)}){assertFalse(result.has("episode:tt123:1:1"));assertFalse(result.has("episode:tt123:2:3"));assertTrue(result.has("removed:tt123"));String code=WatchSyncCrypto.create();assertEquals(result.toString(),WatchSyncCrypto.open(code,WatchSyncCrypto.seal(code,result)).toString());}
+    assertTrue(HomeSync.latest(removed).isEmpty());
+    old.getJSONObject("episode:tt123:1:1").put("updatedAt",301);assertTrue(WatchSyncCrypto.merge(removed,old).has("episode:tt123:1:1"));
+  }
 }

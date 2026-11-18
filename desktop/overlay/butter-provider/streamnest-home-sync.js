@@ -5,10 +5,10 @@ const NAMES=['Picked for you','Discover something new','Recently added','Movies'
 let revision=0;
 function createGate(){let lastScope='',lastSignature='',lastAt=0;return(scope,signature,now)=>{if(scope===lastScope&&signature===lastSignature&&now-lastAt<60000)return false;lastScope=scope;lastSignature=signature;lastAt=now;return true;};}
 const shouldPoll=createGate();
-function watched(history,previous={}){const result={...previous};for(const [key,p]of Object.entries(C.clean(history))){const id=key.split(':')[1];result[id]=Math.max(result[id]||0,p.updatedAt);}return Object.fromEntries(Object.entries(result).sort((a,b)=>b[1]-a[1]||(a[0]<b[0]?-1:1)).slice(0,500));}
+function watched(history,previous={}){const result={...previous};for(const [key,p]of Object.entries(C.clean(history))){if(key.startsWith('removed:'))continue;const id=key.split(':')[1];result[id]=Math.max(result[id]||0,p.updatedAt);}return Object.fromEntries(Object.entries(result).sort((a,b)=>b[1]-a[1]||(a[0]<b[0]?-1:1)).slice(0,500));}
 function asHistory(watched){return Object.fromEntries(Object.entries(watched).map(([id,time])=>['movie:'+id,{positionMs:10000,durationMs:120000,updatedAt:time}]));}
 function signature(history){
- const latest=new Map();for(const [key,p] of Object.entries(C.clean(history))){const id=key.split(':')[1];latest.set(id,Math.max(latest.get(id)||0,p.updatedAt));}
+ const latest=new Map();for(const [key,p] of Object.entries(C.clean(history))){if(key.startsWith('removed:'))continue;const id=key.split(':')[1];latest.set(id,Math.max(latest.get(id)||0,p.updatedAt));}
  return crypto.createHash('sha256').update(JSON.stringify([...latest.keys()].sort((a,b)=>latest.get(b)-latest.get(a)||(a<b?-1:a>b?1:0)))).digest('hex');
 }
 function metadata(t){
@@ -30,7 +30,7 @@ function create(pool,history,previous,now=Date.now(),manual={}){
  history=asHistory(watched(history,previous&&previous.watched));
  const H=require('./streamnest-home'),merged=new Map();for(const t of pool){const old=merged.get(H.id(t));if(!old||old.kind!=='animes'||t.kind==='animes')merged.set(H.id(t),t);}for(const t of Object.values(previous&&previous.titles||{}))merged.set(t.imdb,{...merged.get(t.imdb),...t});
  const titles={},rows=H.build([...merged.values()],history,12,manual).slice(1).map(row=>({name:row.name,ids:row.cards.map(c=>{const m=metadata(c.title);if(m)titles[m.imdb]=m;return m&&m.imdb;}).filter(Boolean)}));
- const latest=new Map();for(const [key,p]of Object.entries(C.clean(history))){const id=key.split(':')[1];latest.set(id,Math.max(latest.get(id)||0,p.updatedAt));}
+ const latest=new Map();for(const [key,p]of Object.entries(C.clean(history))){if(key.startsWith('removed:'))continue;const id=key.split(':')[1];latest.set(id,Math.max(latest.get(id)||0,p.updatedAt));}
  for(const id of [...latest.keys()].sort((a,b)=>latest.get(b)-latest.get(a)||(a<b?-1:1)).slice(0,50)){const m=metadata(merged.get(id)||{});if(m)titles[id]=m;}
  return clean({schema:1,history:signature(history),createdAt:now,rows,titles,watched:watched(history),manual:require('./streamnest-manual-watched').signature(manual)});
 }

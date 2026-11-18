@@ -44,7 +44,7 @@ final class HomeLibrary {
   Map<String,Catalog.Title> known=new HashMap<>();for(Catalog.Title t:pool){Catalog.Title old=known.get(t.id);if(old==null||!old.kind.equals("animes")||t.kind.equals("animes"))known.put(t.id,t);}
   List<String> keys=new ArrayList<>();for(Iterator<String> it=history.keys();it.hasNext();)keys.add(it.next());keys.sort((a,b)->Long.compare(history.optJSONObject(b).optLong("updatedAt"),history.optJSONObject(a).optLong("updatedAt")));
   Set<String> seen=new HashSet<>();int attempts=0;
-  for(String key:keys){String[] parts=key.split(":");if(parts.length<2||!parts[1].matches("tt[0-9]+")||!seen.add(parts[1]))continue;Catalog.Title existing=known.get(parts[1]);boolean next=parts[0].equals("episode")&&history.getJSONObject(key).optBoolean("completed");
+  for(String key:keys){String[] parts=key.split(":");if(!(parts[0].equals("movie")||parts[0].equals("episode"))||parts.length<2||!parts[1].matches("tt[0-9]+")||!seen.add(parts[1]))continue;Catalog.Title existing=known.get(parts[1]);boolean next=parts[0].equals("episode")&&history.getJSONObject(key).optBoolean("completed");
    if(existing!=null&&(!next||System.currentTimeMillis()-existing.raw.optLong("homeEpisodeOrderAt")<7200000))continue;if(attempts++>=4)break;
    if(Thread.currentThread().isInterrupted())throw new InterruptedException();
    try{String type=parts[0].equals("movie")?"movie":"series";JSONObject meta=CatalogHttp.object("https://v3-cinemeta.strem.io/meta/"+type+"/"+parts[1]+".json",null).getJSONObject("meta");if(!parts[1].equals(meta.optString("imdb_id",meta.optString("id"))))continue;

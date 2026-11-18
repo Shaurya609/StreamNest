@@ -1,3 +1,11 @@
+## 0.33.0 group-wide Continue Watching removal — 18 November 2026
+
+- Android/TV and Windows Home cards expose a separate × Remove button with an accessible title-specific label describing all synced devices. Desktop action is a sibling of the title button; wrapping preserves card geometry and directional navigation. Android button is focusable for TV remotes.
+- Removal writes an encrypted title-wide zero-time deletion marker; merge removes all older/equal movie and episode records for that IMDb title. Unrelated progress is retained. Explicit newer playback can create fresh resume state. Legacy fallback timestamps are overridden. Markers are not treated as Watched events or used for artwork enrichment/recommendation affinity. Existing history bounds and timestamp/ID validation apply.
+- Unit cases cover merge order, stale offline episodes, equal-time deletion, encrypted round trips, invalid markers, independent titles, fresh playback and movie/series/anime Home removal. Normal sync encrypts and uploads markers in the existing history payload; connected devices receive on their normal sync and offline devices after reconnecting. All group devices need0.33.0 support; old clients do not understand the extension.
+- Disposable tablet: actual Home Remove button clears every stored episode timestamp, legacy read returns0, a stale incoming merge cannot restore Continue Watching and fresh playback resumes again. No production install or user history mutation was performed.
+- Native Windows Home: accessible separate Remove control, persisted JSON cleared, legacy position cleared, stale incoming merge rejected, fresh playback returns, keyboard focus/navigation preserved; existing Home layouts, search, progress bars, title/trailer and Up next checks pass.
+
 ## 0.32.0 content coverage — 18 November 2026
 
 - 210 Android unit tests, lint and APK build pass; 165 desktop/catalog/backend tests pass.
