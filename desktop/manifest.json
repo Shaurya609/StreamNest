@@ -272,7 +272,7 @@
     },
     {
       "path": "butter-provider/streamnest-diagnostics.js",
-      "sha256": "2dee79a3c955f38452e0f0dbd1db2e3756476338b4a5694060272b38f0c29be8"
+      "sha256": "9e743dc54f684994b8c5235a0658ba1da784b780e71afb75770d13f15cc92dfd"
     },
     {
       "path": "butter-provider/streamnest-watching-activity.js",
