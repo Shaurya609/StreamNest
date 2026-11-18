@@ -152,14 +152,15 @@ public class PlayerActivity extends Activity {
             "Pause",
             buttons,
             () -> {
-              if (player.isPlaying()) {
+              // Buffering/opening may report not-playing: follow the user's intent instead.
+              if (!userPaused) {
                 userPaused = true;
-                player.pause();
+                if (mediaSet) player.pause();
                 pause.setImageResource(R.drawable.ic_play);
                 pause.setContentDescription("Play");
               } else {
                 userPaused = false;
-                player.play();
+                if (mediaSet) player.play();
                 pause.setImageResource(R.drawable.ic_pause);
                 pause.setContentDescription("Pause");
               }
@@ -230,6 +231,7 @@ public class PlayerActivity extends Activity {
             if(waiting&&!diagnosticBuffering)Diagnostics.event("player.buffering");
             diagnosticBuffering=waiting;
           }
+          if (e.type == MediaPlayer.Event.Playing && userPaused) { player.pause(); return; }
           if (e.type == MediaPlayer.Event.Playing) Diagnostics.event("player.resumed");
           if (e.type == MediaPlayer.Event.Paused) {Diagnostics.event("player.paused");WatchingActivity.report(this,"paused");}
           if (e.type == MediaPlayer.Event.EndReached) {Diagnostics.event("player.ended");WatchingActivity.report(this,"stopped");}
@@ -915,7 +917,7 @@ public class PlayerActivity extends Activity {
                             ? "Source " + (attempt + 1) + "/" + alternatives.size() + " · "
                             : "")
                         + e.status());
-            if (e.url != null && !mediaSet && viewsAttached && hasWindowFocus()) {
+            if (e.url != null && !mediaSet && !userPaused && viewsAttached && hasWindowFocus()) {
               Media media = new Media(vlc, Uri.parse(e.url));
               media.addOption(":http-proxy=");
               if (DeviceProfile.lite(PlayerActivity.this)) media.addOption(":avcodec-threads=2");

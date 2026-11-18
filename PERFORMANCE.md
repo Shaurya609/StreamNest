@@ -2,6 +2,8 @@
 
 ## Changes
 
+- Pause follows explicit user intent even when the decoder reports not-playing during startup/buffering. A late Playing event is paused again, and ready media does not auto-open until the user resumes. The torrent service remains running.
+
 - Android video HTTP reads schedule the forward piece-deadline window on piece transitions, rather than on every small read. Seeking/new requests still establish their own window. Waiting for missing pieces uses monotonic time and observes stream closure across threads.
 - Completion and integrity checks run on the engine worker. UI/preload checks read a volatile verified result instead of making synchronous native torrent calls. Downloading continues while video is paused.
 - Low Memory playback trimming no longer acquires the series-index monitor on the UI thread. Initial movie-index loading is deferred to the background catalog path, and setup does not acquire its network-held monitor.

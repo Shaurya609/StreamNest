@@ -2,6 +2,7 @@
 
 Android playback/startup optimization and lighter desktop sync.
 
+- Respect Pause during buffering/startup; continue downloading without unexpectedly starting video.
 - Reduce repeated torrent piece-deadline updates; keep native completion checks off the player UI thread.
 - Avoid Low Memory player startup waiting for a catalog network lock. Defer movie-index loading, release rebuildable background metadata and cache stable device-profile detection.
 - Move expensive memory sampling off the player UI. Keep pause-to-download behavior, preload, cache cleanup, subtitles, resume and sync.
