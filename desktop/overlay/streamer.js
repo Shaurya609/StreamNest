@@ -115,7 +115,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
             if(state==='preload')return; // Never evict the currently playing episode for prefetch.
             if(this.torrentModel && !this.stopped)this.stop();
             const generation=(this._runGeneration||0)+1;this._runGeneration=generation;
-            try{await require('./butter-provider/streamnest-recovery').wait();}catch(error){if(this._runGeneration===generation){this.setModels(model,state);this.stateModel.set({state:'error',error:error.message});}return;}
+            try{await require('./butter-provider/streamnest-recovery').wait();}catch(error){if(this._runGeneration===generation){require('./butter-provider/streamnest-diagnostics').failure('torrent.failed','torrent','startup',error);this.setModels(model,state);this.stateModel.set({state:'error',error:error.message});}return;}
             if(this._runGeneration!==generation)return;
 
             if (App.WebTorrent.destroyed) {
@@ -187,19 +187,20 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                 this.torrent = null;
                 return this.createFileServer(fileForServer).then(() => { App.vent.trigger('system:openFileSelector', this.streamInfo); });
             }
+            this._startupStage='metadata';this.armRecovery(generation);
             if(typeof this.torrentModel.get('torrent')==='string')this.torrentModel.set('streamnestSourceUri',this.torrentModel.get('torrent'));
             if (!this.downloadOnly && !this.preload) {
                 this.fetchTorrent(this.torrentModel.get('torrent'), location, model.get('title')).then(function (torrent) {
                     if(this._runGeneration!==generation||this.stopped)throw Error('Cancelled');
                     torrent.streamnestEpisode=model.get('streamnestEpisode');
-                    this.torrentModel.set('torrent', this.torrent = torrent);
+                    this.pendingTorrent=null;this.torrentModel.set('torrent', this.torrent = torrent);
                     this.linkTransferStatus();
                     this.handleTorrent(torrent);
                     this.handleStreamInfo();
                     this.watchState();
                     this.saveCoverToFile(location);
-                    return this.createServer();
-                }.bind(this)).then(url=>{if(this._runGeneration===generation&&!this.stopped)return this.waitForBuffer(url);}).catch(error=>{if(this._runGeneration===generation)this.handleErrors(error);});
+                    this._startupStage='server';return this.createServer();
+                }.bind(this)).then(url=>{if(this._runGeneration===generation&&!this.stopped){this._startupStage='buffer';return this.waitForBuffer(url);}}).catch(error=>{if(this._runGeneration===generation)this.handleErrors(error);});
             } else {
                 this.fetchTorrent(this.torrentModel.get('torrent'), location, model.get('title')).then(function (torrent) {
                     this.torrentModel.set('torrent', torrent);
@@ -213,6 +214,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
         stop: function() {
             this._runGeneration=(this._runGeneration||0)+1;
             clearInterval(this._sourceRecovery);this._sourceRecovery=null;
+            this._pendingFetchCancel?.();this._pendingFetchCancel=null;for(const cleanup of this._torrentListeners||[])cleanup();this._torrentListeners=[];
             if(this.pendingTorrent && this.pendingTorrent!==this.torrent) {
                 const pending=this.pendingTorrent;this.pendingTorrent=null;
                 App.streamnestStop=require('./butter-provider/streamnest-recovery').track(done=>pending.destroy(done));
@@ -339,6 +341,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
 
         handleErrors: function (reason) {
             if (!this.stopped) {
+                require('./butter-provider/streamnest-diagnostics').failure('torrent.failed','torrent','startup',reason);
                 win.error(reason);
                 if(this.retrySource())return;
                 if(this.stateModel)this.stateModel.set({state:'error',error:String(reason.message||reason)});
@@ -359,82 +362,49 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
             const started=Date.now();let lastProgress=started,received=0;
             this._sourceRecovery=setInterval(()=>{
                 if(this._runGeneration!==generation||this.stopped||this.canPlay){clearInterval(this._sourceRecovery);return;}
-                const progress=this.torrent ? this.torrent.downloaded||0 : 0;
+                const current=this.torrent||this.pendingTorrent,progress=current?current.downloaded||0:0;
+                if(Date.now()-started<2000||Date.now()-(this._startupSampleAt||0)>=15000){this._startupSampleAt=Date.now();require('./butter-provider/streamnest-diagnostics').event('torrent.stage',{stage:this._startupStage||'metadata',elapsedMs:Date.now()-started,peers:Math.max(0,current?.numPeers||0),downloadKbps:Math.max(0,Math.round((current?.downloadSpeed||0)/1024)),attempt:Number(this.torrentModel?.get('streamnestAttempt'))||0});}
                 if(progress>received){received=progress;lastProgress=Date.now();}
                 if(Date.now()-lastProgress>=45000||Date.now()-started>=180000){
+                    require('./butter-provider/streamnest-diagnostics').event('torrent.stalled',{stage:this._startupStage||'metadata',operation:'startup',reason:'timeout',elapsedMs:Date.now()-started},'warn');
                     if(!this.retrySource()){const failed=this.stateModel;this.stop();if(failed)failed.set({state:'error',error:'No active source found. Return to details and change quality.'});}
                 }
             },1000);
         },
 
         // fire webtorrent and resolve the torrent
-        fetchTorrent: function(torrentInfo, path, mediaName) {
-            return new Promise(function (resolve, reject) {
-
-                // handles magnet and hosted torrents
-                var uri = torrentInfo.magnet || torrentInfo.url || torrentInfo;
-                const generation=this._runGeneration;
-                const parseTorrent = require('parse-torrent');
-                var infoHash = '';
-                try { infoHash = parseTorrent(uri).infoHash; } catch (err) {}
-                var torrent;
-
-                App.plugins.mediaName.setMediaName(infoHash, mediaName);
-
-                for(const t of App.WebTorrent.torrents) {
-                    if (t.infoHash === infoHash) {
-                        torrent = t;
-                        torrent.resume();
-                        if (torrent.pctRemovedPeers) {
-                            const peers = torrent.pctRemovedPeers;
-                            torrent.pctRemovedPeers = undefined;
-                            for (let peer of peers) {
-                                if (peer) {
-                                    torrent.addPeer(peer);
-                                }
-                            }
-                        }
-                        resolve(torrent);
-                    }
-                }
-
-                if (!torrent) {
-                  torrent = App.WebTorrent.add(uri, {
-                      path      : path,
-                      maxConns  : 10,
-                      dht       : { concurrency: parseInt(Settings.maxUdpReqLimit, 10) || 16 },
-                      secure    : Settings.protocolEncryption || false,
-                      announce  : Settings.trackers.forced,
-                      tracker   : Settings.trackers.forced
-                  });
-                }
-
-                this.pendingTorrent=torrent;
-                const fs = require('fs');
-                fs.mkdirSync(require('path').join(path,'TorrentCache'),{recursive:true});
-                fs.writeFileSync(path + '/TorrentCache/' + torrent.infoHash, uri);
-
-                torrent.on('metadata', function () {
-                    if(this.stopped||this._runGeneration!==generation){reject(Error('Cancelled'));return;}
-                    this.pendingTorrent=null;
-                    // deselect files, webtorrent api
-                    // as of november 2016, need to remove all torrent,
-                    //  then add wanted file, it's a bug: https://github.com/feross/webtorrent/issues/164
-                    torrent.deselect(0, torrent.pieces.length - 1, false); // Remove default selection (whole torrent)
-
-                    resolve(torrent);
-                }.bind(this));
-
-                torrent.on('error', function(error){
-                    if(this._runGeneration===generation)reject(error);
-                }.bind(this));
-
-                App.WebTorrent.on('error', function (error) {
-                    win.error('WebTorrent fatal error', error);
-                    this.stop();
-                    reject(error);
-                }.bind(this));
-            }.bind(this));
+        fetchTorrent: function(torrentInfo, location, mediaName) {
+            const generation=this._runGeneration,client=App.WebTorrent,fs=require('fs');
+            return new Promise((resolve,reject)=>{
+                const uri=torrentInfo&&(torrentInfo.magnet||torrentInfo.url||torrentInfo);
+                if(typeof uri!=='string'||!uri){reject(Error('No torrent source supplied'));return;}
+                let hash='';try{hash=require('parse-torrent')(uri).infoHash;}catch(_){}
+                App.plugins.mediaName.setMediaName(hash,mediaName);
+                let torrent=hash&&client.torrents.find(t=>t.infoHash===hash),settled=false;
+                const current=()=>this._runGeneration===generation&&(!this.stopped||this.downloadOnly||this.preload);
+                const cleanup=()=>{torrent?.removeListener('metadata',ready);if(this._pendingFetchCancel===cancel)this._pendingFetchCancel=null;};
+                const finish=(error)=>{if(settled)return;settled=true;cleanup();error?reject(error):resolve(torrent);};
+                const cancel=()=>finish(Error('Cancelled'));
+                const failed=error=>{if(!current())return;if(!settled)finish(error);else require('./butter-provider/streamnest-diagnostics').failure('torrent.failed','torrent','playback',error);};
+                const ready=()=>{
+                    if(!current()){cancel();return;}
+                    try{
+                        torrent.deselect(0,torrent.pieces.length-1,false);
+                        const cache=require('path').join(location,'TorrentCache');fs.mkdirSync(cache,{recursive:true});
+                        fs.writeFileSync(require('path').join(cache,torrent.infoHash),uri);
+                        finish();
+                    }catch(error){finish(error);}
+                };
+                try{
+                    if(torrent){torrent.resume();for(const peer of torrent.pctRemovedPeers||[])if(peer)torrent.addPeer(peer);torrent.pctRemovedPeers=undefined;}
+                    else torrent=client.add(uri,{path:location,maxConns:10,dht:{concurrency:parseInt(Settings.maxUdpReqLimit,10)||16},secure:Settings.protocolEncryption||false,announce:Settings.trackers.forced,tracker:Settings.trackers.forced});
+                    this.pendingTorrent=torrent;this._pendingFetchCancel=cancel;
+                    torrent.on('error',failed);client.on('error',failed);
+                    (this._torrentListeners||(this._torrentListeners=[])).push(()=>{cleanup();torrent.removeListener('error',failed);client.removeListener('error',failed);});
+                    torrent.once('metadata',ready);
+                    if(torrent.metadata||torrent.ready)ready();
+                }catch(error){finish(error);}
+            });
         },
 
         linkTransferStatus: function () {

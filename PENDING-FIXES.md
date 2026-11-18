@@ -1,5 +1,7 @@
 # Current reliability cycle
 
+0.36.2 follow-up arms the missing Windows source-startup watchdog, waits for reused-torrent metadata, guards disposed player controls and reduces optional metadata404 retry noise. Actual TheBeast startup/normal buffered-recovery confirmation is still pending.
+
 0.36.1 adds bounded Windows buffered-stall recovery and compatibility-audio pause/seek/buffering coordination. The observed TheBeast S1E1 stall is addressed through same-source, same-cache reopening with saved position, not an assertion that its original decoder interruption is fully explained. Physical TheBeast confirmation remains pending; its current playback is not interrupted.
 
 0.36.0 addresses the reported 0.34.0 episode-selection freeze with compiled release matching, linear source selection and background playback planning. A tablet 2,000-source comparison measured 8,110 ms before versus 224 ms after, with the same selected source; title-dialog launch handled the click in 1 ms. It also adds Windows missing-audio decoding and embedded text subtitle extraction/display. Real Last of Us English E-AC-3 audio and Black Clover English embedded subtitle playback passed in an isolated Windows profile. Physical-projector/USB confirmation remains pending.

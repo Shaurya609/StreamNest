@@ -1,3 +1,11 @@
+## 0.36.2 Windows startup follow-up — 19 November 2026
+
+- TheBeast0.36.1 reports repeated startup requests without a player-open event. Source audit confirms the startup watchdog was defined but never armed. It now starts before metadata fetch; no-progress timeout45s and total attempt timeout180s retain existing candidate/cache rules. Stage/peer/rate reports distinguish metadata, local server and video buffer.
+- Reused torrents wait for metadata; warm metadata needs no new event. Cancellation settles pending fetches and removes attempt-owned listeners. Regression tests cover the real start path, hung metadata, existing metadata and retry bounds.
+- A queued play animation reproduced the unsafe disposed-control access in a regression harness. Close is now idempotent, animation queues are stopped and delayed handlers decline disposed views. The historical TheBeast TypeError has no source stack; equivalence to this defect is not claimed.
+- Optional Home/artwork lookup404s return no metadata, use bounded five-minute negative caching and share in-flight requests. Required404s and other failures still surface; allowlisted provider names reach diagnostics without URLs, queries or titles. Tests cover404 deduplication, required failures and503 reporting.
+- 210 desktop/catalog/backend tests passed; Android unit/lint/build passed with version-only changes. Real-content startup fallback, packaged release and physical TheBeast confirmation remain pending.
+
 ## 0.36.1 buffered Windows playback recovery — 19 November 2026
 
 - 200 desktop/catalog/backend tests pass; 225 Android unit tests plus lint and build pass (Android version alignment only).

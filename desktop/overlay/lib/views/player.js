@@ -196,6 +196,7 @@
         },
 
         closePlayer: function () {
+            if(this._streamnestClosing||this.isDestroyed())return;this._streamnestClosing=true;
             const active=this.model.get('torrentModel');
             if(active)require('./butter-provider/streamnest-preload').retire(active.attributes,active.get('torrent'),App.WebTorrent);
             win.info('Player closed');
@@ -366,6 +367,7 @@
         },
 
         onPlayerPlay: function () {
+            if(this._streamnestClosing||this.isDestroyed())return;
             this._progressEnded=false;
             // Trigger a resize so the subtitles are adjusted
             $(window).trigger('resize');
@@ -388,6 +390,7 @@
                 this.ui.pause.hide().dequeue().css('transform', 'scale(1)');
                 this.ui.play.appendTo('div#video_player');
                 this.ui.play.show().delay(50).queue(function () {
+                    if(this._streamnestClosing||this.isDestroyed())return;
                     this.ui.play.css('transform', 'scale(1.8)').fadeOut(400).dequeue();
                 }.bind(this));
                 this.ui.maxPlayCtrlIcon.removeClass('fa-play').addClass('fa-pause');
@@ -398,6 +401,7 @@
         },
 
         onPlayerPause: function () {
+            if(this._streamnestClosing||this.isDestroyed())return;
             this.persistProgress(false);require('./butter-provider/streamnest-sync').request(true);
             if (this.player.scrubbing) {
                 this.wasSeek = true;
@@ -406,6 +410,7 @@
                 try { this.ui.play.hide().dequeue().css('transform', 'scale(1)'); } catch (error) {}
                 try { this.ui.pause.appendTo('div#video_player'); } catch (error) {}
                 try { this.ui.pause.show().delay(50).queue(function () {
+                    if(this._streamnestClosing||this.isDestroyed())return;
                     this.ui.pause.css('transform', 'scale(1.8)').fadeOut(400).dequeue();
                 }.bind(this)); } catch (error) {}
                 try { this.ui.maxPlayCtrlIcon.removeClass('fa-pause').addClass('fa-play'); } catch (error) {}
@@ -1334,6 +1339,7 @@
         },
 
         onBeforeDestroy: function () {
+            this._streamnestClosing=true;
             if(this._StreamNestTimer)clearInterval(this._StreamNestTimer);
             if (this.model.get('type') === 'video/youtube') { // XXX Sammuel86 Trailer UI Show FIX/HACK -START
                 $('.trailer_mouse_catch').remove();
