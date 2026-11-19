@@ -1,3 +1,5 @@
+> Current open work is separated into **Owner backlog** (owner tests) and **Developer backlog** (investigation, fixes and features) in [BACKLOG.md](BACKLOG.md). Entries below retain historical release/sprint context; older pending statements are not the current task list.
+
 # Desktop status — patch 0.11.0
 
 New user-reported regressions and follow-up work: see [PENDING-FIXES.md](PENDING-FIXES.md). Version 0.11.0 implements subtitle renewal/download/render fixes and consistent anime paging; broad title/device checks remain pending. See RELEASE-0.11.0.md for the validation scope.
