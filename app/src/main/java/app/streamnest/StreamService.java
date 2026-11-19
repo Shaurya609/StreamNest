@@ -8,7 +8,7 @@ import java.util.concurrent.*;
 
 public class StreamService extends Service {
   static volatile TorrentEngine engine,retiring,startupOwner;
-  static boolean startupBlocked(){TorrentEngine owner=startupOwner;return owner!=null&&!(owner instanceof RemoteTorrentEngine)&&owner.startup.active;}
+  static boolean startupBlocked(){TorrentEngine owner=startupOwner;return RemoteTorrentEngine.cleanupPending()||owner!=null&&!(owner instanceof RemoteTorrentEngine)&&owner.startup.active;}
   static final ExecutorService worker = Executors.newSingleThreadExecutor();
 
   public IBinder onBind(Intent i) {

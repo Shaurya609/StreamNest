@@ -1,3 +1,18 @@
+# Projector follow-up — 0.41.0
+
+19 November 2026. Owner reports on the physical 0.40.0 projector confirm a native have_piece startup stall and intermittent unconfirmed worker shutdown; later source attempts hit occupied worker reservations. A disconnected USB drive caused a separate earlier cache creation error. Internal-cache checks later passed, but worker-slot failure prevented a clean storage comparison. Do not claim an identified firmware root cause or resolved physical playback.
+
+Candidate changes replace per-piece native queries with a locally synchronized verified-piece view, completion/hash-failure alerts and native status snapshots for restored/missed state. Startup head/tail verification, completion, subtitle hashing and HTTP reads consume the local view. Native status and deadline operations remain possible blocking points. Worker control runs on a separate HandlerThread; termination scheduling survives control-loop shutdown. Exact process-name/all-UID /proc validation supplements an omitted OEM process list. Unconfirmed cleanup blocks source cycling and preserves writer reservations. At most three stack reports per attempt carry pulse age/peers/rate/progress; one recoverable cache probe reports category/free space/elapsed time without a path.
+
+Validation:
+- 237 desktop/catalog/backend checks passed; no desktop source or backend sanitizer changes required.
+- 235 Android unit tests passed (zero failures/errors/skips), plus lint, production build and AndroidTest compilation; final run in reference/release41-checks.txt.
+- Final isolated worker checks passed: blocked HTTP worker operation self-aborts without process-list fallback, SIGSTOP-frozen process retains cache protection, source cycling is blocked until death, SIGCONT permits queued self-abort, cleanup retries and three same-cache restarts succeed. Exact process-name/UID parser tests reject other workers and mismatched/malformed UID fields.
+- Actual S1E3, isolated Low Memory tablet app: first source; time to rendered video 21,122 ms; elapsed test 95,399 ms; final position 43,862 ms; paused clock held and downloading continued; playback resumed/advanced through a 60-second observation window. Main PSS 199,847 KiB, sampled peak 203,291 KiB. This is not a comparable memory benchmark or a claim of uninterrupted playback. Production app settings/history were untouched and the test packages removed.
+- First playback attempt failed with a VLCObject exception during a source/player transition; the instrumentation predicate was updated to tolerate a released VLC object and the retry passed. Not counted as a passing first run.
+
+Physical-projector normal-update acceptance is pending. Required: fresh reboot/internal-cache S1E3 retry, new diagnostic stack if it fails, then repeated starts, paused downloading, USB/internal cache and relaunch. The owner does not want to contact the manufacturer; no firmware modification, root or guessed service procedure is involved.
+
 ## 0.40.0 worker recovery and memory - 19 November 2026
 
 -237 desktop/catalog/backend tests and231 Android unit tests plus lint/APK build/instrumentation compilation passed. Unit piece contracts use an unchanged MIT-licensed pinned torrent-piece fixture so early CI tests do not require a complete desktop install; actual local WebTorrent transfers also exercise the installed dependency.

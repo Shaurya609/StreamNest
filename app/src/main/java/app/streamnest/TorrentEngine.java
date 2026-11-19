@@ -31,6 +31,7 @@ class TorrentEngine implements AutoCloseable {
   volatile int diagnosticPeers,diagnosticKbps,diagnosticPercent,diagnosticError;
   long diagnosticSampleAt;
   int pieceLength;
+  final PieceAvailability available = new PieceAvailability();
   final java.util.concurrent.atomic.AtomicBoolean startupHints=new java.util.concurrent.atomic.AtomicBoolean(true);
   NanoHTTPD server;
   final java.util.concurrent.CountDownLatch resumeSaved =
@@ -48,12 +49,16 @@ class TorrentEngine implements AutoCloseable {
           public int[] types() {
             return new int[] {
               AlertType.ADD_TORRENT.swig(),
+              AlertType.PIECE_FINISHED.swig(),
+              AlertType.HASH_FAILED.swig(),
               AlertType.SAVE_RESUME_DATA.swig(),
               AlertType.SAVE_RESUME_DATA_FAILED.swig()
             };
           }
 
           public void alert(Alert<?> a) {
+            if (a instanceof PieceFinishedAlert) available.finished(((PieceFinishedAlert)a).pieceIndex());
+            if (a instanceof HashFailedAlert) available.failed(((HashFailedAlert)a).pieceIndex());
             if (a instanceof SaveResumeDataAlert) {
               try {
                 byte[] bytes =
@@ -243,8 +248,8 @@ class TorrentEngine implements AutoCloseable {
     message = "Buffering · " + video.getName();
     while (!closed) {
       if(budgetChanged){budgetChanged=false;session.applySettings(new SettingsPack().setInteger(org.libtorrent4j.swig.settings_pack.int_types.aio_threads.swigValue(),EngineBudget.diskThreads(lite,preloadOnly)));}
-      if (url == null && startupReady()) url = readyUrl;
       message = updateStatus();
+      if (url == null && startupReady()) url = readyUrl;
       if(cachedMovieHash.isEmpty()&&url!=null)cachedMovieHash=movieHash();
       pulse();
       if(preloadOnly && root.getUsableSpace()<256L*1024*1024)
@@ -259,13 +264,13 @@ class TorrentEngine implements AutoCloseable {
   void verifyCompletion(float progress) {
     if (verifiedComplete || closed || size <= 0 || pieceLength <= 0 || !Float.isFinite(progress) || progress < 1) return;
     int first=(int)(offset/pieceLength), last=(int)((offset+size-1)/pieceLength);
-    for(int piece=first;piece<=last;piece++)if(!handle.havePiece(piece))return;
+    for(int piece=first;piece<=last;piece++)if(!available.has(piece))return;
     verifiedComplete=true;
   }
 
   boolean startupReady() {
     if (closed || handle == null || !handle.isValid() || size <= 0) return false;
-    return StartupBuffer.ready(size, offset, pieceLength, piece -> handle.havePiece(piece));
+    return StartupBuffer.ready(size, offset, pieceLength, available::has);
   }
 
   void prioritize(long position) {
@@ -283,7 +288,13 @@ class TorrentEngine implements AutoCloseable {
   String updateStatus() {
     try {
       if (handle != null && handle.isValid()) {
-        TorrentStatus s = handle.status(true);
+        // One native status request, then local bitfield reads. No synchronous per-piece RPCs.
+        long generation = available.generation();
+        TorrentStatus s = handle.status(TorrentHandle.QUERY_PIECES);
+        PieceIndexBitfield pieces = s.pieces();
+        java.util.BitSet snapshot = new java.util.BitSet();
+        for (int i=0;i<pieces.size();i++) if(pieces.getBit(i)) snapshot.set(i);
+        available.snapshot(snapshot, generation);
         verifyCompletion(s.progress());
         receivedBytes = s.totalWantedDone();
         diagnosticPeers=Math.max(0,s.numPeers());diagnosticKbps=Math.max(0,s.downloadRate()/1024);diagnosticPercent=Math.max(0,Math.min(100,Math.round(s.progress()*100)));diagnosticError=s.errorCode().getValue();
@@ -309,7 +320,7 @@ class TorrentEngine implements AutoCloseable {
       for (long edge : new long[] {0, size - 65536}) {
         int first = (int) ((offset + edge) / pieceLength),
             last = (int) ((offset + edge + 65535) / pieceLength);
-        for (int p = first; p <= last; p++) if (!handle.havePiece(p)) return "";
+        for (int p = first; p <= last; p++) if (!available.has(p)) return "";
       }
       long hash = size;
       byte[] chunk = new byte[65536];
@@ -370,7 +381,7 @@ class TorrentEngine implements AutoCloseable {
       long waitUntil = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(60);
       // Hundreds of small HTTP reads can belong to one piece; set its window once.
       if (piece != priorityPiece) { prioritize(pos); priorityPiece = piece; }
-      while (!closed && !ended && !handle.havePiece(piece)) {
+      while (!closed && !ended && !available.has(piece)) {
         if (System.nanoTime() > waitUntil)
           throw new IOException("Timed out buffering video");
         try {

@@ -1,3 +1,7 @@
+# Projector follow-up - 0.41.0
+
+The owner tested 0.40.0 on the physical projector. After correcting a disconnected USB cache drive, startup again blocked in native have_piece; shutdown sometimes self-aborted but also remained unconfirmed, later exhausting worker slots. Internal-cache checks also passed before worker-slot failure. Physical acceptance of 0.40.0 therefore failed. The 0.41.0 candidate removes per-piece synchronous queries, isolates the control looper, adds exact UID/process-name fallback validation, halts cycling during unconfirmed cleanup and extends bounded diagnostics. Physical-projector retry remains required; this is not a confirmed firmware diagnosis.
+
 # Projector recovery follow-up - 0.40.0
 
 Token-authorized self-abort, Binder-only writer death confirmation and retryable cleanup are implemented. A frozen-worker/no-process-list test and repeated same-cache restarts passed; S1E3 pause/download/resume plus a sustained tablet sample passed. Projector normal-update acceptance and the underlying cause of remaining native operation stalls are still open. New shutdown-mode and slow-worker stack reports support that diagnosis. Contiguous large-piece copying is reduced; fragmented-piece assembly and whole-device sustained profiling remain distinct.

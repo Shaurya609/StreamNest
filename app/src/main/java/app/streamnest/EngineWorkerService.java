@@ -10,13 +10,15 @@ import java.util.concurrent.*;
 /** Native sessions live here; the independent control looper stays responsive during JNI waits. */
 public class EngineWorkerService extends Service {
  static final int START=1, STOP=2, PROMOTE=3, STATE=4, CLOSED=5, HELLO=6, ABORT=7, REPORT=8;
- final Handler control=new Handler(Looper.getMainLooper());
+ final HandlerThread controlThread=new HandlerThread("torrent-worker-control");
+ {controlThread.start();}
+ final Handler control=new Handler(controlThread.getLooper());
  final ExecutorService worker=Executors.newSingleThreadExecutor();
  long memoryAt;volatile long memoryMb;final java.util.concurrent.atomic.AtomicBoolean memoryBusy=new java.util.concurrent.atomic.AtomicBoolean();
- volatile Thread engineThread;boolean stackRequested;
+ volatile Thread engineThread;int stackReports;final java.util.concurrent.atomic.AtomicBoolean stackBusy=new java.util.concurrent.atomic.AtomicBoolean();
  volatile String failureReport="";
  TorrentEngine engine;Messenger owner;String token="";boolean stopping;
- final Messenger endpoint=new Messenger(new Handler(Looper.getMainLooper()){
+ final Messenger endpoint=new Messenger(new Handler(controlThread.getLooper()){
   @Override public void handleMessage(Message m){
    Bundle d=m.getData();
    if(m.what==HELLO&&engine==null&&!stopping){owner=m.replyTo;token=d.getString("token","");Bundle hello=new Bundle();hello.putString("token",token);hello.putInt("pid",android.os.Process.myPid());send(HELLO,hello);return;}
@@ -27,7 +29,10 @@ public class EngineWorkerService extends Service {
     engine.startup.begin("Creating torrent worker",10000);snapshot();
     worker.execute(()->{engineThread=Thread.currentThread();try{
      engine.startup.begin("Checking cache folder",20000);
+     long probeAt=android.os.SystemClock.elapsedRealtime();
      File requested=new File(d.getString("root",""));File root=requested.getCanonicalFile(),base=CacheLocation.writable(requested.getParentFile());
+     Bundle storage=new Bundle();storage.putString("token",token);String kind=storageKind(base);
+     storage.putString("report",new org.json.JSONObject().put("stage","cache_check").put("storage",kind).put("cacheFreeMb",base.getUsableSpace()/1048576).put("elapsedMs",android.os.SystemClock.elapsedRealtime()-probeAt).toString());send(REPORT,storage);
      if(!requested.getName().matches("[a-f0-9]{64}")||!base.equals(root.getParentFile()))throw new IOException("Invalid torrent worker folder");
      if(engine.preloadOnly&&base.getUsableSpace()<512L*1024*1024)throw new IOException("Not enough free storage to preload");
      if(!engine.closed)engine.start(engine.sourceUrl,root);
@@ -35,13 +40,14 @@ public class EngineWorkerService extends Service {
     finally{snapshot();if(stopping||engine.closed)finishEngine();}});
    }else if(token.equals(d.getString("token"))){
     if(m.what==ABORT){android.os.Process.killProcess(android.os.Process.myPid());return;}
-    if(m.what==REPORT&&!stackRequested&&engineThread!=null){stackRequested=true;new Thread(()->{try{org.json.JSONArray frames=new org.json.JSONArray();for(StackTraceElement f:engineThread.getStackTrace())if(frames.length()<12&&f.getLineNumber()>0)frames.put(f.getClassName()+"."+f.getMethodName()+":"+f.getLineNumber());Bundle report=new Bundle();report.putString("token",token);report.putString("report",DiagnosticData.clean(new org.json.JSONObject().put("stage","worker").put("frames",frames)).toString());send(REPORT,report);}catch(Exception ignored){}},"worker-stack").start();return;}
+    if(m.what==REPORT&&stackReports<3&&engineThread!=null&&stackBusy.compareAndSet(false,true)){stackReports++;new Thread(()->{try{org.json.JSONArray frames=new org.json.JSONArray();for(StackTraceElement f:engineThread.getStackTrace())if(frames.length()<12&&f.getLineNumber()>0)frames.put(f.getClassName()+"."+f.getMethodName()+":"+f.getLineNumber());Bundle report=new Bundle();report.putString("token",token);report.putString("report",DiagnosticData.clean(new org.json.JSONObject().put("stage","worker").put("frames",frames).put("workerAgeMs",Math.max(0,(System.nanoTime()-engine.workerPulse)/1000000)).put("peers",engine.diagnosticPeers).put("downloadKbps",engine.diagnosticKbps).put("percent",engine.diagnosticPercent)).toString());send(REPORT,report);}catch(Exception ignored){}finally{stackBusy.set(false);}},"worker-stack").start();return;}
 
     if(m.what==STOP){stopping=true;if(engine!=null)engine.closed=true;else {Bundle done=new Bundle();done.putString("token",token);send(CLOSED,done);terminate();}}
     else if(m.what==PROMOTE&&engine!=null)engine.promote();
    }
   }
  });
+ String storageKind(File base){if(base.toPath().startsWith(getFilesDir().getParentFile().toPath()))return "internal";try{return android.os.Environment.isExternalStorageRemovable(base)?"external":"custom";}catch(IllegalArgumentException ignored){return "custom";}}
  @Override public IBinder onBind(Intent i){return endpoint.getBinder();}
  void snapshot(){
   TorrentEngine e=engine;if(e==null)return;
@@ -57,7 +63,7 @@ public class EngineWorkerService extends Service {
  final Runnable ticker=new Runnable(){public void run(){if(android.os.SystemClock.elapsedRealtime()-memoryAt>30000&&memoryBusy.compareAndSet(false,true)){memoryAt=android.os.SystemClock.elapsedRealtime();new Thread(()->{try{memoryMb=android.os.Debug.getPss()/1024;}finally{memoryBusy.set(false);}},"worker-memory").start();}snapshot();control.postDelayed(this,engine==null?500:WorkerCadence.delay(engine.startup.active,engine.preloadOnly));}};
  @Override public void onCreate(){super.onCreate();control.post(ticker);}
  void finishEngine(){try{engine.close();}finally{Bundle d=new Bundle();d.putString("token",token);send(CLOSED,d);control.post(this::terminate);}}
- void terminate(){stopSelf();control.postDelayed(()->android.os.Process.killProcess(android.os.Process.myPid()),100);}
+ void terminate(){stopSelf();new Thread(()->{android.os.SystemClock.sleep(100);android.os.Process.killProcess(android.os.Process.myPid());},"worker-exit").start();}
  @Override public boolean onUnbind(Intent i){stopping=true;if(engine!=null){engine.closed=true;control.postDelayed(this::terminate,4500);}else stopSelf();return false;}
- @Override public void onDestroy(){control.removeCallbacks(ticker);if(engine!=null)engine.closed=true;worker.shutdown();super.onDestroy();}
+ @Override public void onDestroy(){control.removeCallbacks(ticker);if(engine!=null)engine.closed=true;worker.shutdown();controlThread.quitSafely();super.onDestroy();}
 }
