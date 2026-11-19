@@ -1,5 +1,9 @@
 # StreamNest sprints
 
+## Remaining optimization pass - 0.42.0
+
+Completed this targeted pass: investigate fragmented assembly/hash allocations; yield the remaining synchronous large-piece Windows hash work with request backpressure; record eight alternating whole-app Windows Home launches and three current Android baseline runs. Checksums/verification remain authoritative. The measurements do not establish a total RAM/CPU/startup saving. Full-piece fragmented assembly remains a current engine/store requirement; eliminating it is a separate, optional redesign rather than repeatedly reopening already-shipped optimizations. Sustained physical-projector verification stays with projector reliability, distinct from the owner-confirmed 0.41.0 S1E3 smooth-playback pass. See PERFORMANCE.md for exact results and limitations.
+
 ## Sprint 1 — released in 0.17.0
 
 Implemented: prominent desktop player Previous/Next controls; icon/text intro and credits controls with five-second progress fill; auto-skip disable in Settings; clipboard normalization for desktop pairing; ten-second progress uploads and forced pause/seek/exit updates, including a queued final update during another upload.
