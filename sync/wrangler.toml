@@ -3,6 +3,8 @@ main = "worker.mjs"
 compatibility_date = "2025-10-01"
 workers_dev = true
 preview_urls = false
+# The dashboard embeds a self-contained function; omit external name-preservation helpers.
+keep_names = false
 
 [observability]
 enabled = false
