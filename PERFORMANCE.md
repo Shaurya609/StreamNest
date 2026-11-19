@@ -82,3 +82,31 @@ A fully downloaded real American Dad S2E1 triggered preload for S2E2. Real end p
 ## 0.38.0 bounded Windows reads
 
 Verified-piece media streams now request at most256KiB through the pinned filesystem store range API. ImmediateStore stays above this path so verified data pending disk flush remains available. Full-piece reads for other purposes retain the original path. Range boundary, backpressure, unverified-piece and cancellation tests apply. The separate-process synthetic128MiB-piece/16MiB-range benchmark recorded maximum reads128MiB versus256KiB and peak external memory270452979 versus26396991bytes. These measurements do not establish a whole-app or projector RAM percentage saving. Download piece assembly and other full-piece consumers remain open. Native long-session projector measurements remain pending.
+
+
+## 0.39.0 measured follow-up - 19 November 2026
+
+### Changes and focused measurements
+
+Windows whole-piece caches are now byte-budgeted at32MiB active/8MiB preload rather than permitting two arbitrary-sized pieces. An actual pinned filesystem/cache/immediate-store test of one128MiB piece retained134217728bytes before and0 after; both reads delivered134217728bytes with the same sampled-byte checksum. The existing256KiB media reader remains in place. A verified-write queue gates new download requests at64MiB active/32MiB preload, releasing them after the existing disk callback. Already-in-flight blocks/hash buffers may exceed this threshold. Nothing discards unverified progress or bypasses integrity checks. Controlled delayed/error write tests and preload-to-active promotion pass. The live cached playback had no pending writes, so it is not a physical slow-USB backpressure test.
+
+Home's3-second poll now compares a progress revision. At500 records,100 old stringify/clean/sort checks took89.97ms wall/125ms process CPU; revision checks took0.017ms/below the CPU counter's resolution. This is a focused poll workload, not a whole-app speedup. Unchanged remote merges keep their revision; real local/remote/removal changes increment it. Diagnostic fallback wakeups are2/minute instead of60, while timeupdate/other playback events remain active.
+
+Separate tablet instrumentation at2000 stored records (500 survive the existing sync sanitizer):25 previous startup duration lookups via full records took3965ms wall/4971ms process CPU;25 selected-record lookups took2ms/4ms. The selected record was within the retained500. Removal-marker reads, numeric legacy values and malformed records passed.2000 previous scope-hash calls took476ms/749ms CPU; cached identical calls took5ms/6ms. These counts isolate specific work and do not predict projector latency.
+
+### Whole-app profiles and limits
+
+Same host, published0.38.0 Windows payload versus the same runtime with only the changed modules, fresh isolated profile then second launch, same84-card Home,35-second observation, all owned application processes:
+
+| Workload | Before readiness ms | After readiness ms | Before peak private commit bytes | After peak private commit bytes | Before CPU seconds | After CPU seconds |
+|---|---:|---:|---:|---:|---:|---:|
+| First profile launch |2801|3197|568348672|595697664|8.391|8.469|
+| Second profile launch |3261|2986|551092224|554803200|8.125|7.453|
+
+Private commit is not resident physical RAM/PSS. First-profile launch is not an OS disk-cache flush. There were no window/promise errors in accepted runs. Earlier mixed-source/packaging-configuration attempts were rejected. Public metadata/artwork and host activity vary: no consistent overall Windows startup/CPU/RAM improvement is established by these two short observations.
+
+Unlocked tablet, separately installed verification package, identical forced Low Memory Home workload and30-second main-process profile: launch-to-idle1031ms before/874ms after; peak PSS124893KiB/119931KiB; process CPU11185ms/13198ms. One observation per version with network/cache variability does not establish an overall percentage improvement. A locked-device initial profile was rejected. This is a tablet running the policy, not a hard1GB emulator or the actual projector.
+
+Actual hidden American Dad S2E1 check decoded1440-wide video,1393 frames and1013147 native audio bytes through66.98seconds of media time. Pause retained its position, resume and a10-second seek advanced normally; maximum UI heartbeat gap118.3ms; actual128MiB-piece retained cache0bytes and no window/promise errors. It used an isolated cache/profile without production sync or history changes.
+
+The remaining large allocation is required complete-piece assembly/hash verification. Reducing that safely needs deeper engine work, not disabling checks or discarding partial pieces. Long physical-projector sessions, peak playback-process profiling under matching peer/cache conditions, and additional alternating whole-app trials remain open. Public reproducible profile tooling: tools/performance/README.md.

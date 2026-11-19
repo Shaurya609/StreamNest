@@ -572,7 +572,7 @@ public class PlayerActivity extends Activity {
   void startStream() {
     Diagnostics.attemptId=java.util.UUID.randomUUID().toString();
     Diagnostics.event("source.changed","attempt",attempt+1);
-    double fraction=0;try{org.json.JSONObject row=WatchProgress.records(this).optJSONObject(WatchProgress.identity(getIntent(),key));long p=resumeAfterSwitch>0?resumeAfterSwitch:getIntent().getBooleanExtra("startFromBeginning",false)?0:WatchProgress.read(this,WatchProgress.identity(getIntent(),key),0);if(row!=null&&row.optLong("durationMs")>0)fraction=(double)p/row.optLong("durationMs");}catch(Exception ignored){}
+    double fraction=0;try{org.json.JSONObject row=WatchProgress.record(this,WatchProgress.identity(getIntent(),key));long p=resumeAfterSwitch>0?resumeAfterSwitch:getIntent().getBooleanExtra("startFromBeginning",false)?0:WatchProgress.read(this,WatchProgress.identity(getIntent(),key),0);if(row!=null&&row.optLong("durationMs")>0)fraction=(double)p/row.optLong("durationMs");}catch(Exception ignored){}
     startForegroundService(
         new Intent(this, StreamService.class).putExtra("attemptId",Diagnostics.attemptId).putExtra("resumeFraction",fraction)
             .putExtra("source", source)

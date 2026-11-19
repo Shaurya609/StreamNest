@@ -31,7 +31,9 @@ final class WatchProgress {
   }
 
   static synchronized long read(Context c, String key, long legacy) {
-    Object value = c.getSharedPreferences(preferenceName, 0).getAll().get(key);
+    SharedPreferences selected=c.getSharedPreferences(preferenceName,0);Object value;
+    try{value=selected.getString(key,null);}catch(ClassCastException legacyType){value=selected.getAll().get(key);}
+
     try{String marker=c.getSharedPreferences(preferenceName,0).getString("removed:"+key.split(":")[1],null);if(marker!=null){JSONObject removed=new JSONObject(marker),row=value instanceof String?new JSONObject((String)value):null;if(row==null||removed.optLong("updatedAt")>=row.optLong("updatedAt"))return 0;}}catch(Exception ignored){}
     try {
       if (value instanceof String) {
@@ -42,6 +44,12 @@ final class WatchProgress {
     } catch (Exception ignored) {
     }
     return legacy;
+  }
+
+  static synchronized JSONObject record(Context c,String key)throws Exception {
+    String raw;try{raw=c.getSharedPreferences(preferenceName,0).getString(key,null);}catch(ClassCastException legacy){return null;}
+    if(raw==null)return null;
+    try{return WatchSyncCrypto.clean(new JSONObject().put(key,new JSONObject(raw))).optJSONObject(key);}catch(JSONException invalid){return null;}
   }
 
   static synchronized void save(Context c, String key, long position, long duration) {

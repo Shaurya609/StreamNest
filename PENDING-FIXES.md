@@ -1,3 +1,7 @@
+# Optimization follow-up - 0.39.0
+
+Byte-budgeted Windows caches/writeback, revision-based Home polls, selected-record Android startup and cached diagnostic scope hashes are implemented and measured. Short whole-app profiles do not establish a consistent total RAM/CPU/startup percentage improvement. Full-piece hash assembly, additional matching trials and long physical-projector playback remain open. See PERFORMANCE.md for exact observations.
+
 # Projector and subtitle follow-up - 0.38.0
 
 Projector remains top priority: bounded Java crash capture, correlated attempt timelines, worker/heap observations, main-thread stall stacks and protected cleanup containment are implemented. The original reported Java crash lacked its stack; the verified cleanup exception is a candidate path, not confirmed historical attribution. Physical S1E3 retry and sustained paused-download/relaunch testing require the projector to update normally.

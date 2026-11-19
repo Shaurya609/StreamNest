@@ -17,7 +17,7 @@ function attachPlayer(player,root,model){
  const sample=()=>{if(closed||Date.now()-lastSample<30000||!enabled())return;const video=element();if(!video)return;lastSample=Date.now();const torrent=model.get('torrentModel')?.get?.('torrent');event('player.sample',{...sampleData(video,Number.isFinite(torrent?.numPeers)?torrent.numPeers:model.get('active_peers'),Number.isFinite(torrent?.downloadSpeed)?torrent.downloadSpeed:model.get('downloadSpeed')),mediaId:mediaId(require('./streamnest-sync').config().code,torrent?.infoHash),processMemoryMb:Math.round(process.memoryUsage().rss/1048576),freeRamMb:Math.round(os.freemem()/1048576)});};
  event('player.open');const handlers={waiting:()=>{if(!waiting){waiting=true;event('player.buffering');}},playing:()=>{waiting=false;event('player.resumed');},pause:()=>event('player.paused'),ended:()=>event('player.ended'),error:()=>{const e=player.error();event('player.error',{service:'player',operation:'playback',nativeCode:Math.max(0,Number(e?.code)||0)},'error');},timeupdate:()=>{sample();const video=element();if(!ready&&player.currentTime()>1&&video?.videoWidth>0){ready=true;event('player.video_ready',{width:video.videoWidth,height:video.videoHeight});}}};
  for(const [name,fn]of Object.entries(handlers))player.on(name,fn);
- const timer=setInterval(sample,1000);timer.unref?.();
+ const timer=setInterval(sample,30000);timer.unref?.();
  const dispose=()=>{if(closed)return;closed=true;clearInterval(timer);for(const [name,fn]of Object.entries(handlers))player.off(name,fn);};player.one('dispose',dispose);return dispose;
 }
 let gpu='Unavailable',graphics='Unavailable',windowRef,gpuProbed=false;

@@ -49,6 +49,7 @@ function create(options={}){
    const fail=error=>{if(slot!==state)return;const alternate=require('./streamnest-episodes').nextAttempt(state.attrs);lastError=error.message||'Next episode preload unavailable';const draining=cancel(),ticket=generation;attempted=key;draining.then(()=>{if(generation!==ticket)return;if(alternate){prepared={key,attrs:{...alternate,streamnestFromBeginning:true}};attempted='';lastError='Trying another source for next episode';}}).catch(()=>{lastError='Preload cache is still closing';});};
    state.client.on('error',fail);
    state.torrent=state.client.add(next.torrent,{path:state.dir,maxConns:16,storeCacheSlots:1,secure:settings.protocolEncryption||false,announce:forced,tracker:forced},async t=>{
+    require('./streamnest-transfer-budget').install(t,true);
     try{
      if(slot!==state||state.cancelled)return;
      t.deselect(0,t.pieces.length-1,false);

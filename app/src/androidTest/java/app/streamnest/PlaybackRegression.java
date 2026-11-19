@@ -14,14 +14,14 @@ import org.videolan.libvlc.Media;
 /** Device-only regression; fixture is supplied locally, never bundled in the app. */
 public class PlaybackRegression extends Instrumentation {
   PlayerActivity activity;boolean engineRecovery,stability;
-  boolean performance, contentVerification, posters, animePlayback, safeArea, watchingActivity, preload, discovery, home, fillerLive, groupHome, homeLayout, artwork, homeSearch, watchedStartup, trailers, diagnostics;
+  boolean optimizationData, optimizationProfile, performance, contentVerification, posters, animePlayback, safeArea, watchingActivity, preload, discovery, home, fillerLive, groupHome, homeLayout, artwork, homeSearch, watchedStartup, trailers, diagnostics;
   String watchSyncCode, shortPairingCode, expectedPairingAuth,manualSyncCode;
   boolean pairingUiDirect, skipLive, catalog, subtitles, storage, resilience, episodes, appUpdates, watchSyncUi, resumeUi;
 
   @Override
   public void onCreate(Bundle args) {
     if(args!=null&&"true".equals(args.getString("crashCapture"))){super.onCreate(args);new Thread(()->{try{finish(Activity.RESULT_OK,CrashCaptureRegression.run(this));}catch(Throwable e){Bundle out=new Bundle();out.putString("error",e.toString());finish(Activity.RESULT_CANCELED,out);}},"crash-test").start();return;}
-    super.onCreate(args);stability=args!=null&&"true".equals(args.getString("stability"));engineRecovery=args!=null&&"true".equals(args.getString("engineRecovery"));
+    super.onCreate(args);optimizationData=args!=null&&"true".equals(args.getString("optimizationData"));optimizationProfile=args!=null&&"true".equals(args.getString("optimizationProfile"));stability=args!=null&&"true".equals(args.getString("stability"));engineRecovery=args!=null&&"true".equals(args.getString("engineRecovery"));
     manualSyncCode=args==null?null:args.getString("manualSyncCode");
     watchSyncCode = args == null ? null : args.getString("watchSyncCode");
     catalog = args != null && "true".equals(args.getString("catalog"));
@@ -64,6 +64,8 @@ public class PlaybackRegression extends Instrumentation {
 
   @Override
   public void onStart() {
+    if(optimizationData){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,OptimizationDataRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
+    if(optimizationProfile){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,OptimizationProfile.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
     if(stability){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,StabilityRegression.run(this));}catch(Throwable error){result.putString("result","FAIL: "+error);finish(Activity.RESULT_CANCELED,result);}return;}
     if(performance){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,PerformanceRegression.run(this));}catch(Throwable error){result.putString("result","FAIL: "+error);finish(Activity.RESULT_CANCELED,result);}return;}
     if(engineRecovery){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,EngineRecoveryRegression.run(this));}catch(Throwable error){result.putString("result","FAIL: "+error);finish(Activity.RESULT_CANCELED,result);}return;}

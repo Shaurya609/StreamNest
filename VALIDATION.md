@@ -1,3 +1,11 @@
+## 0.39.0 performance follow-up - 19 November 2026
+
+-233 desktop/catalog/backend tests and231 Android unit tests plus lint/APK build and instrumentation compilation passed. New coverage includes delayed/error disk completion, queue recovery, byte-cache limits, preload promotion, and progress revisions for local/remote/removal changes versus unchanged merges. Scope hash output/caching/reset passed.
+- Native isolated data regression compared previous full-history startup lookup to selected-record lookup at2000 stored records, preserving removal markers/legacy/malformed behavior; scope caching matched the previous SHA256 identity. Unlocked Low Memory Home before/after30-second PSS/CPU profiles completed. Physical projector was not connected. Detailed measurements and non-comparability limits are in PERFORMANCE.md.
+- Accepted Windows first-profile and second-launch profiles used the published0.38.0 runtime and matching changed modules, same84-card Home,35-second process-tree CPU/private-commit measurements and zero errors. Mixed-source/bootstrap attempts were rejected, not counted as passes. No overall memory/speed percentage claim is made.
+- Real hidden American Dad2x1 played with video/native audio, pause/resume and seek;1393 frames,1013147 audio bytes,1440-wide video,66.98s media time,118.3ms max UI gap,0 retained whole-piece-cache bytes on128MiB pieces. The cache was warm; no pending writes occurred, so controlled tests cover disk backpressure rather than a real USB stall. Production sync group/history/accounts stayed untouched. Instrumentation used separately installed verification packages and restored production build configuration.
+- Public reusable profiler has isolated-folder guards and rejects errors/missing Home/timeouts. Final packaged release and signed update-feed verification pending.
+
 ## 0.38.0 projector/desktop reliability - 19 November 2026
 
 - Connected projector report is Android14/API34, model rockchip rk3562_projector, ARM32 and951MiB RAM. Latest previous playback failed before video-ready, stalled during engine startup, switched source and subsequently reported Java exit reason4 without a stack. No exact exception/episode-title attribution is claimed from that old report.
