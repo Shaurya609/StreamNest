@@ -1,5 +1,5 @@
 {
-  "version": "0.42.0",
+  "version": "0.44.0",
   "target": "Popcorn Time 0.5.1",
   "files": [
     {
@@ -132,7 +132,7 @@
     },
     {
       "path": "butter-provider/streamnest-net.js",
-      "sha256": "810b32d369c2c1343ba3bc2cc41bd538d64e526bbd753be9a8c1eaf1c206801b"
+      "sha256": "437c8caf4ebedfd2e8f51361fee9b9c90a25818557e34b2a0c1b97b83eea82fa"
     },
     {
       "path": "butter-provider/streamnest-org.js",

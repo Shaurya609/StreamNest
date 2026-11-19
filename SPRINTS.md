@@ -1,3 +1,7 @@
+## Reliability Sprints4/5 — focused 0.44.0 pass
+
+Found and fixed: Android subtitle-search ownership/language changes, stale error status, truthful track attachment, remote seek consistency and Home first-touch activation; Android concurrent metadata duplication and repeated missing metadata; Windows concurrent required/optional metadata duplication with deadline/policy separation and independent parsed objects. Preserve canonical resume/sync/removal semantics. Isolated tablet Home first-touch, remote center/focus, synced timestamp refresh and completed-known-next passed. Unknown legacy histories are not guessed or deleted. The generic historical sprint labels below are planning history; concrete remaining work is tracked in BACKLOG.md. Physical TV/projector failures remain separate, not closed by this pass.
+
 > Current open work is separated into **Owner backlog** (owner tests) and **Developer backlog** (investigation, fixes and features) in [BACKLOG.md](BACKLOG.md). Entries below retain historical release/sprint context; older pending statements are not the current task list.
 
 # TV playback and anime matching — 0.43.0

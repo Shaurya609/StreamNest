@@ -79,4 +79,23 @@ public class CatalogHttpTest {
     assertEquals("tt123", CatalogHttp.object(url, null).getJSONObject("meta").getString("id"));
     assertTrue(CatalogStatus.note().contains("Saved"));
   }
+
+  @Test public void concurrentMetadataSharesTransportButNotMutableResults() throws Exception {
+    java.util.concurrent.CountDownLatch started=new java.util.concurrent.CountDownLatch(1),release=new java.util.concurrent.CountDownLatch(1);
+    java.util.concurrent.atomic.AtomicInteger calls=new java.util.concurrent.atomic.AtomicInteger();
+    CatalogHttp.fetcher=u->{calls.incrementAndGet();started.countDown();release.await();return "{\"items\":[]}".getBytes(StandardCharsets.UTF_8);};
+    java.util.concurrent.ExecutorService pool=java.util.concurrent.Executors.newFixedThreadPool(2);
+    try{
+      java.util.concurrent.Future<JSONObject> a=pool.submit(()->CatalogHttp.object("https://fixture.example/shared",null));
+      assertTrue(started.await(2,java.util.concurrent.TimeUnit.SECONDS));
+      java.util.concurrent.Future<JSONObject> b=pool.submit(()->CatalogHttp.object("https://fixture.example/shared",null));
+      Thread.sleep(50);release.countDown();JSONObject first=a.get(),second=b.get();first.put("changed",true);assertFalse(second.has("changed"));assertEquals(1,calls.get());
+    }finally{release.countDown();pool.shutdownNow();}
+  }
+  @Test public void missingLookupIsCachedPerUrlWithoutHidingOtherMetadata() throws Exception {
+    java.util.concurrent.atomic.AtomicInteger calls=new java.util.concurrent.atomic.AtomicInteger();
+    CatalogHttp.fetcher=u->{calls.incrementAndGet();if(u.endsWith("missing"))throw new IOException("Catalog HTTP 404");return "[]".getBytes(StandardCharsets.UTF_8);};
+    for(int i=0;i<2;i++)try{CatalogHttp.array("https://fixture.example/missing");fail();}catch(IOException expected){}
+    assertEquals(1,calls.get());assertEquals(0,CatalogHttp.array("https://fixture.example/found").length());assertEquals(2,calls.get());
+  }
 }

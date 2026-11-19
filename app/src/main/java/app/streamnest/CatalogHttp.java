@@ -24,7 +24,24 @@ final class CatalogHttp {
               url, 16000000, System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(8));
   static final EndpointHealth health = new EndpointHealth();
 
+  static final Map<String, java.util.concurrent.CompletableFuture<byte[]>> pending = new HashMap<>();
+  static final LinkedHashMap<String, Long> absent = new LinkedHashMap<>();
+  static byte[] fetch(String url) throws Exception {
+    java.util.concurrent.CompletableFuture<byte[]> task; boolean owner;
+    synchronized(pending){
+      Long until=absent.get(url);
+      if(until!=null&&until>System.nanoTime())throw new IOException("Catalog HTTP 404 (recent missing result)");
+      task=pending.get(url);owner=task==null;
+      if(owner){task=new java.util.concurrent.CompletableFuture<>();pending.put(url,task);}
+    }
+    if(owner){try{byte[] bytes=fetcher.get(url);if(bytes.length>16000000)throw new IOException("Catalog response too large");task.complete(bytes);}
+      catch(Exception error){if(String.valueOf(error.getMessage()).matches(".*HTTP\\s*(404|410)\\b.*"))synchronized(pending){absent.put(url,System.nanoTime()+java.util.concurrent.TimeUnit.SECONDS.toNanos(30));while(absent.size()>128)absent.remove(absent.keySet().iterator().next());}task.completeExceptionally(error);}
+      finally{synchronized(pending){pending.remove(url);}}}
+    try{return task.get();}catch(java.util.concurrent.ExecutionException error){Throwable cause=error.getCause();if(cause instanceof Exception)throw (Exception)cause;throw new IOException("Catalog request failed",cause);}
+  }
+
   static void configure(File folder) {
+    synchronized(pending){absent.clear();}
     directory = new File(folder, "http");
     directory.mkdirs();
   }
@@ -44,7 +61,7 @@ final class CatalogHttp {
     }
     if (!health.candidates(Collections.singletonList(uri.getHost()), uri.getHost()).isEmpty())
       try {
-        byte[] bytes = fetcher.get(url);
+        byte[] bytes = fetch(url);
         if (bytes.length > 16000000) throw new IOException("Catalog response too large");
         Object value = new JSONTokener(new String(bytes, StandardCharsets.UTF_8)).nextValue();
         if (!validator.valid(value)) throw new IOException("Invalid catalog response");
@@ -56,10 +73,13 @@ final class CatalogHttp {
           }
         return value;
       } catch (Exception e) {
-        if (Thread.currentThread().isInterrupted())
+        if (e instanceof InterruptedException || Thread.currentThread().isInterrupted()) {
+          Thread.currentThread().interrupt();
           throw new InterruptedException("Catalog request replaced");
+        }
         failure = e;
-        Diagnostics.failure("catalog.failed","catalog","fetch",e);
+        if(!String.valueOf(e.getMessage()).contains("recent missing result"))
+          Diagnostics.failure("catalog.failed","catalog","fetch",e);
         if (!String.valueOf(e.getMessage()).matches(".*HTTP\\s*(400|404|410|422)\\b.*"))
           health.failed(uri.getHost());
       }

@@ -55,8 +55,8 @@ public class PlayerActivity extends Activity {
   TextView subtitleStatus;
   final java.util.concurrent.ExecutorService subtitleWorker =
       java.util.concurrent.Executors.newSingleThreadExecutor();
-  boolean subtitleBusy;
   int subtitleChoice;
+  final SubtitleSearchState subtitleSearch = new SubtitleSearchState();
   List<Catalog.Source> alternatives = new ArrayList<>();
   int attempt;
   long attemptStarted, resumeAfterSwitch, lastProgressAt, lastReceived;
@@ -473,7 +473,7 @@ public class PlayerActivity extends Activity {
                   pendingAuto = false;
                   skipRequested = false;
                   pendingSeek = -1;
-                  subtitleBusy = false;
+                  subtitleSearch.reset();
                   segments = new ArrayList<>();
                   activeSegment = null;
                   skipSegment.setVisibility(View.GONE);
@@ -621,7 +621,7 @@ public class PlayerActivity extends Activity {
     segments = new ArrayList<>();
     activeSegment = null;
     skipSegment.setVisibility(View.GONE);
-    subtitleBusy = false;
+    subtitleSearch.reset();
     opened = false;
     mediaSet = false;
     startupRetries = 0;
@@ -750,15 +750,16 @@ public class PlayerActivity extends Activity {
   void findSubtitles(boolean automatic) {
     if(!automatic)subtitleChoice++;
     final int choice=subtitleChoice;
-    if (subtitleBusy) return;
+    final long searchSerial=subtitleSearch.begin(automatic);
+    if(searchSerial==0)return;
     final int requestAttempt = attempt;
     final int requestVersion = playbackVersion;
     OpenSubtitles api = new OpenSubtitles(this);
     if (!api.configured()&&!animePlayback()) {
+      subtitleSearch.finish(searchSerial);
       if (!automatic) startActivity(new Intent(this, SubtitleSettingsActivity.class));
       return;
     }
-    subtitleBusy = true;
     subtitleStatus.setText("Finding subtitles…");
     String imdb = getIntent().getStringExtra("imdb"),
         title = getIntent().getStringExtra("title"),
@@ -780,7 +781,7 @@ public class PlayerActivity extends Activity {
             if(results.isEmpty()&&lookupFailure!=null)throw lookupFailure;
             ui.post(
                 () -> {
-                  subtitleBusy = false;
+                  if(!subtitleSearch.finish(searchSerial))return;
                   if (isDestroyed()
                       || (attempt != requestAttempt || playbackVersion != requestVersion)||choice!=subtitleChoice) return;
                   if (results.isEmpty()) {
@@ -803,10 +804,10 @@ public class PlayerActivity extends Activity {
             Diagnostics.failure("subtitle.failed","subtitles","download",e);
             ui.post(
                 () -> {
-                  subtitleBusy = false;
+                  if(!subtitleSearch.finish(searchSerial))return;
                   if (!isDestroyed()
                       && attempt == requestAttempt
-                      && playbackVersion == requestVersion) subtitleStatus.setText(e.getMessage());
+                      && playbackVersion == requestVersion&&choice==subtitleChoice) subtitleStatus.setText("Subtitle search failed. Try again.");
                 });
           }
         });
@@ -821,7 +822,7 @@ public class PlayerActivity extends Activity {
     subtitleWorker.execute(
         () -> {
           try {
-            if(result.provider.equals("tsukihime")){File file=AnimeSubtitles.download(result,getCacheDir());ui.post(()->{if(!isDestroyed()&&attempt==requestAttempt&&playbackVersion==requestVersion&&choice==subtitleChoice){player.addSlave(Media.Slave.Type.Subtitle,Uri.fromFile(file),true);subtitleStatus.setText("Subtitles added: "+result.label);}});return;}
+            if(result.provider.equals("tsukihime")){File file=AnimeSubtitles.download(result,getCacheDir());ui.post(()->{if(!isDestroyed()&&attempt==requestAttempt&&playbackVersion==requestVersion&&choice==subtitleChoice){subtitleStatus.setText(player.addSlave(Media.Slave.Type.Subtitle,Uri.fromFile(file),true)?"Subtitle track attached: "+result.label:"Player could not attach this subtitle track");}});return;}
             File existing =
                 new File(
                     getCacheDir(),
@@ -838,8 +839,8 @@ public class PlayerActivity extends Activity {
                   if (!isDestroyed()
                       && attempt == requestAttempt
                       && playbackVersion == requestVersion&&choice==subtitleChoice) {
-                    player.addSlave(Media.Slave.Type.Subtitle, Uri.fromFile(file), true);
-                    subtitleStatus.setText("Subtitles added: " + result.label);
+                    subtitleStatus.setText(player.addSlave(Media.Slave.Type.Subtitle, Uri.fromFile(file), true)
+                        ? "Subtitle track attached: " + result.label : "Player could not attach this subtitle track");
                   }
                 });
           } catch (Exception e) {
@@ -848,7 +849,7 @@ public class PlayerActivity extends Activity {
                 () -> {
                   if (!isDestroyed()
                       && attempt == requestAttempt
-                      && playbackVersion == requestVersion) subtitleStatus.setText(e.getMessage());
+                      && playbackVersion == requestVersion&&choice==subtitleChoice) subtitleStatus.setText("Subtitle download failed. Try another result.");
                 });
           }
         });
@@ -887,7 +888,7 @@ public class PlayerActivity extends Activity {
             videoOutputs = 0;
             ++playbackVersion;
             opened = false;
-            subtitleBusy = false;
+            subtitleSearch.reset();
             mediaSet = false;
             sourceFailed = false;
             softwareDecoder = ++startupRetries == 2;
@@ -985,8 +986,7 @@ public class PlayerActivity extends Activity {
       return true;
     }
     if (code == KeyEvent.KEYCODE_MEDIA_REWIND || code == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD) {
-      player.setTime(
-          Math.max(0, player.getTime() + (code == KeyEvent.KEYCODE_MEDIA_REWIND ? -10000 : 10000)));
+      seekTo(Math.max(0, player.getTime() + (code == KeyEvent.KEYCODE_MEDIA_REWIND ? -10000 : 10000)));
       return true;
     }
     return super.onKeyDown(code, event);
