@@ -10,6 +10,8 @@ Updated 20 November 2026. This is the current source of truth for open work. PEN
 | O2 | Physical projector: exFAT USB and longer acceptance session | First confirm the projector recognizes the freshly formatted exFAT USB (label StreamNest), select its cache folder and retry the same episode/source. Then check longer playback, repeated starts, paused downloading, episode transitions, internal/USB cache and relaunching. S1E3 smooth playback on 0.41.0 is already passed and must not be listed as an unimplemented fix. |
 | O3 | TheBeast: original next-episode/recovery cases | Confirm Last of Us S1E2 advances to S1E3 rather than repeating, with preload on and off when convenient; observe normal buffered-stall recovery. Isolated handoff/recovery checks passed. General TV preload was already owner-confirmed working and remains closed. |
 
+| O4 | Normal update to0.44.0 | Install Android and Windows updates through StreamNest. Both releases and signed-feed entries are published and verified. Last tablet inspection still reports0.43.0; installed0.44.0 acceptance remains an owner check. |
+
 Owner checks are acceptance tests, not unfinished implementation. The developer retains responsibility for diagnosis, code fixes and developer-run verification. An owner report can create or update a developer issue; it does not automatically reopen every historical issue.
 
 ## Developer backlog — investigations, fixes and features
@@ -24,7 +26,7 @@ Owner checks are acceptance tests, not unfinished implementation. The developer 
 
 ### Completed developer pass — reliability Sprints4/5, 0.44.0
 
-Implemented concrete interaction/subtitle-status and metadata-duplication gaps found in review. Native isolated tablet first-touch/remote activation, resume refresh and known-next passed; 244 Android unit tests/lint/build and252 desktop/catalog/backend checks passed. Existing canonical history, sync tombstones and production data remain intact. No unidentified legacy record was guessed into an episode; additional migration needs a concrete identifiable case, not a recurring generic backlog item. Publication/installed update status is tracked in VALIDATION.md. Physical TV/projector acceptance remains separate above.
+Implemented concrete interaction/subtitle-status and metadata-duplication gaps found in review. Native isolated tablet first-touch/remote activation, resume refresh and known-next passed; 244 Android unit tests/lint/build and252 desktop/catalog/backend checks passed. Existing canonical history, sync tombstones and production data remain intact. No unidentified legacy record was guessed into an episode; additional migration needs a concrete identifiable case, not a recurring generic backlog item. Android and Windows0.44.0 are published and the normal signed feed verifies both. Installed-update acceptance is O4; evidence is in VALIDATION.md. Physical TV/projector acceptance remains separate above.
 
 ### Tracking rules
 
