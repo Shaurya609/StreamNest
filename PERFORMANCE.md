@@ -119,3 +119,37 @@ The pinned torrent-piece flush now avoids a second whole-piece buffer only for p
 Focused128MiB flush: previous additional external allocation134280863bytes/39.34ms; shared-view allocation63135bytes/2.36ms, identical SHA1. Actual pinned WebTorrent+filesystem local HTTP webseed transfers used a fresh download directory and no public peer discovery. All128MiB bytes were verified and stored. Alternating optimized/previous/previous/optimized runs recorded peak external memory437130673/540153265/540153265/440669617bytes and RSS474828800/609284096/608210944/475455488bytes. Each optimized transfer used one shared flush; previous transfers used none. CPU totals843/1016/1484/1001ms and elapsed704/753/909/660ms vary with cache/scheduling, so no general playback-speed percentage is claimed. These are engine-only observations, not full UI/projector measurements. Reproduction: tools/performance/webseed-piece-profile.cjs.
 
 Native S1E3 sustained test: Low Memory tablet verification app, first candidate, pause10seconds retained time while received bytes increased, resume advanced, then60seconds further observation; final media position67220ms, sustained main-process peak PSS186586KiB, final180955KiB. The reported96455ms was total exercise duration, not startup; the test label is corrected for future runs. An earlier shorter S1E3 run reached video in31891ms. The older pinned S1E2 source had0 peers/0KBps and did not start; it is not counted as a pass. Physical projector/native driver behavior remains a separate acceptance item.
+
+
+## 0.42.0 — remaining hash work and comparable profiles
+
+The remaining Windows `simple-sha1` Node path hashed whole completed pieces synchronously in the renderer process. For Buffer inputs >=1 MiB, the pinned 3.1.0 adapter now calls the same native SHA1 implementation in 256 KiB updates with an event-loop yield between steps. Its callback result and synchronous API stay unchanged; WebTorrent still compares every digest before store commit. The original path handles small/non-Buffer input. Pending hash bytes participate in active/preload request budgets; already-in-flight blocks, resume verification and OS caches are not a hard RAM cap. The hot path reuses the budget-state reference.
+
+### Allocation investigation and focused measurements
+
+Three alternating fresh-process trials per hash mode on identical 128 MiB input recorded maximum 2 ms-heartbeat gaps of 87.46/88.61/86.27 ms previously versus 11.70/7.66/15.75 ms cooperatively. CPU was 94/94/78 ms versus 94/78/78 ms; elapsed 87.23/88.31/85.99 versus 82.10/90.68/79.96 ms. All SHA1 values matched and external-memory delta was 40 bytes in both paths. This supports responsiveness during hashing, not reduced hash CPU, a universal UI latency bound, or whole-app RAM savings.
+
+Independent 16 KiB peer blocks using the actual pinned Piece implementation still added 134,217,768 external bytes when assembling a 128 MiB piece in both modes. Digest matched; heartbeat gap 78.88 ms previous/15.28 ms cooperative. The final contiguous store API and whole-piece verification still require the assembled buffer. Safely eliminating it would require a deeper engine/store change; preallocating a full buffer for every partial piece could increase memory and is not introduced. The earlier contiguous webseed reuse remains closed and unchanged.
+
+Actual local WebTorrent + HTTP webseed + filesystem transfers, sharing the 0.40.0 flush optimization in both variants: all 134,217,728 bytes verified/stored, shared flush count 1 each; peak external 438,310,321/440,145,329 bytes and RSS 475,553,792/476,098,560 bytes (previous/cooperative). CPU 906/1000 ms; elapsed 737.8/715.4 ms. No RAM or throughput improvement is inferred. Earlier exploratory transfers overlapped extraction/build activity and are not accepted comparisons.
+
+### Whole-app Windows measurements
+
+Same extracted 0.40.0 payload and NW.js 0.119.2, with only candidate hash/request hooks switched; isolated user/profile/cache directories, identical 84-card Home and 35-second observation, candidate/previous/previous/candidate order, first-profile and repeat-profile launches. Build/extraction warm-up was excluded; no renderer errors or timeouts in accepted trials. The renderer probe confirmed the candidate hook true and previous false. Private commit covers the owned app process tree; it is not physical RAM/PSS. Public metadata/artwork and host activity remain variable.
+
+| Trial | Profile | Home ready ms | Peak private commit bytes | App CPU seconds |
+|---|---|---:|---:|---:|
+|candidate-valid1|fresh-profile|4605|580366336|14.062|
+|candidate-valid1|warm-profile|4019|542830592|10.266|
+|previous-valid1|fresh-profile|4101|566112256|10.359|
+|previous-valid1|warm-profile|3779|561790976|9.250|
+|previous-valid2|fresh-profile|4284|569073664|12.922|
+|previous-valid2|warm-profile|4521|563503104|11.141|
+|candidate-valid2|fresh-profile|4951|599629824|14.422|
+|candidate-valid2|warm-profile|3512|560259072|8.609|
+
+These observations do not establish an overall startup, CPU or RAM improvement. Candidate fresh-profile launches were slower in this set; repeat-profile results and memory/CPU varied. The release claim is the isolated large-hash responsiveness result, not a general application speedup. An initial profile timed out without a Home probe and was rejected; explicit baseline/candidate startup checks and all eight accepted launches later passed. Profiles never changed the installed app or production history.
+
+### Android baseline
+
+Android 0.41.0 code is unchanged in this pass. Three sequential Low Memory Home profiles in an unlocked, separately installed tablet app recorded launch-to-idle 1058/636/635 ms, 30-second process CPU 11734/8755/9051 ms, and peak main-process PSS 125021/112052/107444 KiB. The first run uses a fresh test install; later runs retain its cache. These are baselines rather than a before/after saving, Home idle is not first decoded video, no torrent worker was active, and this is not a 1 GiB physical-projector measurement. The owner separately confirmed S1E3 smooth playback on projector 0.41.0; that functional result does not supply sustained projector CPU/RAM measurements. Test packages were removed and production build configuration restored.

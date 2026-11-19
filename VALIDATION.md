@@ -1,3 +1,7 @@
+# Windows hash follow-up - 0.42.0
+
+240 desktop/catalog/backend checks passed. Real pinned WebTorrent local-webseed transfers verified all 128 MiB bytes under both previous/cooperative hash paths, preserving the existing contiguous-flush optimization. Actual hidden NW renderer profiles confirmed the expected hook and 84-card Home, zero errors, eight accepted launches across four alternating version trials. Initial timeout was rejected. Three Android 0.41.0 Low Memory baseline profiles passed on the unlocked tablet; no Android production code changed. See PERFORMANCE.md for all CPU, memory, timing and limitations. Runtime release checks/publication are recorded after CI acceptance.
+
 Publication: source 6572414; GitHub Android/build and desktop-checks run 44541194512 passed. Public release v0.41.0 contains Android 0.41.0/code 56 plus unchanged Windows 0.40.0 downloads; all eight remote asset sizes/SHA-256 digests match local verified packages. APK signer matches the existing installed-app certificate. Signed feed run 44541710563 passed; the normal pinned-public-key client fetched and verified Android 0.41.0/code 56 and Windows 0.40.0. Physical-projector acceptance remains pending.
 
 # Projector follow-up — 0.41.0

@@ -1,3 +1,7 @@
+# Remaining optimization investigation - 0.42.0
+
+The remaining synchronous Windows large-piece hash path now yields with pending-hash request backpressure. Fragmented-piece assembly was measured and still requires a whole-piece allocation with the current store contract; no unsafe early preallocation or verification bypass is introduced. Eight alternating whole-app Home profiles did not establish an overall RAM/startup/CPU saving, and three Android runs establish a current baseline only. Previously shipped cache/read/contiguous-flush optimizations remain closed. Further fragmented-buffer elimination would be a separately scoped engine/store redesign; sustained physical-projector profiling is separate from the owner-confirmed 0.41.0 S1E3 playback pass.
+
 # Projector follow-up - 0.41.0
 
 The owner tested 0.40.0 on the physical projector. After correcting a disconnected USB cache drive, startup again blocked in native have_piece; shutdown sometimes self-aborted but also remained unconfirmed, later exhausting worker slots. Internal-cache checks also passed before worker-slot failure. Physical acceptance of 0.40.0 therefore failed. The 0.41.0 candidate removes per-piece synchronous queries, isolates the control looper, adds exact UID/process-name fallback validation, halts cycling during unconfirmed cleanup and extends bounded diagnostics. Physical-projector retry remains required; this is not a confirmed firmware diagnosis.
