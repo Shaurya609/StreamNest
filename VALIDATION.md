@@ -1,3 +1,5 @@
+Publication: source 6572414; GitHub Android/build and desktop-checks run 44541194512 passed. Public release v0.41.0 contains Android 0.41.0/code 56 plus unchanged Windows 0.40.0 downloads; all eight remote asset sizes/SHA-256 digests match local verified packages. APK signer matches the existing installed-app certificate. Signed feed run 44541710563 passed; the normal pinned-public-key client fetched and verified Android 0.41.0/code 56 and Windows 0.40.0. Physical-projector acceptance remains pending.
+
 # Projector follow-up — 0.41.0
 
 19 November 2026. Owner reports on the physical 0.40.0 projector confirm a native have_piece startup stall and intermittent unconfirmed worker shutdown; later source attempts hit occupied worker reservations. A disconnected USB drive caused a separate earlier cache creation error. Internal-cache checks later passed, but worker-slot failure prevented a clean storage comparison. Do not claim an identified firmware root cause or resolved physical playback.
