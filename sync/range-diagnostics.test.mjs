@@ -1,0 +1,5 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {cleanData} from './diagnostics.mjs';
+test('range reports retain bounded counts and coarse locations without absolute playback positions or paths',()=>{
+ const raw={rangeState:'waiting',rangeWaitMs:500,rangeStateAgeMs:50,startupPiecesRequired:2,startupPiecesReady:1,pieceSizeKb:4096,videoDecodedFrames:0,playerReadBytes:1234,demuxReadBytes:1200,demuxCorrupted:1,demuxDiscontinuities:0,rangeStartPercent:33,rangeEndPercent:100,rangeServedBytes:32768,rangeRequests:3,rangeActiveReaders:1,seekKind:'resume',seekPercent:32,positionMs:123456,filePath:'private'};
+ const clean=cleanData(raw);assert.equal(clean.rangeState,'waiting');assert.equal(clean.seekKind,'resume');for(const key of ['rangeStateAgeMs','startupPiecesRequired','startupPiecesReady','pieceSizeKb','videoDecodedFrames','playerReadBytes','demuxReadBytes','demuxCorrupted','demuxDiscontinuities'])assert.equal(clean[key],raw[key]);assert.equal(clean.rangeStartPercent,33);assert(!('positionMs' in clean));assert(!('filePath' in clean));assert.deepEqual(cleanData({rangeState:'private',seekKind:'secret',rangeWaitMs:-1}),{});
+});

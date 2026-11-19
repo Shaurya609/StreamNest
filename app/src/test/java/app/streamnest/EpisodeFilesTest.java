@@ -56,4 +56,16 @@ public class EpisodeFilesTest {
   public void movieStillSelectsLargestVideo() throws Exception {
     assertEquals(0, EpisodeFiles.select(pack, sizes, -1, "", false, 0, 0, 0));
   }
+
+  @Test public void supportsVerifiedAbsoluteAliasesAndUnderscores() throws Exception {
+    assertTrue(EpisodeFiles.matches("[Judas] Black Clover - S03E19 (121).mkv",1,121,121));
+    assertTrue(EpisodeFiles.matches("Black_Clover_-_121_RUS_JP_ENG_Judas_BDrip_HEVC_10bit.mkv",1,121,121));
+    assertTrue(EpisodeFiles.matches("[UQW] Black Clover - Ep121 [1080p].mkv",1,121,121));
+    assertFalse(EpisodeFiles.matches("Black Clover - S03E19 (121).mkv",1,122,122));
+    assertFalse(EpisodeFiles.matches("Black Clover - S01E121 (122).mkv",1,121,121));
+    assertFalse(EpisodeFiles.matches("Anime - 121 - 122.mkv",1,121,121));
+  }
+  @Test(expected=IOException.class) public void unindexedWrongUnderscoreEpisodeCannotFallBack() throws Exception {
+    EpisodeFiles.select(Arrays.asList("Black_Clover_-_121_ENG.mkv"),Arrays.asList(100L),-1,"",true,1,122,122);
+  }
 }

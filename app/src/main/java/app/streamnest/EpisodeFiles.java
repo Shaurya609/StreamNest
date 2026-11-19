@@ -11,23 +11,30 @@ final class EpisodeFiles {
         && !path.toLowerCase(Locale.ROOT).matches(".*(?:^|[/\\\\._ -])sample(?:[/\\\\._ -]|$).*");
   }
 
+  static String member(String path) {
+    path=path.replace('\\','/');return path.substring(path.lastIndexOf('/')+1).replace('_',' ');
+  }
+  static boolean rangeTail(String tail){return Pattern.compile("^\\s*[-~]\\s*[0-9]{1,4}(?=\\s|$|[.\\[\\]])").matcher(tail).find();}
   static boolean matches(String path, int season, int episode, int absolute) {
-    path=path.replace('\\','/');path=path.substring(path.lastIndexOf('/')+1);
+    path=member(path);
     if(Pattern.compile("(?i)s[0-9]+e[0-9]+[ -]*(?:e[0-9]+|s[0-9]+e[0-9]+)").matcher(path).find())return false;
-    Matcher m = Pattern.compile("(?i)(?:^|[^a-z0-9])s(\\d{1,2})e(\\d{1,4})(?!\\d)").matcher(path);
-    if (m.find())
-      return Integer.parseInt(m.group(1)) == season && Integer.parseInt(m.group(2)) == episode;
-    m = Pattern.compile("(?i)(?:^|[^a-z0-9])(\\d{1,2})x(\\d{1,4})(?!\\d)").matcher(path);
-    if (m.find())
-      return Integer.parseInt(m.group(1)) == season && Integer.parseInt(m.group(2)) == episode;
-    if (absolute > 0) {
-      m = Pattern.compile("\\s-\\s(\\d{1,4})(?:v\\d+)?(?=\\s|\\[|\\(|\\.)").matcher(path);
-      if (m.find()) return Integer.parseInt(m.group(1)) == absolute;
+    Matcher m=Pattern.compile("(?i)(?:^|[^a-z0-9])s(\\d{1,2})e(\\d{1,4})(?!\\d)").matcher(path);
+    if(!m.find())m=Pattern.compile("(?i)(?:^|[^a-z0-9])(\\d{1,2})x(\\d{1,4})(?!\\d)").matcher(path);
+    else return seasonal(path,m,season,episode,absolute);
+    if(m.find())return seasonal(path,m,season,episode,absolute);
+    if(absolute>0){
+      m=Pattern.compile("(?i)(?:\\s-\\s|(?:^|[ .-])ep(?:isode)?[ .-]*)(\\d{1,4})(?:v\\d+)?(?=\\s|\\[|\\(|\\.|$)").matcher(path);
+      if(m.find())return !rangeTail(path.substring(m.end()))&&Integer.parseInt(m.group(1))==absolute;
     }
     return false;
   }
-
-  static boolean hasNumber(String name){String member=new java.io.File(name.replace('\\','/')).getName();return Pattern.compile("(?i)(?:s[0-9]{1,2}e[0-9]{1,4}|[0-9]{1,2}x[0-9]{1,4}| - [0-9]{1,4})").matcher(member).find();}
+  static boolean seasonal(String path,Matcher m,int season,int episode,int absolute){
+    if(rangeTail(path.substring(m.end())))return false;
+    Matcher alias=Pattern.compile("^\\s*\\(([0-9]{1,4})\\)").matcher(path.substring(m.end()));
+    if(absolute>0&&alias.find())return Integer.parseInt(alias.group(1))==absolute;
+    return Integer.parseInt(m.group(1))==season&&Integer.parseInt(m.group(2))==episode;
+  }
+  static boolean hasNumber(String name){return Pattern.compile("(?i)(?:^|[^a-z0-9])(?:s[0-9]{1,2}e[0-9]{1,4}|[0-9]{1,2}x[0-9]{1,4}|- [0-9]{1,4}|ep(?:isode)?[ .-]*[0-9]{1,4})(?![0-9])").matcher(member(name)).find();}
 
   static int select(
       List<String> paths,
@@ -57,7 +64,7 @@ final class EpisodeFiles {
       }
     if (episodeRequest) {
       if (matched.size() == 1) return matched.get(0);
-      if (matched.isEmpty() && videos.size() == 1 && !Pattern.compile("(?i)(?:^|[^a-z0-9])(?:s[0-9]{1,2}e[0-9]{1,4}|[0-9]{1,2}x[0-9]{1,4}|- [0-9]{1,4})(?![0-9])").matcher(paths.get(videos.get(0))).find()) return videos.get(0);
+      if (matched.isEmpty() && videos.size() == 1 && !hasNumber(paths.get(videos.get(0)))) return videos.get(0);
       throw new IOException("Cannot uniquely identify this episode in the season pack");
     }
     return videos.stream()

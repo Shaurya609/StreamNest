@@ -1,3 +1,7 @@
+# TV playback and anime matching — 0.43.0
+
+Exact Black Clover 121 member parsing is corrected and verified against four real torrent packs; wrong episode 122 requests are rejected. Live Black Clover video acceptance remains distinct. TV buffering investigation now includes bounded range waits/delivery, startup verified pieces, seek kind and decoder/input counters. ARM32 isolated tablet S1E3 pause/download/resume and short sustained playback passed. Physical TV retry on the new version is still required; no confirmed TV root-cause fix is claimed. See VALIDATION.md.
+
 # Remaining optimization investigation - 0.42.0
 
 The remaining synchronous Windows large-piece hash path now yields with pending-hash request backpressure. Fragmented-piece assembly was measured and still requires a whole-piece allocation with the current store contract; no unsafe early preallocation or verification bypass is introduced. Eight alternating whole-app Home profiles did not establish an overall RAM/startup/CPU saving, and three Android runs establish a current baseline only. Previously shipped cache/read/contiguous-flush optimizations remain closed. Further fragmented-buffer elimination would be a separately scoped engine/store redesign; sustained physical-projector profiling is separate from the owner-confirmed 0.41.0 S1E3 playback pass.

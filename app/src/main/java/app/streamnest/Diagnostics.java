@@ -11,7 +11,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import org.json.*;
 
-/** Default-on, user-disableable bounded technical journal. No titles, media positions, paths, URLs or exception messages. */
+/** Default-on, user-disableable bounded technical journal. No titles, absolute watch timestamps, paths, URLs or exception messages. */
 final class Diagnostics {
   private static Context context;
   private static final ScheduledExecutorService worker=Executors.newSingleThreadScheduledExecutor();

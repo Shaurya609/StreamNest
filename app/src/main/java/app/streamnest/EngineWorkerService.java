@@ -53,6 +53,7 @@ public class EngineWorkerService extends Service {
   TorrentEngine e=engine;if(e==null)return;
   Bundle d=new Bundle();d.putString("token",token);d.putInt("pid",android.os.Process.myPid());
   d.putLong("workerMemoryMb",memoryMb);if(!failureReport.isEmpty())d.putString("failureReport",failureReport);
+  d.putString("rangeReport",e.rangeSnapshot().toString());
   d.putString("message",e.message);d.putString("url",e.url);d.putBoolean("closed",e.closed);d.putBoolean("complete",e.verifiedComplete);
   d.putString("stage",e.startup.stage);d.putLong("since",e.startup.since);d.putLong("limit",e.startup.limitMs);d.putBoolean("active",e.startup.active);d.putLong("pulse",e.workerPulse);
   d.putString("video",e.video==null?"":e.video.getAbsolutePath());d.putLong("size",e.size);d.putLong("received",e.receivedBytes);d.putString("fingerprint",e.fingerprint());d.putString("hash",e.cachedMovieHash);

@@ -27,6 +27,9 @@ class TorrentEngine implements AutoCloseable {
   String fingerprint(){return torrentFingerprint;}
   volatile boolean budgetChanged;
   void promote(){preloadOnly=false;budgetChanged=true;}
+  final RangeTrace ranges=new RangeTrace(System::nanoTime);
+  volatile String rangeReport="{}",diagnosticSeekKind="none";
+  volatile int diagnosticSeekPercent=-1;
   volatile long receivedBytes;
   volatile int diagnosticPeers,diagnosticKbps,diagnosticPercent,diagnosticError;
   long diagnosticSampleAt;
@@ -217,12 +220,13 @@ class TorrentEngine implements AutoCloseable {
               res.addHeader("Content-Range", "bytes */" + size);
               return res;
             }
+            PieceStream traced=null;
             try {
-              if(req.getMethod()==Method.GET){if(startupHints.compareAndSet(true,false))handle.clearPieceDeadlines();prioritize(range.start);}
               InputStream input =
                   req.getMethod() == Method.HEAD
                       ? new ByteArrayInputStream(new byte[0])
                       : new PieceStream(range.start, range.end);
+              if(input instanceof PieceStream){PieceStream stream=(PieceStream)input;traced=stream;ranges.state(stream.rangeId,"prioritizing");if(startupHints.compareAndSet(true,false))handle.clearPieceDeadlines();prioritize(range.start);}
               String mime =
                   video.getName().toLowerCase().endsWith("mkv") ? "video/x-matroska" : "video/mp4";
               Response res =
@@ -237,6 +241,7 @@ class TorrentEngine implements AutoCloseable {
                     "Content-Range", "bytes " + range.start + "-" + range.end + "/" + size);
               return res;
             } catch (Exception e) {
+              if(traced!=null)try{traced.close();}catch(IOException ignored){}
               return newFixedLengthResponse(
                   Response.Status.SERVICE_UNAVAILABLE, "text/plain", "Buffering; retry playback");
             }
@@ -356,15 +361,19 @@ class TorrentEngine implements AutoCloseable {
     }
   }
 
+  org.json.JSONObject rangeSnapshot(){org.json.JSONObject d=ranges.snapshot();try{if(size>0&&pieceLength>=16384){java.util.Set<Integer> needed=new java.util.HashSet<>();for(int[] range:StartupPieces.ranges(size,offset,pieceLength,0))for(int n=range[0];n<=range[1];n++)needed.add(n);int ready=0;for(int n:needed)if(available.has(n))ready++;d.put("startupPiecesRequired",needed.size()).put("startupPiecesReady",ready).put("pieceSizeKb",pieceLength/1024);}}catch(org.json.JSONException ignored){}return d;}
+
   final class PieceStream extends InputStream {
     long pos, end;
     RandomAccessFile file;
     volatile boolean ended;
     int priorityPiece = -1;
+    final long rangeId;
 
     PieceStream(long s, long e) {
       pos = s;
       end = e;
+      rangeId=ranges.open(s,e,size);
     }
 
     public int read() throws IOException {
@@ -380,10 +389,13 @@ class TorrentEngine implements AutoCloseable {
       int piece = (int) ((offset + pos) / pieceLength);
       long waitUntil = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(60);
       // Hundreds of small HTTP reads can belong to one piece; set its window once.
-      if (piece != priorityPiece) { prioritize(pos); priorityPiece = piece; }
+      if (piece != priorityPiece) { ranges.state(rangeId,"prioritizing");prioritize(pos); priorityPiece = piece; }
       while (!closed && !ended && !available.has(piece)) {
-        if (System.nanoTime() > waitUntil)
+        ranges.waiting(rangeId,pos);
+        if (System.nanoTime() > waitUntil){
+          ranges.state(rangeId,"timeout");
           throw new IOException("Timed out buffering video");
+        }
         try {
           Thread.sleep(100);
         } catch (InterruptedException e) {
@@ -392,6 +404,7 @@ class TorrentEngine implements AutoCloseable {
         }
       }
       if (closed || ended) throw new IOException("Stream stopped");
+      ranges.state(rangeId,"reading");
       if (file == null) file = new RandomAccessFile(video, "r");
       int n =
           (int) Math.min(Math.min(len, end - pos + 1), pieceLength - (offset + pos) % pieceLength);
@@ -399,11 +412,13 @@ class TorrentEngine implements AutoCloseable {
       int got = file.read(b, off, n);
       if (got < 0) throw new IOException("Downloaded piece is unavailable on disk");
       pos += got;
+      ranges.served(rangeId,pos,got);
       return got;
     }
 
     public void close() throws IOException {
       ended = true;
+      ranges.close(rangeId);
       if (file != null) file.close();
     }
   }

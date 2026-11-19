@@ -199,7 +199,7 @@ public class PlayerActivity extends Activity {
     skipSegment.setOnClickListener(
         v -> {
           if (activeSegment != null) {
-            seekTo(activeSegment.end);
+            seekTo(activeSegment.end,activeSegment.type.equals("intro")?"intro":"credits");
             updateSegment(activeSegment.end);
           }
           setControlsVisible(true);
@@ -273,7 +273,7 @@ public class PlayerActivity extends Activity {
                             WatchProgress.identity(getIntent(), key),
                             getPreferences(0).getLong(key, 0));
             startupPosition = p;
-            if (p > 0) player.setTime(p);
+            if (p > 0){recordSeek(p,"resume");player.setTime(p);}
             getIntent().putExtra("startFromBeginning", false);
             prepareTracks();
           }
@@ -309,12 +309,15 @@ public class PlayerActivity extends Activity {
     finally {if(media!=null)media.release();}
   }
 
-  void seekTo(long position) {
+  void recordSeek(long position,String kind){TorrentEngine e=StreamService.engine;if(e!=null){e.diagnosticSeekKind=kind;e.diagnosticSeekPercent=RangeTrace.percent(position,Math.max(lastLength,player.getLength()));}}
+  void seekTo(long position) {seekTo(position,"manual");}
+  void seekTo(long position,String kind) {
     if (player == null) return;
     if (position < Math.max(lastLength, player.getLength()) - 10000) {
       endedHandled = false;
       pendingAuto = false;
     }
+    recordSeek(position,kind);
     pendingSeek = position;
     player.setTime(position);
   }
@@ -564,7 +567,7 @@ public class PlayerActivity extends Activity {
       skipSegment.setContentDescription(label);
       if (auto && skipRemaining <= 0) {
         skipCancelled = true;
-        seekTo(activeSegment.end);
+        seekTo(activeSegment.end,activeSegment.type.equals("intro")?"intro":"credits");
       }
     }
   }
@@ -871,7 +874,7 @@ public class PlayerActivity extends Activity {
           if(player!=null&&playbackStall.sample(now,Math.max(0,player.getTime()),Math.max(0,player.getLength()),playedVideo&&!userPaused&&!dragging&&pendingSeek<0&&viewsAttached&&hasWindowFocus())){Diagnostics.event("torrent.stalled");DiagnosticPlayback.sample(PlayerActivity.this,player,currentEngine?e:null,softwareDecoder,diagnosticBufferPercent);episodeMessage="Playback has stalled. Try another source or a lower quality.";setControlsVisible(true);}else if(playbackStall.advancedAt==now&&episodeMessage!=null&&episodeMessage.startsWith("Playback has stalled"))episodeMessage=null;
           if(now-watchingActivityAt>=30000){watchingActivityAt=now;WatchingActivity.report(PlayerActivity.this,userPaused||!viewsAttached||opened&&!player.isPlaying()&&!diagnosticBuffering?"paused":playedVideo&&player.isPlaying()&&!diagnosticBuffering?"playing":mediaSet?"buffering":"starting");}
           if(mediaSet&&player.isPlaying()&&player.getTime()>1500&&videoOutputs==0&&diagnosticAudioOnlyVersion!=playbackVersion){diagnosticAudioOnlyVersion=playbackVersion;try{Diagnostics.event("player.audio_only",new org.json.JSONObject().put("attempt",attempt).put("decoder",softwareDecoder?"software":"auto"));}catch(Exception ignored){}}
-          if(mediaSet&&now-diagnosticSampleAt>=30000){diagnosticSampleAt=now;DiagnosticPlayback.sample(PlayerActivity.this,player,currentEngine?e:null,softwareDecoder,diagnosticBufferPercent);}
+          if(currentEngine&&now-diagnosticSampleAt>=30000){diagnosticSampleAt=now;DiagnosticPlayback.sample(PlayerActivity.this,player,currentEngine?e:null,softwareDecoder,diagnosticBufferPercent);}
           if (mediaSet
               && mediaOpenedAt > 0
               && !playedVideo

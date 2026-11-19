@@ -14,14 +14,14 @@ import org.videolan.libvlc.Media;
 /** Device-only regression; fixture is supplied locally, never bundled in the app. */
 public class PlaybackRegression extends Instrumentation {
   PlayerActivity activity;boolean engineRecovery,stability;
-  boolean projectorPlayback, workerShutdown, optimizationData, optimizationProfile, performance, contentVerification, posters, animePlayback, safeArea, watchingActivity, preload, discovery, home, fillerLive, groupHome, homeLayout, artwork, homeSearch, watchedStartup, trailers, diagnostics;
+  boolean tvPlayback, projectorPlayback, workerShutdown, optimizationData, optimizationProfile, performance, contentVerification, posters, animePlayback, safeArea, watchingActivity, preload, discovery, home, fillerLive, groupHome, homeLayout, artwork, homeSearch, watchedStartup, trailers, diagnostics;
   String watchSyncCode, shortPairingCode, expectedPairingAuth,manualSyncCode;
   boolean pairingUiDirect, skipLive, catalog, subtitles, storage, resilience, episodes, appUpdates, watchSyncUi, resumeUi;
 
   @Override
   public void onCreate(Bundle args) {
     if(args!=null&&"true".equals(args.getString("crashCapture"))){super.onCreate(args);new Thread(()->{try{finish(Activity.RESULT_OK,CrashCaptureRegression.run(this));}catch(Throwable e){Bundle out=new Bundle();out.putString("error",e.toString());finish(Activity.RESULT_CANCELED,out);}},"crash-test").start();return;}
-    super.onCreate(args);projectorPlayback=args!=null&&"true".equals(args.getString("projectorPlayback"));workerShutdown=args!=null&&"true".equals(args.getString("workerShutdown"));optimizationData=args!=null&&"true".equals(args.getString("optimizationData"));optimizationProfile=args!=null&&"true".equals(args.getString("optimizationProfile"));stability=args!=null&&"true".equals(args.getString("stability"));engineRecovery=args!=null&&"true".equals(args.getString("engineRecovery"));
+    super.onCreate(args);tvPlayback=args!=null&&"true".equals(args.getString("tvPlayback"));projectorPlayback=args!=null&&"true".equals(args.getString("projectorPlayback"));workerShutdown=args!=null&&"true".equals(args.getString("workerShutdown"));optimizationData=args!=null&&"true".equals(args.getString("optimizationData"));optimizationProfile=args!=null&&"true".equals(args.getString("optimizationProfile"));stability=args!=null&&"true".equals(args.getString("stability"));engineRecovery=args!=null&&"true".equals(args.getString("engineRecovery"));
     manualSyncCode=args==null?null:args.getString("manualSyncCode");
     watchSyncCode = args == null ? null : args.getString("watchSyncCode");
     catalog = args != null && "true".equals(args.getString("catalog"));
@@ -64,6 +64,7 @@ public class PlaybackRegression extends Instrumentation {
 
   @Override
   public void onStart() {
+    if(tvPlayback){Bundle result=new Bundle();try{TvEpisodeRegression.verifyMembers(this);finish(Activity.RESULT_OK,ProjectorPlaybackRegression.run(this,false));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
     if(projectorPlayback){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,ProjectorPlaybackRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
     if(workerShutdown){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,WorkerShutdownRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
     if(optimizationData){Bundle result=new Bundle();try{finish(Activity.RESULT_OK,OptimizationDataRegression.run(this));}catch(Throwable e){result.putString("result","FAIL: "+e);finish(Activity.RESULT_CANCELED,result);}return;}
@@ -496,7 +497,7 @@ public class PlaybackRegression extends Instrumentation {
       values.put("orgAnonymousUntil", "0");
       List<SubtitleQuery.Result> percy =
           api.search(
-              "tt12324366", 1, 1, "Percy Jackson · S1 E1", "en", "0123456789abcdef", 500000000);
+              "tt12324366", 1, 1, "Percy Jackson Â· S1 E1", "en", "0123456789abcdef", 500000000);
       List<SubtitleQuery.Result> scorpion =
           api.search("tt33473834", 0, 0, "Scorpion", "en", "0123456789abcdef", 500000000);
       List<SubtitleQuery.Result> squid =

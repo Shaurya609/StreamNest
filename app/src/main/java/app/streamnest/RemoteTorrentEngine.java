@@ -23,6 +23,7 @@ class RemoteTorrentEngine extends TorrentEngine {
    if(m.what==EngineWorkerService.REPORT){try{Diagnostics.event("torrent.stage",new org.json.JSONObject(d.getString("report")).put("attemptId",reportAttempt));}catch(Exception ignored){}return;}
    if(m.what!=EngineWorkerService.STATE||closeStarted)return;
    if(!failureReported&&d.containsKey("failureReport")){failureReported=true;try{Diagnostics.event("torrent.failed",new org.json.JSONObject(d.getString("failureReport")));}catch(Exception ignored){}}
+   rangeReport=d.getString("rangeReport","{}");
    workerMemoryMb=d.getLong("workerMemoryMb");pid=d.getInt("pid");attached=true;snapshotAt=System.nanoTime();
    String stage=d.getString("stage",startup.stage);if(!startup.stage.equals(stage)||startup.active&&!d.getBoolean("active"))Diagnostics.startup(startup.stage+" finished after "+startup.elapsed()+"ms; "+stage);
    startup.stage=stage;startup.since=d.getLong("since");startup.limitMs=d.getLong("limit");startup.active=d.getBoolean("active");
