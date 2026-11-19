@@ -14,3 +14,8 @@ See PERFORMANCE.md and VALIDATION.md for measured results and limits. No product
 
 
 For the pinned engine-only128MiB contiguous-piece comparison, prepare the frozen desktop/upstream dependencies, then run `node tools/performance/webseed-piece-profile.cjs previous` and `node tools/performance/webseed-piece-profile.cjs optimized` from the checkout root, alternating order. It uses only a local HTTP webseed, sparse zero-filled fixture and fresh reference download folders. All data is hash-verified by WebTorrent. Results include process CPU, peak external/RSS and shared flush count; they are not whole-app or public-network benchmarks. Keep the generated reference data out of Git. Fragmented peer blocks retain the original concat path.
+
+
+For the remaining large-piece hash path, run `node tools/performance/hash-profile.cjs previous` and `node tools/performance/hash-profile.cjs cooperative` in alternating fresh processes. Both hash identical 128 MiB input; report CPU/elapsed time and maximum heartbeat gap, not a whole-app saving. `fragmented-piece-profile.cjs` uses the actual pinned Piece implementation with independent 16 KiB blocks and reports the additional contiguous assembly allocation. `webseed-hash-profile.cjs` compares current 0.40.0 shared-flush behavior with the cooperative hash hook on the actual WebTorrent/local-webseed/filesystem path. Public peer discovery is disabled. Keep benchmark runs separate from whole-app measurements.
+
+The Windows startup probe records `cooperativeHash` so a candidate measurement cannot silently run the previous implementation. Accepted comparisons require the expected hook, identical card count and no renderer errors/timeouts.

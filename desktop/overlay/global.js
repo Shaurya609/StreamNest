@@ -35,7 +35,7 @@ var _ = require('underscore'),
   URI = require('urijs'),
   Trakt = require('trakt.tv'),
   // Torrent engines
-  WebTorrent = require('webtorrent'),
+  WebTorrent = (require('./butter-provider/streamnest-piece-hash').install(require), require('webtorrent')),
   torrentCollection = require('torrentcollection6'),
   // NodeJS
   child = require('child_process'),
