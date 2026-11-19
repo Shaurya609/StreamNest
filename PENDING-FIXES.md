@@ -1,3 +1,7 @@
+# Projector recovery follow-up - 0.40.0
+
+Token-authorized self-abort, Binder-only writer death confirmation and retryable cleanup are implemented. A frozen-worker/no-process-list test and repeated same-cache restarts passed; S1E3 pause/download/resume plus a sustained tablet sample passed. Projector normal-update acceptance and the underlying cause of remaining native operation stalls are still open. New shutdown-mode and slow-worker stack reports support that diagnosis. Contiguous large-piece copying is reduced; fragmented-piece assembly and whole-device sustained profiling remain distinct.
+
 # Optimization follow-up - 0.39.0
 
 Byte-budgeted Windows caches/writeback, revision-based Home polls, selected-record Android startup and cached diagnostic scope hashes are implemented and measured. Short whole-app profiles do not establish a consistent total RAM/CPU/startup percentage improvement. Full-piece hash assembly, additional matching trials and long physical-projector playback remain open. See PERFORMANCE.md for exact observations.

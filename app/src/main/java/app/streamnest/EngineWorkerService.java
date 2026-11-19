@@ -9,10 +9,11 @@ import java.util.concurrent.*;
 
 /** Native sessions live here; the independent control looper stays responsive during JNI waits. */
 public class EngineWorkerService extends Service {
- static final int START=1, STOP=2, PROMOTE=3, STATE=4, CLOSED=5, HELLO=6;
+ static final int START=1, STOP=2, PROMOTE=3, STATE=4, CLOSED=5, HELLO=6, ABORT=7, REPORT=8;
  final Handler control=new Handler(Looper.getMainLooper());
  final ExecutorService worker=Executors.newSingleThreadExecutor();
  long memoryAt;volatile long memoryMb;final java.util.concurrent.atomic.AtomicBoolean memoryBusy=new java.util.concurrent.atomic.AtomicBoolean();
+ volatile Thread engineThread;boolean stackRequested;
  volatile String failureReport="";
  TorrentEngine engine;Messenger owner;String token="";boolean stopping;
  final Messenger endpoint=new Messenger(new Handler(Looper.getMainLooper()){
@@ -24,7 +25,7 @@ public class EngineWorkerService extends Service {
     engine.sourceUrl=d.getString("source","");engine.episodeIdentity=d.getString("identity");engine.expectedFilename=d.getString("filename","");engine.fileIndex=d.getInt("fileIndex",-1);
     engine.episodeRequest=d.getBoolean("episodeRequest");engine.requestedSeason=d.getInt("season");engine.requestedEpisode=d.getInt("episode");engine.absoluteEpisode=d.getInt("absolute");engine.publicMetadataLookup=d.getBoolean("metadata");engine.lite=d.getBoolean("lite");engine.preloadOnly=d.getBoolean("preload");engine.resumeFraction=d.getDouble("resumeFraction");
     engine.startup.begin("Creating torrent worker",10000);snapshot();
-    worker.execute(()->{try{
+    worker.execute(()->{engineThread=Thread.currentThread();try{
      engine.startup.begin("Checking cache folder",20000);
      File requested=new File(d.getString("root",""));File root=requested.getCanonicalFile(),base=CacheLocation.writable(requested.getParentFile());
      if(!requested.getName().matches("[a-f0-9]{64}")||!base.equals(root.getParentFile()))throw new IOException("Invalid torrent worker folder");
@@ -33,6 +34,9 @@ public class EngineWorkerService extends Service {
     }catch(Throwable error){failureReport=DiagnosticData.failure("torrent","startup",error).toString();engine.message="Unable to stream: "+(error.getMessage()==null?error.getClass().getSimpleName():error.getMessage());engine.closed=true;engine.startup.done();}
     finally{snapshot();if(stopping||engine.closed)finishEngine();}});
    }else if(token.equals(d.getString("token"))){
+    if(m.what==ABORT){android.os.Process.killProcess(android.os.Process.myPid());return;}
+    if(m.what==REPORT&&!stackRequested&&engineThread!=null){stackRequested=true;new Thread(()->{try{org.json.JSONArray frames=new org.json.JSONArray();for(StackTraceElement f:engineThread.getStackTrace())if(frames.length()<12&&f.getLineNumber()>0)frames.put(f.getClassName()+"."+f.getMethodName()+":"+f.getLineNumber());Bundle report=new Bundle();report.putString("token",token);report.putString("report",DiagnosticData.clean(new org.json.JSONObject().put("stage","worker").put("frames",frames)).toString());send(REPORT,report);}catch(Exception ignored){}},"worker-stack").start();return;}
+
     if(m.what==STOP){stopping=true;if(engine!=null)engine.closed=true;else {Bundle done=new Bundle();done.putString("token",token);send(CLOSED,done);terminate();}}
     else if(m.what==PROMOTE&&engine!=null)engine.promote();
    }

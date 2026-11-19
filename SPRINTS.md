@@ -69,6 +69,6 @@ This is the new five-sprint evaluation follow-up, distinct from the earlier 0.17
 
 1. Correct, audible playback — delivered in 0.34.0.
 2. Engine recovery and startup — 0.35.0: isolated Android native workers, bounded cancellation, writer-lease protection, warm preload adoption, targeted startup/resume piece windows; bounded Windows shutdown/server waits and stale-attempt guards. Real native frozen-worker recovery and warm-cache handover passed; original physical-projector/USB confirmation remains distinct.
-3. Memory and sustained stability — focused optimizations published in0.37.0 and0.39.0; short whole-app profiles are recorded. Full-piece hash assembly, additional matching trials and physical-projector sustained acceptance remain open. Profile native/mapped/graphics memory, Low Memory budgets, repeated transitions and the anime responsiveness case.
+3. Memory and sustained stability — focused optimizations published in0.37.0,0.39.0 and0.40.0; short whole-app profiles are recorded. Full-piece hash assembly, additional matching trials and physical-projector sustained acceptance remain open. Profile native/mapped/graphics memory, Low Memory budgets, repeated transitions and the anime responsiveness case.
 4. Resume, subtitles and interaction — pending. Consolidate legacy anime history, accurate subtitle status, touch versus remote behavior and Continue Watching polish.
 5. Efficient browsing and cleanup — pending. Metadata deduplication/negative caching, measured Home rendering, safe regression-history cleanup and text normalization.

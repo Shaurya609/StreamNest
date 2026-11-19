@@ -1,0 +1,2 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {cleanData} from './diagnostics.mjs';
+test('worker shutdown mode survives owner-report sanitization without raw process details',()=>{assert.deepEqual(cleanData({stage:'shutdown',workerStopMode:'self_abort',elapsedMs:1532,pid:123,token:'secret'}),{elapsedMs:1532,stage:'shutdown',workerStopMode:'self_abort'});assert.deepEqual(cleanData({workerStopMode:'private'}),{});});

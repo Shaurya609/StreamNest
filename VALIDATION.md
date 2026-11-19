@@ -1,3 +1,11 @@
+## 0.40.0 worker recovery and memory - 19 November 2026
+
+-237 desktop/catalog/backend tests and231 Android unit tests plus lint/APK build/instrumentation compilation passed. Unit piece contracts use an unchanged MIT-licensed pinned torrent-piece fixture so early CI tests do not require a complete desktop install; actual local WebTorrent transfers also exercise the installed dependency.
+- Separate tablet package: fully SIGSTOP-frozen worker without parent process-list kill eligibility kept its cache protected. After SIGCONT, queued token-authorized self-abort triggered Binder death; cleanup retry and three same-cache worker restarts passed. No lease is released based on process-list absence. Real S1E3 first-candidate video/pause/downloading/resume and60-second sustained observation passed. Old pinned S1E2 zero-peer failure is excluded. Installed production history/accounts were not changed; physical projector confirmation remains pending.
+- Whole-piece SHA1/output and real local128MiB webseed verification passed for original and optimized assembly; fragmented/incomplete/extra-backing fallbacks passed. Detailed engine-only and tablet observations/limits are in PERFORMANCE.md. No universal whole-app memory or source-availability improvement is claimed.
+- Additive shutdown-mode diagnostic sanitizer deployed as a3eefddf-5e5e-437a-9094-0c655e9161cf. Disposable authenticated upload/owner retrieval retained self_abort and shutdown fields, then removed the test group/reports. Slow-worker stacks are bounded, consent-gated and collected off the control thread; the actual projector must report a remaining stall before assigning its native cause.
+- Final package checks and signed update publication pending.
+
 ## 0.39.0 performance follow-up - 19 November 2026
 
 -233 desktop/catalog/backend tests and231 Android unit tests plus lint/APK build and instrumentation compilation passed. New coverage includes delayed/error disk completion, queue recovery, byte-cache limits, preload promotion, and progress revisions for local/remote/removal changes versus unchanged merges. Scope hash output/caching/reset passed.

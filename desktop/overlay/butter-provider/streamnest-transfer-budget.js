@@ -2,6 +2,7 @@
 // Backpressure at the verified-write boundary. Already-requested blocks and hash
 // verification finish normally; no partial pieces, cache files or peers are discarded.
 function install(torrent,preload=false){
+ const piece=Array.isArray(torrent.pieces)&&torrent.pieces.find(p=>p&&p.constructor?.name==='Piece'&&typeof p.flush==='function');if(piece)require('./streamnest-piece-memory').install(piece.constructor);
  if(torrent.streamnestTransferBudget){const state=torrent.streamnestTransferBudget;if(state.preload&&!preload){state.preload=false;state.cacheBytes=32*1024*1024;state.writeBytes=64*1024*1024;}return state;}
  if(!torrent.store?.put||typeof torrent._request!=='function')return null;
  const cacheBytes=(preload?8:32)*1024*1024,writeBytes=(preload?32:64)*1024*1024;
