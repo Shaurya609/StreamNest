@@ -26,7 +26,11 @@ probe.mkdir(parents=True)
 for name in ('Local','Roaming','Temp','Chromium'):(probe/name).mkdir()
 env=dict(os.environ,LOCALAPPDATA=str(probe/'Local'),APPDATA=str(probe/'Roaming'),
          TEMP=str(probe/'Temp'),TMP=str(probe/'Temp'),STREAMNEST_SMOKE_ROOT=str(probe))
-if args.dashboard:env['STREAMNEST_DASHBOARD_SOURCE']=str(ROOT/'sync/dashboard.mjs')
+if args.dashboard:
+    # Import the production module: slicing its template leaves interpolation unexpanded.
+    rendered=probe/'dashboard.html'
+    subprocess.run(['node','--input-type=module','-e',"import {pathToFileURL} from 'node:url';import {writeFileSync} from 'node:fs';const html=(await import(pathToFileURL(process.argv[1]).href)).default;writeFileSync(process.argv[2],html);",str(ROOT/'sync/dashboard.mjs'),str(rendered)],check=True)
+    env['STREAMNEST_DASHBOARD_SOURCE']=str(rendered)
 if args.video:env['STREAMNEST_SMOKE_VIDEO']=str(args.video.resolve())
 if args.group_home_input:env['STREAMNEST_GROUP_HOME_INPUT']=str(args.group_home_input.resolve())
 @contextlib.contextmanager
