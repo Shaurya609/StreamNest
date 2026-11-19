@@ -1,4 +1,5 @@
 'use strict';
+const hashState=require('./streamnest-piece-hash').state;
 // Backpressure at the verified-write boundary. Already-requested blocks and hash
 // verification finish normally; no partial pieces, cache files or peers are discarded.
 function install(torrent,preload=false){
@@ -23,7 +24,7 @@ function install(torrent,preload=false){
   const done=error=>{if(settled)return;settled=true;state.pendingBytes-=bytes.length;callback(error);};
   try{return put(index,bytes,done);}catch(error){if(settled)throw error;done(error);}
  };
- torrent._request=function(...args){if(state.pendingBytes+require('./streamnest-piece-hash').state.pendingBytes>=state.writeBytes){state.blockedRequests++;return false;}return request.apply(this,args);};
+ torrent._request=function(...args){if(state.pendingBytes+hashState.pendingBytes>=state.writeBytes){state.blockedRequests++;return false;}return request.apply(this,args);};
  return state;
 }
 module.exports={install};

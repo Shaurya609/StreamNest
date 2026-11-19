@@ -340,7 +340,7 @@
     },
     {
       "path": "butter-provider/streamnest-transfer-budget.js",
-      "sha256": "0802093116e1b621159fca8fa47cc8125ab8da0cdac1684cc61fc26e2479bbe1"
+      "sha256": "30be6e856d10a7286c65ea29e2c22408ec89b3040f951e6bafae35835f47ce0a"
     },
     {
       "path": "butter-provider/streamnest-piece-memory.js",
