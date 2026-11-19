@@ -12,6 +12,7 @@ import org.videolan.libvlc.*;
 import org.videolan.libvlc.util.VLCVideoLayout;
 
 public class PlayerActivity extends Activity {
+  final EpisodeCompletion completionTail=new EpisodeCompletion();
   LibVLC vlc;
   MediaPlayer player;
   VLCVideoLayout video;
@@ -235,7 +236,7 @@ public class PlayerActivity extends Activity {
           if (e.type == MediaPlayer.Event.Playing && userPaused) { player.pause(); return; }
           if (e.type == MediaPlayer.Event.Playing) Diagnostics.event("player.resumed");
           if (e.type == MediaPlayer.Event.Paused) {Diagnostics.event("player.paused");WatchingActivity.report(this,"paused");}
-          if (e.type == MediaPlayer.Event.EndReached) {Diagnostics.event("player.ended");WatchingActivity.report(this,"stopped");}
+
           if (e.type == MediaPlayer.Event.EncounteredError) Diagnostics.event("player.error");
           if(e.type==MediaPlayer.Event.ESAdded){automaticTracksVersion=-1;if(opened)prepareTracks();}
           if (e.type == MediaPlayer.Event.Vout) { videoOutputs = e.getVoutCount();  }
@@ -244,8 +245,8 @@ public class PlayerActivity extends Activity {
             setControlsVisible(true);
             status.setText("Playback failed. Stop and retry, or choose another source.");
           }
-          if (e.type == MediaPlayer.Event.EndReached) {
-            persistProgress(true);
+          if (e.type == MediaPlayer.Event.EndReached && mediaSet && playedVideo && !endedHandled) {
+            Diagnostics.event("player.ended");WatchingActivity.report(this,"stopped");
             episodeEnded();
           }
           if (e.type == MediaPlayer.Event.TimeChanged && pendingSeek >= 0
@@ -381,6 +382,7 @@ public class PlayerActivity extends Activity {
         position = Math.max(lastPosition, player.getTime());
     if (endedHandled || !EpisodePlayback.completed(position, len, playedVideo, userPaused)) return;
     endedHandled = true;
+    persistProgress(true);
     getPreferences(0).edit().remove(key).apply();
     if (getSharedPreferences("playback", 0).getBoolean("autoNext", true)
         && episodeQueue != null
@@ -460,6 +462,7 @@ public class PlayerActivity extends Activity {
                   videoOutputs = 0;
                   softwareDecoder = false;
                   playedVideo = false;
+                  completionTail.reset();
                   sourceFailed = false;
                   userPaused = false;
                   resumeOnReturn = false;
@@ -947,6 +950,7 @@ public class PlayerActivity extends Activity {
           }
           if (mediaSet && playedVideo) requestSegments(len);
           updateSegment(p);
+          if(!endedHandled&&episodeQueue!=null&&completionTail.sample(SystemClock.elapsedRealtime(),p,len,playedVideo&&!userPaused&&!changingEpisode&&viewsAttached&&hasWindowFocus())){try{Diagnostics.event("player.ended",new org.json.JSONObject().put("reason","decoder"));}catch(Exception ignored){}WatchingActivity.report(PlayerActivity.this,"stopped");episodeEnded();}
           if (pendingAuto
               && !userPaused
               && getSharedPreferences("playback", 0).getBoolean("autoNext", true)

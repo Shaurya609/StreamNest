@@ -426,7 +426,7 @@ vjs.Player.prototype.volume = function (percentAsDecimal) {
 
         //let's save this bad boy
         AdvSettings.set('playerVolume', vol.toFixed(2));
-        App.PlayerView.displayOverlayMsg(i18n.__('Volume') + ': ' + (vol.toFixed(2) * 100).toFixed(0) + '%');
+        App.PlayerView?.displayOverlayMsg(i18n.__('Volume') + ': ' + (vol.toFixed(2) * 100).toFixed(0) + '%');
 
         return this;
     }

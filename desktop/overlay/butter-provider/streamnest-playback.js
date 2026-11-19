@@ -11,6 +11,7 @@ async function resolve(attrs,direction,lookup=E.alternatives){
  if(!candidates.length)throw lookupFailure||Error('No matching source found. Try another quality or retry source lookup.');const source=candidates[0];
  return Object.assign({},row,{type:'episode',torrent:source.url,file_name:source.file||'',fileIndex:source.fileIndex,streamnestSources:candidates,streamnestCandidates:candidates,streamnestAttempt:0,streamnestRetry:false,streamnestQuality:quality,quality:source.quality,imdb_id:attrs.imdb_id,tvdb_id:attrs.tvdb_id,auto_id:row.season+':'+row.episode,auto_play_data:attrs.auto_play_data,episodes:attrs.episodes,auto_play:attrs.auto_play,streamnestFromBeginning:true,streamnestSeriesTitle:attrs.streamnestSeriesTitle,streamnestActivityKind:attrs.streamnestActivityKind,streamnestOriginalLanguage:attrs.streamnestOriginalLanguage,malId:row.skipMalId||row.malId||0});
 }
+class TailCompletion{constructor(){this.position=-1;this.since=0;this.fired=false;}sample(now,position,length,eligible){if(!eligible||!Number.isFinite(position)||!Number.isFinite(length)||length<10||position<0||position>length+1||length-position>0.1){this.position=position;this.since=now;this.fired=false;return false;}if(this.position<0||Math.abs(position-this.position)>0.02){this.position=position;this.since=now;this.fired=false;return false;}this.position=position;if(!this.fired&&now-this.since>=3000){this.fired=true;return true;}return false;}}
 function completed(position,length,played,paused){return played&&!paused&&Number.isFinite(length)&&length>10&&position>=length-5;}
 function range(type,start,end,length){const max=type==='intro'?300:900;if(!Number.isFinite(start)||!Number.isFinite(end)||!Number.isFinite(length)||length<=0||start<0||end-start<5||end-start>max||end>length+1||(type==='intro'?start>=length/2:start<=length/2))return null;return {type,start,end:Math.min(end,length)};}
 function introdb(doc,attrs,length){if(doc.imdb_id!==attrs.imdb_id||Number(doc.season)!==Number(attrs.season)||Number(doc.episode)!==Number(attrs.episode)||doc.is_movie)return [];return ['intro','outro'].map(type=>{const row=doc[type];return !doc['no_'+type]&&row&&row.confidence>=0.75&&row.submission_count>=1?range(type,row.start_ms/1000,row.end_ms/1000,length):null;}).filter(Boolean);}
@@ -32,4 +33,4 @@ async function segments(attrs,length,fetch){const get=fetch||(url=>require('./st
  return rows;
 }
 function active(rows,position){return rows.find(s=>position>=s.start&&position<s.end-1)||null;}
-module.exports={ordered,neighbour,resolve,future,completed,range,introdb,aniskip,skipdb,segments,active};
+module.exports={TailCompletion,ordered,neighbour,resolve,future,completed,range,introdb,aniskip,skipdb,segments,active};

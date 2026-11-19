@@ -591,7 +591,7 @@ var handleVideoFile = function (file) {
 
   // close the player if needed
   try {
-    App.PlayerView.closePlayer();
+    App.PlayerView?.closePlayer();
   } catch (err) { }
 
   return new Promise(function (resolve, reject) {
@@ -738,7 +738,7 @@ var handleVideoFile = function (file) {
 
 var handleTorrent = function (torrent) {
   try {
-    App.PlayerView.closePlayer();
+    App.PlayerView?.closePlayer();
   } catch (err) {
     // The player wasn't running
   }
@@ -766,7 +766,7 @@ window.ondrop = function (e) {
       fs.readFileSync(file.path),
       function (err) {
         if (err) {
-          App.PlayerView.closePlayer();
+          App.PlayerView?.closePlayer();
           window.alert(i18n.__('Error Loading File') + ': ' + err);
         } else {
           if (file.name.indexOf('.torrent') !== -1) {

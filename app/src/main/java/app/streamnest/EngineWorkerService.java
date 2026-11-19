@@ -47,7 +47,7 @@ public class EngineWorkerService extends Service {
   send(STATE,d);
  }
  void send(int type,Bundle data){try{Message m=Message.obtain(null,type);m.setData(data);if(owner!=null)owner.send(m);}catch(RemoteException e){stopping=true;if(engine!=null)engine.closed=true;}}
- final Runnable ticker=new Runnable(){public void run(){snapshot();control.postDelayed(this,500);}};
+ final Runnable ticker=new Runnable(){public void run(){snapshot();control.postDelayed(this,engine==null?500:WorkerCadence.delay(engine.startup.active,engine.preloadOnly));}};
  @Override public void onCreate(){super.onCreate();control.post(ticker);}
  void finishEngine(){try{engine.close();}finally{Bundle d=new Bundle();d.putString("token",token);send(CLOSED,d);control.post(this::terminate);}}
  void terminate(){stopSelf();control.postDelayed(()->android.os.Process.killProcess(android.os.Process.myPid()),100);}

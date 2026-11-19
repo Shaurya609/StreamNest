@@ -69,9 +69,10 @@
             };
 
             //If a child was added above this view
-            App.vent.on('viewstack:push', function() {
+            this.listenTo(App.vent,'viewstack:push', function() {
+                if(this._streamnestClosing||this.isDestroyed())return;
                 if (_.last(App.ViewStack) !== 'app-overlay') {
-                    _this.unbindKeyboardShortcuts();
+                    this.unbindKeyboardShortcuts();
                     if (win.isFullscreen) {
                         $('.player .video-js').hide();
                         this.wasFullscreen = true;
@@ -80,9 +81,10 @@
             });
 
             //If a child was removed from above this view
-            App.vent.on('viewstack:pop', function() {
+            this.listenTo(App.vent,'viewstack:pop', function() {
+                if(this._streamnestClosing||this.isDestroyed())return;
                 if (_.last(App.ViewStack) === 'app-overlay') {
-                    _this.bindKeyboardShortcuts();
+                    this.bindKeyboardShortcuts();
                     if (this.wasFullscreen) {
                         $('.player .video-js').removeAttr('style');
                         this.wasFullscreen = false;
@@ -246,13 +248,17 @@
         },
 
         onPlayerEnded: function () {
-            if(this.persistProgress)this.persistProgress(true);
+            if(this._streamnestClosing||this._streamnestEnded||this.isDestroyed?.())return;
+            this.player?.el()?.querySelector('video')?.streamnestCompatibilityAudio?.stop();
+
             const tm=this.model.get('torrentModel'),P=require('./butter-provider/streamnest-playback');
             if(tm&&tm.get('type')==='episode'){
                 if(this._streamnestEnded||!P.completed(Math.max(this._streamnestPosition||0,this.video.currentTime()),Math.max(this._streamnestLength||0,this.video.duration()),this._streamnestPlayed,false))return;
                 this._streamnestEnded=true;
+                if(this.persistProgress)this.persistProgress(true);
                 if(tm.get('auto_play')&&P.neighbour(tm.attributes,1)){this.navigateEpisode(1);return;}
             }
+            if((!tm||tm.get('type')!=='episode')&&this.persistProgress)this.persistProgress(true);
             this.closePlayer();
         },
 
@@ -563,7 +569,8 @@
             this.player.usingNativeControls(false);
 
             // Local subtitle hack
-            App.vent.on('customSubtitles:added', function (subpath) {
+            this.listenTo(App.vent,'customSubtitles:added', function (subpath) {
+                if(that._streamnestClosing||that.isDestroyed())return;
                 var currentTime = 0;
                 try { currentTime = that.video.currentTime(); } catch (error) {};
                 that.customSubtitles = {
@@ -686,8 +693,11 @@
         playNextNow: function () { this.navigateEpisode(1); },
         navigateEpisode: function(direction){
             const tm=this.model.get('torrentModel');if(!tm||this._streamnestNavigating||this.isDestroyed())return;
+            const target=require('./butter-provider/streamnest-playback').neighbour(tm.attributes,direction);
+            if(this._streamnestEnded){this.player.el()?.querySelector('video')?.streamnestCompatibilityAudio?.stop();this.player.pause();}
             this._streamnestNavigating=true;this._streamnestNavButtons&&this._streamnestNavButtons.prop('disabled',true);
             require('./butter-provider/streamnest-preload').next(tm.attributes,direction).then(async attrs=>{
+                if(!target||Number(attrs.season)!==Number(target.season)||Number(attrs.episode)!==Number(target.episode)||attrs.imdb_id!==tm.get('imdb_id'))throw Error('Next episode identity mismatch. Please retry from episode details.');
                 await require('./butter-provider/streamnest-preload').take(attrs);
                 if(this.isDestroyed())return;
                 this.dontTouchFS=true;this.closePlayer();App.vent.trigger('stream:start',new Backbone.Model(attrs));
@@ -720,14 +730,16 @@
             </style>`);
             this._streamnestSkip.addClass('streamnest-skip');
             this._streamnestSegments=[];
+            this._completionTail=new P.TailCompletion();
             this._StreamNestTimer=setInterval(()=>{
                 if(this.isDestroyed())return;
                 const position=this.video.currentTime(),length=this.video.duration();
                 if(Number.isFinite(position))this._streamnestPosition=position;if(Number.isFinite(length))this._streamnestLength=length;
                 if(position>1&&!this.video.paused())this._streamnestPlayed=true;
+                if(!this._streamnestEnded&&this._completionTail.sample(performance.now(),position,length,this._streamnestPlayed&&!this.video.paused()&&!this._streamnestNavigating)){require('./butter-provider/streamnest-diagnostics').event('player.ended',{reason:'decoder'});this.onPlayerEnded();return;}
                 if(!this._streamnestNavigating&&App.settings){
                     const preload=require('./butter-provider/streamnest-preload'),torrent=tm.get('torrent');
-                    preload.consider(tm.attributes,torrent,Number((tm.get('video_file')||{}).index),Settings.streamnestPreloadNext===true,App.settings.tmpLocation);
+                    preload.consider(tm.attributes,torrent,Number((tm.get('video_file')||{}).index),Settings.streamnestPreloadNext===true,App.settings.tmpLocation,Settings);
                     const element=this.player.el().querySelector&&this.player.el().querySelector('video');
                     if(element&&element.videoWidth>0&&!this.video.paused()&&(element.webkitDecodedFrameCount>0||element.getVideoPlaybackQuality&&element.getVideoPlaybackQuality().totalVideoFrames>0)&&torrent)preload.playing(torrent.path);
                 }
@@ -1339,6 +1351,8 @@
         },
 
         onBeforeDestroy: function () {
+            for(const timer of [this._AutoPlayCheckTimer,this._ShowUIonHover,this._StreamNestTimer])if(timer)clearInterval(timer);
+            if(App.PlayerView===this)App.PlayerView=null;if(_this===this)_this=null;
             this._streamnestClosing=true;
             if(this._StreamNestTimer)clearInterval(this._StreamNestTimer);
             if (this.model.get('type') === 'video/youtube') { // XXX Sammuel86 Trailer UI Show FIX/HACK -START

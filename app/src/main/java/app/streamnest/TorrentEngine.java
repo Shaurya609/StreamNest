@@ -25,7 +25,8 @@ class TorrentEngine implements AutoCloseable {
   double resumeFraction;
   void pulse(){workerPulse=System.nanoTime();}
   String fingerprint(){return torrentFingerprint;}
-  void promote(){preloadOnly=false;}
+  volatile boolean budgetChanged;
+  void promote(){preloadOnly=false;budgetChanged=true;}
   volatile long receivedBytes;
   volatile int diagnosticPeers,diagnosticKbps,diagnosticPercent,diagnosticError;
   long diagnosticSampleAt;
@@ -81,6 +82,8 @@ class TorrentEngine implements AutoCloseable {
             .maxPeerlistSize(lite ? 200 : 1000)
             .activeDownloads(1)
             .alertQueueSize(300);
+    settings.setInteger(org.libtorrent4j.swig.settings_pack.int_types.aio_threads.swigValue(),EngineBudget.diskThreads(lite,preloadOnly));
+    if(lite){settings.setInteger(org.libtorrent4j.swig.settings_pack.int_types.mmap_file_size_cutoff.swigValue(),Integer.MAX_VALUE);settings.setInteger(org.libtorrent4j.swig.settings_pack.int_types.disk_write_mode.swigValue(),org.libtorrent4j.swig.settings_pack.mmap_write_mode_t.always_pwrite.swigValue());}
     startup.enter("Starting torrent engine",45000);
     session.start(new SessionParams(settings));
     startup.check();
@@ -239,6 +242,7 @@ class TorrentEngine implements AutoCloseable {
     System.out.println("StreamNest URL " + url);
     message = "Buffering · " + video.getName();
     while (!closed) {
+      if(budgetChanged){budgetChanged=false;session.applySettings(new SettingsPack().setInteger(org.libtorrent4j.swig.settings_pack.int_types.aio_threads.swigValue(),EngineBudget.diskThreads(lite,preloadOnly)));}
       if (url == null && startupReady()) url = readyUrl;
       message = updateStatus();
       if(cachedMovieHash.isEmpty()&&url!=null)cachedMovieHash=movieHash();

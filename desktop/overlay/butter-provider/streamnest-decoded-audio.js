@@ -15,7 +15,7 @@ class DecodedAudio {
       seeking: () => { this.audio.pause(); clearTimeout(this.seekTimer); this.seekTimer = setTimeout(() => this.restart('seek'), 180); },
       volumechange: () => { this.audio.volume = video.volume; this.audio.muted = video.muted; },
       ratechange: () => { this.audio.playbackRate = video.playbackRate; },
-      ended: () => { this.wantPlaying = false; this.audio.pause(); },
+      ended: () => this.stop(),
       waiting: () => { this.videoWaiting = true; this.audio.pause(); },
       playing: () => { this.videoWaiting = false; if (this.ready && this.wantPlaying && !this.freezing) this.playAudio(); }
     };
@@ -30,15 +30,19 @@ class DecodedAudio {
     this.timer = setInterval(() => this.correct(), 500); this.timer.unref?.();
   }
   holdVideo() { if (!this.video.paused) { this.ignorePause = true; this.video.pause(); } }
+  atEnd() { return this.video.ended || Number.isFinite(this.video.duration) && this.video.duration > 0 && this.video.currentTime >= this.video.duration - 0.05; }
+  stop() { this.wantPlaying = false; ++this.sequence; this.pendingCancel?.(); this.ready = false; this.freezing = false; this.audio.pause(); this.audio.removeAttribute('src'); this.audio.load(); clearTimeout(this.seekTimer); this.phase = 'paused'; }
   async playAudio() {
+    if(this.atEnd()){this.stop();return;}
     try { await this.audio.play(); if (!this.wantPlaying || this.disposed) this.audio.pause(); else if (!this.video.paused && !this.videoWaiting && !this.freezing) { this.phase = 'playing'; this.report(''); } }
     catch (error) { if (this.wantPlaying && !this.disposed && !this.freezing) this.fail(error); }
   }
   async resume() {
+    if(this.atEnd()){this.stop();return;}
     if (this.disposed || !this.wantPlaying || !this.ready) return;
     try {
       await this.audio.play();
-      if (this.disposed || !this.wantPlaying) { this.audio.pause(); return; }
+      if (this.disposed || !this.wantPlaying || this.atEnd()) { this.audio.pause(); return; }
       await this.video.play();
       if (this.wantPlaying) { this.phase = 'playing'; this.report(''); }
     } catch (error) { if (!this.disposed && this.wantPlaying) this.fail(error); }
@@ -57,6 +61,7 @@ class DecodedAudio {
     await this.restart('start');
   }
   async restart(reason = 'user') {
+    if(this.atEnd()){this.stop();return;}
     if (this.disposed || !this.server || this.freezing && reason !== 'seek') return;
     if (['sync', 'buffer'].includes(reason)) {
       const now = performance.now(); this.restarts = this.restarts.filter(at => now - at < 60000);

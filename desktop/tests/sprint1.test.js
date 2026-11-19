@@ -30,7 +30,7 @@ function playerHarness(auto=true){
   return node;
  }
  const App={View:{}},settings={streamnestAutoSkip:auto};
- const context={window:{App},Marionette:{View:{extend:value=>value}},Settings:settings,
+ const context={performance,window:{App},Marionette:{View:{extend:value=>value}},Settings:settings,
   document:{createTextNode:value=>value},$:()=>element(),Date:{now:()=>now},
   setInterval:fn=>{tick=fn;return 1;},require:()=>playback};
  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../overlay/lib/views/player.js'),'utf8'),context);
@@ -110,7 +110,7 @@ test('a pause during an active upload queues the latest timestamp',async()=>{
 
 test('rewinding a completed paused episode saves the intended position',()=>{
  const App={View:{}},saved=[];let uploads=0;
- const context={window:{App},Marionette:{View:{extend:value=>value}},
+ const context={performance,window:{App},Marionette:{View:{extend:value=>value}},
   require:()=>({request:()=>uploads++})};
  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../overlay/lib/views/player.js'),'utf8'),context);
  const view={_progressEnded:true,video:{currentTime:()=>45,duration:()=>1500},

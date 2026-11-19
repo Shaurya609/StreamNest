@@ -57,6 +57,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                   App.WebTorrent.add(data, {
                       path      : App.settings.tmpLocation,
                       maxConns  : 10,
+                      storeCacheSlots: 2,
                       dht       : { concurrency: parseInt(Settings.maxUdpReqLimit, 10) || 16 },
                       secure    : Settings.protocolEncryption || false,
                       announce  : Settings.trackers.forced,
@@ -94,6 +95,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                   App.WebTorrent.add(data, {
                       path      : App.settings.downloadsLocation,
                       maxConns  : 10,
+                      storeCacheSlots: 2,
                       dht       : { concurrency: parseInt(Settings.maxUdpReqLimit, 10) || 16 },
                       secure    : Settings.protocolEncryption || false,
                       announce  : Settings.trackers.forced,
@@ -397,7 +399,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
                 };
                 try{
                     if(torrent){torrent.resume();for(const peer of torrent.pctRemovedPeers||[])if(peer)torrent.addPeer(peer);torrent.pctRemovedPeers=undefined;}
-                    else torrent=client.add(uri,{path:location,maxConns:10,dht:{concurrency:parseInt(Settings.maxUdpReqLimit,10)||16},secure:Settings.protocolEncryption||false,announce:Settings.trackers.forced,tracker:Settings.trackers.forced});
+                    else torrent=client.add(uri,{path:location,maxConns:10,storeCacheSlots:2,dht:{concurrency:parseInt(Settings.maxUdpReqLimit,10)||16},secure:Settings.protocolEncryption||false,announce:Settings.trackers.forced,tracker:Settings.trackers.forced});
                     this.pendingTorrent=torrent;this._pendingFetchCancel=cancel;
                     torrent.on('error',failed);client.on('error',failed);
                     (this._torrentListeners||(this._torrentListeners=[])).push(()=>{cleanup();torrent.removeListener('error',failed);client.removeListener('error',failed);});
