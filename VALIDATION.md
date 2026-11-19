@@ -583,3 +583,5 @@ Physical TV root cause is still open. Earlier TV logs showed responsive download
 Final checks: 240 Android unit tests, lint, production universal/ARM32/ARM64 build and Android test compilation passed; 250 Node checks passed. APK production package/version57 and existing update signer verified. Backend telemetry/dashboard deployment completed; physical-TV retry remains pending.
 
 Publication: v0.43.0 release 451826214 contains universal/ARM32/ARM64 APKs plus checksums; all four remote sizes and SHA-256 digests match local artifacts. Published source 0c3ffa2b2ffe66c41ad13db4cecc90aae4ddd19e. Signed-feed workflow 44598781852 succeeded; committed feed verifies Android0.43.0/code57 and Windows0.42.0. Android GitHub checks passed. Normal raw-feed propagation is checked separately; no production APK was installed through ADB.
+
+Owner acceptance — 20 November 2026: American Dad S2E1 desktop subtitles on TheBeast confirmed resolved during normal use. Close this specific subtitle backlog item; no new implementation or release required.
