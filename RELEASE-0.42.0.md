@@ -1,4 +1,4 @@
-# StreamNest Desktop 0.42.0 — large-piece hashing responsiveness
+# StreamNest Desktop 0.42.0 â€” large-piece hashing responsiveness
 
 Windows-only optimization; Android remains at 0.41.0.
 
