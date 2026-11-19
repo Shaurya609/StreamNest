@@ -92,10 +92,15 @@ public class StreamService extends Service {
                     + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
             android.util.Log.e("StreamNest", "Playback failed", e);
           } finally {
-            try{if(next.closed||engine!=next){next.startup.begin("Cleaning failed torrent session",20000);next.close();EpisodePreload.released(next);}}finally{if(warm==null){next.startup.done();if(startupOwner==next)startupOwner=null;}}
+            try{if(next.closed||engine!=next){next.startup.begin("Cleaning failed torrent session",20000);release(next);}}finally{if(warm==null){next.startup.done();if(startupOwner==next)startupOwner=null;}}
           }
         });
     return START_NOT_STICKY;
+  }
+
+  static boolean release(TorrentEngine e) {
+    try {e.close();EpisodePreload.released(e);return true;}
+    catch (Exception error) {Diagnostics.failure("torrent.failed","torrent","cache",error);android.util.Log.w("StreamNest","Worker cleanup incomplete; cache remains protected",error);return false;}
   }
 
   static File directory(Context c,Intent i) throws Exception {
@@ -142,7 +147,7 @@ public class StreamService extends Service {
     if (e != null) e.closed = true;
     worker.execute(
         () -> {
-          if (e != null) {e.close();EpisodePreload.released(e);}
+          if (e != null) release(e);
           if(retiring==e)retiring=null;
           if (PlaybackCache.exiting && engine == null) PlaybackCache.purge(getApplicationContext());
         });

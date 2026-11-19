@@ -551,7 +551,7 @@ const StreamNestCache=require("./butter-provider/streamnest-cache");
             torrent.deselect(0,torrent.pieces.length-1,false);
             for(let index=0;index<torrent.files.length;index++){
                 const file=torrent.files[index];file.deselect();
-                if(index===Number(fileIndex)){file.select();file.hidden=false;fileSize=file.length;}
+                if(index===Number(fileIndex)){require('./butter-provider/streamnest-bounded-read').install(file);file.select();file.hidden=false;fileSize=file.length;}
             }
             try{const P=require('./butter-provider/streamnest-progress'),a=this.torrentModel.attributes,row=P.records()[P.identity(a)],fraction=a.streamnestFromBeginning?0:row&&row.durationMs>0?P.read(a)*1000/row.durationMs:0;require('./butter-provider/streamnest-startup-window').apply(torrent,Number(fileIndex),fraction);}catch(error){win.warn('Startup piece priority unavailable');}
             if (!fileName.startsWith(torrent.path)) {

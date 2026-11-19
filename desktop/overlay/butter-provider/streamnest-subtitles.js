@@ -18,7 +18,7 @@ function unpack(bytes) {
 }
 async function read(source) {
  if(require('./streamnest-anime-subs').safeURL(source))return require('./streamnest-anime-subs').download(source);
- if(fs.existsSync(source))return unpack(await fs.promises.readFile(source));
+ if(!/^https?:\/\//i.test(source)&&fs.existsSync(source))return unpack(await fs.promises.readFile(source));
  if(!/^https?:\/\//i.test(source))throw Error('Invalid subtitle URL');
  let bytes;try{bytes=await require('./streamnest-org').download(source);if(bytes)return unpack(bytes);}catch(error){/* Direct URL remains a fallback for rejected RPC downloads. */}
  return new Promise((resolve,reject)=>{

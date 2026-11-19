@@ -13,6 +13,7 @@ final class RemoteTorrentEngine extends TorrentEngine {
  static final class Control {static final HandlerThread thread=new HandlerThread("torrent-control");static {thread.start();}}
  final Context context;final String token=UUID.randomUUID().toString();
  final CountDownLatch died=new CountDownLatch(1),drained=new CountDownLatch(1);
+ volatile long workerMemoryMb;boolean failureReported;
  volatile Messenger remote;volatile int pid,slot=-1;volatile boolean bound,attached,closeStarted,stoppedConfirmed;volatile long snapshotAt;
  final Messenger receiver=new Messenger(new Handler(Control.thread.getLooper()){
   @Override public void handleMessage(Message m){
@@ -20,7 +21,8 @@ final class RemoteTorrentEngine extends TorrentEngine {
    if(m.what==EngineWorkerService.HELLO){synchronized(RemoteTorrentEngine.this){if(closeStarted)return;pid=d.getInt("pid");attached=true;snapshotAt=workerPulse=System.nanoTime();startup.begin("Starting torrent worker",10000);try{Message start=Message.obtain(null,EngineWorkerService.START);start.setData(config());start.replyTo=receiver;remote.send(start);}catch(RemoteException error){closed=true;message="Torrent worker could not start";}}return;}
    if(m.what==EngineWorkerService.CLOSED){drained.countDown();return;}
    if(m.what!=EngineWorkerService.STATE||closeStarted)return;
-   pid=d.getInt("pid");attached=true;snapshotAt=System.nanoTime();
+   if(!failureReported&&d.containsKey("failureReport")){failureReported=true;try{Diagnostics.event("torrent.failed",new org.json.JSONObject(d.getString("failureReport")));}catch(Exception ignored){}}
+   workerMemoryMb=d.getLong("workerMemoryMb");pid=d.getInt("pid");attached=true;snapshotAt=System.nanoTime();
    String stage=d.getString("stage",startup.stage);if(!startup.stage.equals(stage)||startup.active&&!d.getBoolean("active"))Diagnostics.startup(startup.stage+" finished after "+startup.elapsed()+"ms; "+stage);
    startup.stage=stage;startup.since=d.getLong("since");startup.limitMs=d.getLong("limit");startup.active=d.getBoolean("active");
    workerPulse=d.getLong("pulse");message=d.getString("message",message);verifiedComplete=d.getBoolean("complete");
@@ -51,7 +53,7 @@ final class RemoteTorrentEngine extends TorrentEngine {
   bound=context.bindService(service(),connection,Context.BIND_AUTO_CREATE);if(!bound)throw new IOException("Could not bind torrent worker");
   while(!closed){
    long now=System.nanoTime();String failure=WorkerRecovery.failure(now,begin,snapshotAt,workerPulse,attached,startup.active,startup.since,startup.limitMs);
-   if(!failure.isEmpty()){message=failure+". Recovering torrent worker; try another source.";Diagnostics.event("torrent.stalled");closed=true;url=null;startup.done();break;}
+   if(!failure.isEmpty()){message=failure+". Recovering torrent worker; try another source.";try{Diagnostics.event("torrent.stalled",new org.json.JSONObject().put("reason","timeout").put("workerAgeMs",snapshotAt==0?0:Math.max(0,(now-snapshotAt)/1000000)).put("elapsedMs",Math.max(0,(now-begin)/1000000)));}catch(Exception ignored){}closed=true;url=null;startup.done();break;}
    Thread.sleep(100);
   }
  }

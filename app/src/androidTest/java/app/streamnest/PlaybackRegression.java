@@ -20,6 +20,7 @@ public class PlaybackRegression extends Instrumentation {
 
   @Override
   public void onCreate(Bundle args) {
+    if(args!=null&&"true".equals(args.getString("crashCapture"))){super.onCreate(args);new Thread(()->{try{finish(Activity.RESULT_OK,CrashCaptureRegression.run(this));}catch(Throwable e){Bundle out=new Bundle();out.putString("error",e.toString());finish(Activity.RESULT_CANCELED,out);}},"crash-test").start();return;}
     super.onCreate(args);stability=args!=null&&"true".equals(args.getString("stability"));engineRecovery=args!=null&&"true".equals(args.getString("engineRecovery"));
     manualSyncCode=args==null?null:args.getString("manualSyncCode");
     watchSyncCode = args == null ? null : args.getString("watchSyncCode");

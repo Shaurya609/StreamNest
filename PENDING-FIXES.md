@@ -1,3 +1,11 @@
+# Projector and subtitle follow-up - 0.38.0
+
+Projector remains top priority: bounded Java crash capture, correlated attempt timelines, worker/heap observations, main-thread stall stacks and protected cleanup containment are implemented. The original reported Java crash lacked its stack; the verified cleanup exception is a candidate path, not confirmed historical attribution. Physical S1E3 retry and sustained paused-download/relaunch testing require the projector to update normally.
+
+American Dad S2E1 English subtitles currently search/download/display in an isolated Windows app. Late provider results previously could miss the already-created player; the new path updates that player without reopening video or overriding manual subtitle choices. TheBeast normal-use confirmation remains open.
+
+Windows bounded range reads address large media-read allocations. Large-piece download assembly, comparable whole-app profiling and sustained projector verification remain broader optimization work.
+
 # Current reliability cycle
 
 ## New report: next episode repeats the current episode

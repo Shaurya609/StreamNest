@@ -584,6 +584,9 @@
                 });
             });
 
+            this._subtitleChoiceListener=e=>{if(e.target.closest?.('.vjs-subtitles-button'))this._subtitleManuallyChosen=true;};
+            this.el.addEventListener('click',this._subtitleChoiceListener,true);
+            this.listenTo(this.model.get('torrentModel')||this.model,'change:subtitle',()=>{if(this._streamnestClosing||this.isDestroyed())return;const tm=this.model.get('torrentModel')||this.model;require('./butter-provider/streamnest-late-subtitles').apply(this.player,tm.get('subtitle'),tm.get('defaultSubtitle'),window.videojs||window.vjs,!!this._subtitleManuallyChosen);});
             require('./butter-provider/streamnest-diagnostics').attachPlayer(this.player,this.el,this.model);
             require('./butter-provider/streamnest-watching-activity').attachPlayer(this.player,this.el,this.model);
             this.streamnestMediaTracks=require('./butter-provider/streamnest-media-tracks').attach(this.player,this.el,this.model,window,Settings,{recover:()=>{const tm=this.model.get('torrentModel'),attrs=tm&&require('./butter-provider/streamnest-buffered-recovery').sameSource(tm.attributes,this.video.currentTime());if(!attrs)return false;this.persistProgress(false);this._streamnestRecovering=true;this.dontTouchFS=true;this.closePlayer();App.vent.trigger('stream:start',new Backbone.Model(attrs));return true;},retry:()=>{const tm=this.model.get('torrentModel'),attrs=tm&&require('./butter-provider/streamnest-episodes').nextAttempt(tm.attributes);if(!attrs)return false;this.dontTouchFS=true;this.closePlayer();App.vent.trigger('stream:start',new Backbone.Model(attrs));return true;}});
@@ -1351,6 +1354,7 @@
         },
 
         onBeforeDestroy: function () {
+            if(this._subtitleChoiceListener)this.el.removeEventListener('click',this._subtitleChoiceListener,true);
             for(const timer of [this._AutoPlayCheckTimer,this._ShowUIonHover,this._StreamNestTimer])if(timer)clearInterval(timer);
             if(App.PlayerView===this)App.PlayerView=null;if(_this===this)_this=null;
             this._streamnestClosing=true;

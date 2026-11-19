@@ -1,0 +1,2 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {cleanData} from './diagnostics.mjs';
+test('projector attempt and bounded worker memory measurements survive without secrets',()=>{const attemptId='12345678-1234-1234-1234-123456789abc';assert.deepEqual(cleanData({attemptId,workerMemoryMb:42,workerAgeMs:100,heapUsedMb:16,heapMaxMb:256,url:'private',threadName:'private'}),{attemptId,workerMemoryMb:42,workerAgeMs:100,heapUsedMb:16,heapMaxMb:256});assert.deepEqual(cleanData({attemptId:'private',workerMemoryMb:-1}),{});});
