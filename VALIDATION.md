@@ -580,4 +580,4 @@ Isolated ARM32 tablet normal-mode run: worker self-abort/frozen-worker reservati
 
 Physical TV root cause is still open. Earlier TV logs showed responsive downloading but no conclusive frame progress. The new range/decoder evidence must be captured on that TV after normal update; tablet success does not close physical-TV acceptance. Black Clover native metadata selection is confirmed, actual episode playback is not claimed. No I/O/mmap/firmware change was inferred from these trials.
 
-Final checks: 237 Android unit tests, lint, production universal/ARM32/ARM64 build and Android test compilation passed; 250 Node checks passed. APK production package/version57 and existing update signer verified. Backend telemetry/dashboard deployment completed; physical-TV retry remains pending.
+Final checks: 240 Android unit tests, lint, production universal/ARM32/ARM64 build and Android test compilation passed; 250 Node checks passed. APK production package/version57 and existing update signer verified. Backend telemetry/dashboard deployment completed; physical-TV retry remains pending.
