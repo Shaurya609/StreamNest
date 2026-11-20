@@ -31,6 +31,7 @@ final class TitleScreen extends Dialog {
   boolean manualEpisodeSelection;
   String sourceLookupError;
   Spinner episodeQualityPicker;
+  ImageButton closeDetails;
   java.util.concurrent.Future<?> alternateJob,trailerJob,launchJob;
   int launchGeneration;
   Trailers.Result trailerResult;
@@ -83,15 +84,20 @@ final class TitleScreen extends Dialog {
     LinearLayout top = new LinearLayout(a);
     top.setGravity(Gravity.CENTER_VERTICAL);
     TextView brand = text("StreamNest", 15, 0xff92959c);
+    boolean shortScreen=a.getResources().getConfiguration().screenHeightDp<600;
+    if(series){brand.setText(title.title);brand.setSingleLine(true);brand.setEllipsize(android.text.TextUtils.TruncateAt.END);}
     top.addView(brand, new LinearLayout.LayoutParams(0, -2, 1));
     ImageButton close = new ImageButton(a);
+    closeDetails = close;
     close.setImageResource(R.drawable.ic_close);
     close.setContentDescription("Close details");
     close.setBackground(a.focusBackground());
     top.addView(close, new LinearLayout.LayoutParams(dp(44), dp(44)));
     close.setOnClickListener(v -> dismiss());
     root.addView(top);
-    boolean wide = a.getResources().getConfiguration().screenWidthDp >= 700;
+    android.content.res.Configuration configuration=a.getResources().getConfiguration();
+    boolean wide = configuration.screenWidthDp >= 700
+        || configuration.screenWidthDp>configuration.screenHeightDp;
     LinearLayout hero = new LinearLayout(a);
     hero.setPadding(0, dp(12), 0, dp(16));
     ImageView poster = new ImageView(a);
@@ -119,6 +125,9 @@ final class TitleScreen extends Dialog {
     info.addView(description, new LinearLayout.LayoutParams(-1, 0, 1));
     hero.addView(info, new LinearLayout.LayoutParams(0, dp(height), 1));
     root.addView(hero);
+    // Compact landscape screens otherwise spend their entire height above/below
+    // the weighted episode list, leaving it at zero height and unfocusable.
+    if(series&&(shortScreen||!wide))hero.setVisibility(View.GONE);
     if (series) buildEpisodes(wide);
     else {
       LinearLayout spacer = column();
@@ -150,6 +159,7 @@ final class TitleScreen extends Dialog {
   public void show() {
     super.show();
     getWindow().setLayout(-1, -1);
+    closeDetails.requestFocus();
   }
 
   String savedKey() {
@@ -358,6 +368,7 @@ final class TitleScreen extends Dialog {
     listColumn.setPadding(dp(wide ? 12 : 0), 0, dp(wide ? 16 : 0), 0);
     listColumn.addView(text("EPISODES", 12, 0xff92959c));
     episodesView = new ListView(a);
+    episodesView.setContentDescription("Episodes");
     episodesView.setSelector(a.focusBackground());
     listColumn.addView(episodesView, new LinearLayout.LayoutParams(-1, 0, 1));
     workspace.addView(
@@ -381,7 +392,7 @@ final class TitleScreen extends Dialog {
         episodePanel,
         wide
             ? new LinearLayout.LayoutParams(0, -1, 1)
-            : new LinearLayout.LayoutParams(-1, dp(240)));
+            : new LinearLayout.LayoutParams(-1, dp(160)));
     episodeAdapter =
         new BaseAdapter() {
           public int getCount() {
@@ -417,6 +428,46 @@ final class TitleScreen extends Dialog {
       manualEpisodeSelection = true;
       selectEpisode(visible.get(n));
     });
+    // Spatial guessing can strand a remote on the header or skip the narrow list.
+    closeDetails.setOnKeyListener((v,key,event)->{
+      if(event.getAction()==KeyEvent.ACTION_DOWN&&key==KeyEvent.KEYCODE_DPAD_DOWN)
+        return focusEpisodes();
+      return false;
+    });
+    episodesView.setOnKeyListener((v,key,event)->{
+      if(event.getAction()!=KeyEvent.ACTION_DOWN)return false;
+      if(key==KeyEvent.KEYCODE_DPAD_UP||key==KeyEvent.KEYCODE_DPAD_DOWN
+          ||key==KeyEvent.KEYCODE_DPAD_LEFT||key==KeyEvent.KEYCODE_DPAD_RIGHT)
+        manualEpisodeSelection=true;
+      if(key==KeyEvent.KEYCODE_DPAD_LEFT){
+        View seasonsControl=seasonsView!=null?seasonsView:seasonSpinner;
+        return seasonsControl!=null&&seasonsControl.requestFocus();
+      }
+      if(key==KeyEvent.KEYCODE_DPAD_RIGHT)return episodeQualityPicker.requestFocus();
+      if(key==KeyEvent.KEYCODE_DPAD_UP&&episodesView.getSelectedItemPosition()<=0)
+        return closeDetails.requestFocus();
+      return false;
+    });
+    if(seasonsView!=null){
+      seasonsView.setContentDescription("Seasons");
+      seasonsView.setOnKeyListener((v,key,event)->{
+        if(event.getAction()!=KeyEvent.ACTION_DOWN)return false;
+        if(key==KeyEvent.KEYCODE_DPAD_UP||key==KeyEvent.KEYCODE_DPAD_DOWN
+            ||key==KeyEvent.KEYCODE_DPAD_RIGHT)manualEpisodeSelection=true;
+        return key==KeyEvent.KEYCODE_DPAD_RIGHT&&focusEpisodes();
+      });
+    }
+    episodeQualityPicker.setOnKeyListener((v,key,event)->event.getAction()==KeyEvent.ACTION_DOWN
+        &&key==KeyEvent.KEYCODE_DPAD_LEFT&&focusEpisodes());
+  }
+
+  boolean focusEpisodes(){
+    if(visible.isEmpty())return false;
+    manualEpisodeSelection=true;
+    int position=episodesView.getSelectedItemPosition();
+    if(!episodesView.requestFocus())return false;
+    if(position<0)episodesView.setSelection(Math.max(0,visible.indexOf(selected)));
+    return true;
   }
 
   void loadEpisodes() {
@@ -523,6 +574,9 @@ final class TitleScreen extends Dialog {
       });
       seasonSpinner.setOnKeyListener((view, key, event) -> {
         if (event.getAction() == android.view.KeyEvent.ACTION_DOWN) manualEpisodeSelection = true;
+        if(event.getAction()==KeyEvent.ACTION_DOWN
+            &&(key==KeyEvent.KEYCODE_DPAD_RIGHT||key==KeyEvent.KEYCODE_DPAD_DOWN))
+          return focusEpisodes();
         return false;
       });
       seasonSpinner.setAdapter(

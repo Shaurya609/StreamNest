@@ -20,6 +20,7 @@ public class PlaybackRegression extends Instrumentation {
 
   @Override
   public void onCreate(Bundle args) {
+    if(args!=null&&"true".equals(args.getString("remoteNavigation"))){super.onCreate(args);new Thread(()->{try{finish(Activity.RESULT_OK,RemoteNavigationRegression.run(this));}catch(Throwable e){Bundle out=new Bundle();out.putString("error",e.toString());finish(Activity.RESULT_CANCELED,out);}},"remote-navigation-test").start();return;}
     if(args!=null&&"true".equals(args.getString("trackerRegression"))){super.onCreate(args);new Thread(()->{try{finish(Activity.RESULT_OK,NativeTrackerRegression.run(this));}catch(Throwable e){Bundle out=new Bundle();out.putString("error",e.toString());finish(Activity.RESULT_CANCELED,out);}},"tracker-test").start();return;}
     if(args!=null&&"true".equals(args.getString("sprint45"))){super.onCreate(args);new Thread(()->{try{finish(Activity.RESULT_OK,Sprint45Regression.run(this));}catch(Throwable e){Bundle out=new Bundle();out.putString("error",e.toString());finish(Activity.RESULT_CANCELED,out);}},"home-interaction-test").start();return;}
     if(args!=null&&"true".equals(args.getString("crashCapture"))){super.onCreate(args);new Thread(()->{try{finish(Activity.RESULT_OK,CrashCaptureRegression.run(this));}catch(Throwable e){Bundle out=new Bundle();out.putString("error",e.toString());finish(Activity.RESULT_CANCELED,out);}},"crash-test").start();return;}
