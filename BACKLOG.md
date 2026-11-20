@@ -10,7 +10,7 @@ Updated 20 November 2026. This is the current source of truth for open work. PEN
 | O2 | Physical projector: exFAT USB and longer acceptance session | First confirm the projector recognizes the freshly formatted exFAT USB (label StreamNest), select its cache folder and retry the same episode/source. Then check longer playback, repeated starts, paused downloading, episode transitions, internal/USB cache and relaunching. S1E3 smooth playback on 0.41.0 is already passed and must not be listed as an unimplemented fix. |
 | O3 | TheBeast: original next-episode/recovery cases | Confirm Last of Us S1E2 advances to S1E3 rather than repeating, with preload on and off when convenient; observe normal buffered-stall recovery. Isolated handoff/recovery checks passed. General TV preload was already owner-confirmed working and remains closed. |
 
-| O4 | Normal Android0.45.0 / Windows0.44.0 updates | Install updates through StreamNest. Windows0.44.0 is verified published; Android0.45.0 publication is tracked in VALIDATION.md. Last tablet inspection reported0.43.0; current installed acceptance remains an owner check. |
+| O4 | Normal Android0.45.0 / Windows0.44.0 updates | Install updates through StreamNest. Android0.45.0 and Windows0.44.0 are published and the normal signed update feed verifies both. Last tablet inspection reported0.43.0; current installed acceptance remains an owner check. |
 
 Owner checks are acceptance tests, not unfinished implementation. The developer retains responsibility for diagnosis, code fixes and developer-run verification. An owner report can create or update a developer issue; it does not automatically reopen every historical issue.
 
