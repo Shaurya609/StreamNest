@@ -654,3 +654,13 @@ Isolated test package enforces non-production target, seeds only disposable loca
 ### Android0.46.0 release publication — 20 November 2026
 
 Published v0.46.0 (release452723107) from c8b87a7 with universal, ARM32, ARM64 and SHA256SUMS assets. All four GitHub asset sizes/digests match packaged files. Universal APK package app.streamnest/versionCode60 retains installed signer SHA2561269337c400725a1db05ab7443b76d59c67f9165333d4e87118e1ca182d8b269. Versioned build/unit/lint pass. Signed feed targets Android0.46.0/code60 and retains Windows0.44.0. Android system installation confirmation and physical TV/projector acceptance remain owner steps; no production-device install was performed in this publishing pass.
+
+
+### Owner acceptance — 20 November 2026
+
+Owner confirmed TheBeast S1E2->S1E3 handoff with preload on/off and normal stall recovery resolved. Owner also confirmed installation through the updater for Android0.46.0 and Windows0.44.0. Backlog O3 and O4 closed; these are owner confirmations, not new developer-run measurements.
+
+
+### Cinematic website — 21 November 2026
+
+Sites owner-private deployment succeeded: project appgprj_6b00afc74a40819197f806d0878424a1, deployment appgdep_6b00b31be5a88191860467eecca511bb, site source7172d03c965a460a513728860614fbc4898e8655. URL https://streamnest.shaurya609.chatgpt.site . Local browser checks covered390/320px mobile and1440px desktop,8 guide routes without overflow, real image loads, valid release links and live signed-feed verification. A simulated live-feed failure used the valid signed snapshot; invalid snapshot plus failed live feed disabled all3 platform-download links. Four Node tests cover actual feed signature/expiry/tampering, platform detection and signed foreign/mismatched asset rejection. HEAD requests confirm200 attachment responses for Android0.46.0 universal APK and Windows0.44.0 setup. Private deployed URL correctly presents ChatGPT sign-in; authenticated deployed-page QA is not claimed. Screenshots use prior actual isolated app captures, not private owner history. No app release or device-history changes in this website task.

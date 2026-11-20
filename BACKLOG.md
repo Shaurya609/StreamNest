@@ -1,16 +1,16 @@
 # StreamNest backlog
 
-Updated 20 November 2026. This is the current source of truth for open work. PENDING-FIXES.md, DESKTOP-PENDING.md and older SPRINTS.md entries contain release history; their historical pending statements do not reopen completed work.
+Updated 21 November 2026. This is the current source of truth for open work. PENDING-FIXES.md, DESKTOP-PENDING.md and older SPRINTS.md entries contain release history; their historical pending statements do not reopen completed work.
 
 ## Owner backlog — tests for the owner
 
 | ID | Test | What to confirm |
 | --- | --- | --- |
-| O1 | Physical TV: reported episodes on 0.45.0 | Retry the latest reported S1E5 after the normal Android0.45.0 update; keep earlier S1E3 acceptance separate. Report startup, resume/seek and sustained playback, plus the approximate attempt time if it fails. Latest0.44.0 S1E5 evidence shows zero peers/no startup pieces or player reads; peer unavailability is not yet fully explained. |
+| O1 | Physical TV: reported episodes on latest Android | Retry the latest reported S1E5 after the normal Android0.46.0 update; keep earlier S1E3 acceptance separate. Report startup, resume/seek and sustained playback, plus the approximate attempt time if it fails. Latest0.44.0 S1E5 evidence shows zero peers/no startup pieces or player reads; peer unavailability is not yet fully explained. |
 | O2 | Physical projector: exFAT USB and longer acceptance session | First confirm the projector recognizes the freshly formatted exFAT USB (label StreamNest), select its cache folder and retry the same episode/source. Also recheck the original S1E3 resume mismatch after updating; the separate connected-tablet S1E5 control passed. Then check longer playback, repeated starts, paused downloading, episode transitions, internal/USB cache and relaunching. S1E3 smooth playback on 0.41.0 is already passed and must not be listed as an unimplemented fix. |
-| O3 | TheBeast: original next-episode/recovery cases | Confirm Last of Us S1E2 advances to S1E3 rather than repeating, with preload on and off when convenient; observe normal buffered-stall recovery. Isolated handoff/recovery checks passed. General TV preload was already owner-confirmed working and remains closed. |
 
-| O4 | Normal Android0.45.0 / Windows0.44.0 updates | Install updates through StreamNest. Android0.45.0 and Windows0.44.0 are published and the normal signed update feed verifies both. Connected tablet0.45.0/code59 is now confirmed after the built-in update flow; Windows installed-update acceptance remains an owner check. |
+
+| O5 | Physical TV/projector remote navigation on0.46.0 | Confirm directional entry into Seasons/Episodes/Quality, scrolling beyond visible episodes, and reaching/activating Remove using a disposable Continue Watching title. Isolated developer tests passed; implementation is released. |
 
 Owner checks are acceptance tests, not unfinished implementation. The developer retains responsibility for diagnosis, code fixes and developer-run verification. An owner report can create or update a developer issue; it does not automatically reopen every historical issue.
 
@@ -23,8 +23,14 @@ Owner checks are acceptance tests, not unfinished implementation. The developer 
 | D7 | Projector resume mismatch — original S1E3 report | Owner corrected the original episode to S1E3. A separate connected-tablet S1E5 control used an existing synced late-episode position. Home and stored history matched; after actual torrent buffering, Android0.45.0 reached the requested paused clock, with a displayed frame and unchanged saved record. Wrong-position resume was not reproduced in this tablet attempt. The original projector report remains open; stale0.41.0 projector reports cannot establish its exact seek result. The one-shot initial setTime/no-acknowledgement path is a code reliability gap, not a proven historical cause. Any hardening must preserve history while a seek is pending and be tested against early/rejected seeks and source changes. |
 | D2 | Anime source/member verification | 0.43.0 Android fixes Black Clover121 filename variants and rejects wrong episodes against four real metadata packs. Verify actual episode playback/source availability; inspect desktop parity before claiming that parser correction applies there too. Keep wrong/missing sources distinct from parsing defects. Do not reopen all anime coverage as one endless task. |
 | D8 | Android TV/projector remote navigation | Source fix adds explicit Close/Seasons/Episodes/Quality focus paths and card-to-Remove navigation with visible focus. Short landscape uses columns and omits redundant hero so episodes retain height; compact stacked panel is bounded. Remote browsing preserves manual selection against late sync refresh. Isolated tablet checks and 248 unit tests/lint pass; Android0.46.0/code60 published with universal/ARM32/ARM64 assets and signed update feed. Physical TV/projector remote acceptance remains an owner check. Production history untouched. |
-| D5 | Project website and guides | Cinematic design approved; use Sites for development/hosting, real desktop/mobile screenshots, device-aware direct GitHub asset downloads and separate live Android/Windows release entries. Approved development brief below. Website implementation/publication deferred until requested. |
+| D10 | Targeted Android/Windows follow-up audit | Use previous findings as baseline; audit Home/search/filters, episode and remote navigation, Remove and version visibility; real playback startup, audio/subtitles, resume/seek, pause-to-download, recovery and episode transitions with preload on/off; measured startup/RAM/CPU/background activity/cache cleanup; updates, sync consistency and cross-device handoffs. Preserve existing history/timestamps; remove newly tested titles from Continue Watching across the sync group without marking watched. Deliver one consolidated severity-ranked list with evidence and owner/developer follow-ups. Keep resolved issues closed unless reproduced. Backlog only; not started. |
+| D9 | Android installed-version visibility | Owner reports the APK does not show the current installed StreamNest version. Add a clearly labelled installed version in Settings/About on phone, tablet, TV and projector; distinguish it from an available update version. Display the actual installed package version, not a hardcoded release label. Backlog only; not implemented. |
+| D5 | Project website and guides | Cinematic website implemented and deployed owner-private through Sites on21November2026: https://streamnest.shaurya609.chatgpt.site . Includes real isolated-profile app screenshots,8 guides, plain-language explanation/privacy and device-aware direct GitHub assets using verified signed live release metadata with valid saved-feed fallback. Source checkout: ../StreamNest-Website; Sites project appgprj_6b00afc74a40819197f806d0878424a1. Local browser/responsive/download-fallback checks passed. Owner review and any explicitly requested audience change remain; no public access granted. |
 | D6 | Optional further memory redesign — not the same as acceptance testing | Removing the remaining whole-piece fragmented assembly/hash allocation requires a separately scoped engine/store redesign. Previously released bounded reads, cache budgets, hash yielding and startup improvements stay closed. Do not treat O2 alone as unfinished optimization implementation. |
+
+### Follow-up audit: complete preload and episode-switching coverage
+
+On both Android and Windows, test real multi-episode playback with preloading enabled and disabled. Cover current-download completion triggering background preload; correct next-episode identity and file selection; preload progress and reuse without unnecessary redownload; automatic handoff at natural playback end; manual Previous/Next and episode-list switching; season boundaries and last-episode behavior; resume/sync consistency during handoff; cancellation/source failure and recovery; and previous-episode cache removal only after the new episode displays video. Check bounded memory/storage use and avoid duplicate workers, stale playback or restarting the same episode. Preserve existing owner history/timestamps and remove disposable test titles from Continue Watching across the group without marking watched. Report measured results, failures and any untested device-specific paths. O3 remains owner-confirmed closed; this is broader audit coverage, not reopening that resolved case.
 
 ### Approved website development brief — 20 November 2026
 
@@ -37,7 +43,7 @@ Owner checks are acceptance tests, not unfinished implementation. The developer 
 - **Hosting:** develop and publish through Sites; keep installers/APKs on GitHub Releases. Do not duplicate installer uploads on Sites. This is the approved approach, not an already deployed website.
 - **Release freshness:** integrate the verified release feed with distinct Android and Windows versions/assets. Proposed workflow: publish and verify app assets, then update the feed; the website resolves the latest approved asset/version without a website redeploy for each app release. Validate feed compatibility, cache refresh, asset selection, unavailable-feed fallback and download behavior during implementation. Do not simply use GitHub's single latest-release pointer, since platforms release independently.
 - **Website maintenance:** publish design, screenshot and guide changes through Sites separately from app releases. Keep secrets and the private owner dashboard out of public website source/content.
-- **Current scope:** decisions saved only; do not begin website implementation or publication until the owner asks to start.
+- **Status:** owner requested implementation; the approved website is deployed owner-private through Sites. Preserve audience unless the owner explicitly requests a change.
 
 ### Completed developer pass — reliability Sprints4/5, 0.44.0
 
@@ -50,3 +56,8 @@ Implemented concrete interaction/subtitle-status and metadata-duplication gaps f
 - Close owner-confirmed issues and record acceptance in VALIDATION.md. Do not reintroduce them from older notes.
 - Source availability or missing provider timestamps are external limitations unless a concrete app defect or approved improvement is identified. Broader Korean dub/sub, filler and skip coverage do not become recurring generic backlog items without a specific failed case.
 - Windows signing is intentionally out of scope. Personal subtitle-account retention is out of scope (anonymous access only). Cloudflare usage monitoring is routine operation, not backlog.
+
+### Owner-confirmed closures — 20 November 2026
+
+- O3 closed: TheBeast S1E2->S1E3 handoff with preload on/off and normal stall recovery confirmed resolved by owner.
+- O4 closed: installation through the updater confirmed for Android0.46.0 and Windows0.44.0. Do not reopen these acceptance checks from older notes.
