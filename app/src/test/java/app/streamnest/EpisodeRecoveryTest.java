@@ -21,4 +21,5 @@ public class EpisodeRecoveryTest {
   public void playbackErrorCanTryNextImmediately() {
     assertTrue(EpisodeRecovery.retry(100, 0, 0, true));
   }
+  @Test public void finalPeerlessSourceCannotWaitForever(){assertFalse(EpisodeRecovery.exhausted(false,false,false,true,false,false,44000,0,0,false));assertTrue(EpisodeRecovery.exhausted(false,false,false,true,false,false,45000,0,0,false));assertFalse(EpisodeRecovery.exhausted(false,false,true,true,false,false,300000,0,0,false));assertFalse(EpisodeRecovery.exhausted(false,false,false,true,true,false,300000,0,0,false));assertFalse(EpisodeRecovery.exhausted(false,false,false,true,false,true,300000,0,0,false));assertFalse(EpisodeRecovery.exhausted(true,true,false,true,false,false,300000,0,0,false));}
 }

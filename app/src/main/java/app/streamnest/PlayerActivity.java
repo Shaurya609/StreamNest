@@ -60,7 +60,7 @@ public class PlayerActivity extends Activity {
   List<Catalog.Source> alternatives = new ArrayList<>();
   int attempt;
   long attemptStarted, resumeAfterSwitch, lastProgressAt, lastReceived;
-  boolean mediaSet, playedVideo, sourceFailed, userPaused;
+  boolean mediaSet, playedVideo, sourceFailed, userPaused, startupExhausted;
   int startupRetries;
   long mediaOpenedAt, startupPosition;
   boolean softwareDecoder;
@@ -466,7 +466,7 @@ public class PlayerActivity extends Activity {
                   softwareDecoder = false;
                   playedVideo = false;
                   completionTail.reset();
-                  sourceFailed = false;
+                  sourceFailed = false; startupExhausted=false;
                   userPaused = false;
                   resumeOnReturn = false;
                   endedHandled = false;
@@ -628,7 +628,7 @@ public class PlayerActivity extends Activity {
     videoOutputs = 0;
     softwareDecoder = false;
     playedVideo = false;
-    sourceFailed = false;
+    sourceFailed = false; startupExhausted=false;
     userPaused = false;
     attemptStarted = SystemClock.elapsedRealtime();
     lastProgressAt = attemptStarted;
@@ -890,7 +890,7 @@ public class PlayerActivity extends Activity {
             opened = false;
             subtitleSearch.reset();
             mediaSet = false;
-            sourceFailed = false;
+            sourceFailed = false; startupExhausted=false;
             softwareDecoder = ++startupRetries == 2;
             lastProgressAt = now;
           }
@@ -909,6 +909,13 @@ public class PlayerActivity extends Activity {
             switchSource(true);
             ui.postDelayed(this, 1000);
             return;
+          }
+          if(currentEngine&&!startupExhausted&&hasWindowFocus()&&EpisodeRecovery.exhausted(mediaSet,playedVideo,userPaused,alternatives.size()<=attempt+1,e.startup.active,StreamService.startupBlocked(),now,attemptStarted,lastProgressAt,sourceFailed)){
+            startupExhausted=true;
+            episodeMessage=sourceFailed?"This source could not start. "+e.message+". Return to title details and choose another source or quality.":e.diagnosticPeers==0?"No peers are supplying this source. Return to title details and choose another source or quality.":"This source did not provide playable startup data. Return to title details and choose another source or quality.";
+            e.closed=true; // The service closes the worker off the UI thread and retains its lease until death is confirmed.
+            try{Diagnostics.event("torrent.stalled",new org.json.JSONObject().put("reason",sourceFailed?"unknown":"timeout").put("elapsedMs",Math.max(0,now-attemptStarted)).put("peers",e.diagnosticPeers));}catch(Exception ignored){}
+            setControlsVisible(true);
           }
           if (!playedVideo
               && mediaSet
