@@ -685,3 +685,5 @@ Hidden disposable-profile timings (not actual foreground paint measurements):
 - fresh-profile: shell request495ms; Home cards detected3787ms.
 - warm-profile: shell request456ms; Home cards detected3030ms.
 The earlier0.44.0 baseline observed16748ms first-profile and3004ms repeat-profile Home readiness. Candidate observations are3787ms and3030ms respectively. The original cold run had different OS/file-cache conditions, so these are observations, not a claimed cold-start percentage improvement. Shell-request time is not first visible paint, and antivirus/runtime startup before launch.html remains outside this change.
+
+Publication: desktop-v0.45.0 is public at source296bab7733bf628a97de8411243983f3dda554e3. Four uploaded asset sizes/digests and the changed sources in the application-source archive match the local checked build. Windows CI45134461162 passed, including Home, updater/restart, launch guard and per-user install/uninstall. Signed feed workflow45136233993 passed; public RSA signature verified and Windows0.45.0 installer size/hash match, with Android0.47.0 retained. Installed-app foreground acceptance remains O6.

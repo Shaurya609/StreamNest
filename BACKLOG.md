@@ -8,8 +8,6 @@ Updated 23 November 2026. This is the current source of truth for open work. PEN
 | --- | --- | --- |
 | O1 | Physical TV: reported episodes on latest Android | Retry the latest reported S1E5 after the normal Android0.46.0 update; keep earlier S1E3 acceptance separate. Report startup, resume/seek and sustained playback, plus the approximate attempt time if it fails. Latest0.44.0 S1E5 evidence shows zero peers/no startup pieces or player reads; peer unavailability is not yet fully explained. |
 | O2 | Physical projector: USB cache after0.47.0 | Update through the normal updater, retain the USB cache folder, and retry Remarried Empress S1E1. Confirm internal and USB free space in Playback & storage; if prompted, clear only stopped video cache. Check first-source startup, video/audio, pause-to-download and relaunch. Report the attempt time if it fails so new internal/cache-space and file-error reports can be matched. Earlier S1E3 internal playback stays closed; long-session/USB acceptance remains owner testing after developer fixes. |
-
-
 | O5 | Physical TV/projector remote navigation on0.46.0 | Confirm directional entry into Seasons/Episodes/Quality, scrolling beyond visible episodes, and reaching/activating Remove using a disposable Continue Watching title. Isolated developer tests passed; implementation is released. |
 | O6 | Desktop startup on0.45.0 | After the normal update, confirm the time before the first window appears and then before Continue Watching/recommendations appear. Developer checks request the early shell in~0.5s and find Home in3–4s in disposable profiles; actual foreground paint and first launch after reboot remain owner acceptance. |
 

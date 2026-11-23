@@ -5,7 +5,7 @@ Android, Google TV and standalone Windows app for browsing movies, series and an
 | Download | Package |
 | --- | --- |
 | [Android / Google TV / projector](https://github.com/Shaurya609/StreamNest/releases/latest) | Universal APK — includes ARM32 and ARM64 |
-| [Windows desktop — standalone preview](https://github.com/Shaurya609/StreamNest/releases/tag/desktop-v0.44.0) | Installer or portable ZIP; Popcorn Time is not required |
+| [Windows desktop — standalone preview](https://github.com/Shaurya609/StreamNest/releases/tag/desktop-v0.45.0) | Installer or portable ZIP; Popcorn Time is not required |
 
 [All releases](https://github.com/Shaurya609/StreamNest/releases) · [Desktop setup](desktop/STANDALONE.md) · [Sprint status](SPRINTS.md) · [Owner and developer backlog](BACKLOG.md)
 
