@@ -1,15 +1,21 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><title>StreamNest</title>
 <style>body{background:#15171c;color:#f3f4f6;font:18px/1.5 sans-serif;padding:48px}p{color:#b9c1ce}</style></head>
-<body><h1>StreamNest is updating</h1><p id="status">Waiting for installation to finish. This window will open your library automatically.</p>
+<body><h1 id="heading">Starting StreamNest</h1><p id="status">Loading your library…</p>
 <script>
 'use strict';
+sessionStorage.setItem('streamnestLaunchAt',String(Date.now()));
 const gate=require('./launch-guard');
 const fs=require('fs'),path=require('path');
 const marker=path.join(path.dirname(process.execPath),'.streamnest-installing');
 function check(){
- if(!gate.installing(marker,fs,process)){location.replace('index.html');return;}
+ const installing=gate.installing(marker,fs,process);
+ document.getElementById('heading').textContent=installing?'StreamNest is updating':'Starting StreamNest';
+ document.getElementById('status').textContent=installing?'Waiting for installation to finish. Your library will open automatically.':'Loading your library…';
+ // Open the lightweight shell before index.html imports the media engine and providers.
+ sessionStorage.setItem('streamnestShellAt',String(Date.now()));
  if(!process.env.STREAMNEST_SMOKE_ROOT)nw.Window.get().show();
+ if(!installing){setTimeout(()=>location.replace('index.html'),64);return;}
  setTimeout(check,500);
 }
 check();

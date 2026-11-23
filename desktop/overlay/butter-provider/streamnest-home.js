@@ -25,6 +25,11 @@ function build(pool,history={},limit=12,manual={}){
 function libraryFile(){return path.join(nw.App.dataPath,'streamnest-home-library-v1.json');}
 function remembered(){try{return JSON.parse(fs.readFileSync(libraryFile(),'utf8'));}catch(e){return {};}}
 function remember(raw,kind){try{const rows=remembered();const old=rows[id(raw)];rows[id(raw)]={...(old&&old.homeEpisodeOrder?{homeEpisodeOrder:old.homeEpisodeOrder,homeEpisodeOrderAt:old.homeEpisodeOrderAt}:{}),...raw,kind,seen:Date.now()};revision++;const kept=Object.values(rows).sort((a,b)=>b.seen-a.seen).slice(0,200);fs.writeFileSync(libraryFile()+'.tmp',JSON.stringify(Object.fromEntries(kept.map(t=>[id(t),t]))));fs.renameSync(libraryFile()+'.tmp',libraryFile());}catch(e){}}
+// Only title metadata is cached. Current progress/removals always come from P.records().
+function previewFile(){return path.join(nw.App.dataPath,'streamnest-home-preview-v1.json');}
+function quick(){let titles=[];try{const file=previewFile();if(fs.statSync(file).size<=1000000){const doc=JSON.parse(fs.readFileSync(file,'utf8'));if(doc.schema===1&&Array.isArray(doc.titles))titles=doc.titles.slice(0,160).filter(t=>/^tt\d+$/.test(id(t))&&typeof t.title==='string'&&['movies','shows','animes'].includes(t.kind));}}catch(e){}return [...titles,...Object.values(remembered())];}
+let previewWrite=Promise.resolve();
+function savePreview(rows){const titles=new Map();for(const row of rows)for(const card of row.cards||[]){const t=card.title;if(t&&/^tt\d+$/.test(id(t))&&titles.size<160)titles.set(id(t),t);}const text=JSON.stringify({schema:1,titles:[...titles.values()]});if(Buffer.byteLength(text)>1000000)return;const file=previewFile();previewWrite=previewWrite.catch(()=>{}).then(async()=>{await fs.promises.writeFile(file+'.tmp',text);await fs.promises.rename(file+'.tmp',file);});previewWrite.catch(()=>{});return previewWrite;}
 function load(){const R=require('./streamnest-resilience'),pool=[];for(const kind of ['movies','shows','animes']){const doc=R.catalog(kind);for(const t of doc&&(doc.movies||doc.series)||[])pool.push({...t,kind});}for(const t of R.known.values())pool.push({...t,kind:'movies'});for(const t of Object.values(remembered()))pool.push(t);return pool;}
 async function enrich(pool,history){
  const known=new Map(),seen=new Set();for(const t of pool){const old=known.get(id(t));if(!old||old.kind!=='animes'||t.kind==='animes')known.set(id(t),t);}let attempts=0;
@@ -37,4 +42,4 @@ async function enrich(pool,history){
  }return pool;
 }
 function episodeOrder(rows){return rows.filter(r=>!require('./streamnest-playback').future(r)).slice().sort((a,b)=>a.season-b.season||a.episode-b.episode).map(r=>r.season+':'+r.episode);}
-module.exports={get revision(){return revision+require('./streamnest-home-sync').revision;},episodeOrder,id,genres,build,load,remember,enrich};
+module.exports={get revision(){return revision+require('./streamnest-home-sync').revision;},episodeOrder,id,genres,build,load,quick,savePreview,remember,enrich};

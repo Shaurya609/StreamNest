@@ -31,11 +31,19 @@ function install(App,$){
   },
   refresh(){
    if(this.searchQuery)return;
-   const history=P.records(),pool=H.load();this.signature=JSON.stringify(history);this.progressRevision=P.revision;this.libraryRevision=H.revision;this.paint(shared(pool,history));const generation=this.homeGeneration=(this.homeGeneration||0)+1;
+   const history=P.records();this.signature=JSON.stringify(history);this.progressRevision=P.revision;this.libraryRevision=H.revision;const generation=this.homeGeneration=(this.homeGeneration||0)+1;
+   // Yield with Continue Watching and saved recommendations before full catalog work.
+   this.paint(shared(H.quick(),history));
+   clearTimeout(this.homeRefreshTimer);this.homeRefreshTimer=setTimeout(()=>this.refreshCatalog(generation,history),50);
+  },
+  refreshCatalog(generation,history){
+   if(this.isDestroyed()||this.searchQuery||generation!==this.homeGeneration)return;
+   const pool=H.load();this.paint(shared(pool,history));
    require('./streamnest-sync').request(true).then(()=>{if(!this.isDestroyed()&&(P.revision!==this.progressRevision||this.libraryRevision!==H.revision))this.refresh();});
    const before=pool.slice();H.enrich(pool,history).then(enriched=>{if((enriched.length!==before.length||enriched.some((row,n)=>row!==before[n]))&&!this.isDestroyed()&&generation===this.homeGeneration&&P.revision===this.progressRevision){this.libraryRevision=H.revision;this.paint(shared(enriched,history));}});
   },
   paint(rows){
+   if(!this.searchQuery)H.savePreview(rows);
    if(this.artworkCleanup)this.artworkCleanup.forEach(stop=>stop());this.artworkCleanup=[];const scroll=this.host.scrollTop(),focused=this.host[0].contains(document.activeElement)?document.activeElement:null,focusId=focused&&focused.getAttribute('data-home-key'),offsets=new Map([...this.host[0].querySelectorAll('.sn-rail')].map(r=>[r.getAttribute('data-home-row'),r.scrollLeft]));this.results.empty();$('<h1>').text(this.searchQuery?'Search results for “'+this.searchQuery+'”':'Something for your next watch').appendTo(this.results);$('<p class="sn-home-note">').text(this.searchQuery?'Movies, series and anime':'Continue where you left off, or find your next favorite.').appendTo(this.results);
    for(const section of rows){if(!section.cards.length&&section.name!=='Continue Watching')continue;$('<h2>').text(section.name).appendTo(this.results);
     if(!section.cards.length){$('<p class="sn-home-note">').text('Start watching a title. Your place will appear here automatically.').appendTo(this.results);continue;}
@@ -65,7 +73,7 @@ function install(App,$){
    }catch(e){const note=this.host.find('.sn-home-error');note.remove();$('<p class="sn-home-error" role="alert">').text('Could not open this title. '+e.message).prependTo(this.host);}
    finally{this.opening=false;button.removeAttr('aria-busy');}
   },
-  onBeforeDestroy(){this.searchGeneration=(this.searchGeneration||0)+1;if(this.artworkCleanup)this.artworkCleanup.forEach(stop=>stop());clearInterval(this.timer);document.defaultView.removeEventListener('resize',this.layoutHome);if(this.homeResize)this.homeResize.disconnect();this.homeGeneration=(this.homeGeneration||0)+1;}
+  onBeforeDestroy(){clearTimeout(this.homeRefreshTimer);this.searchGeneration=(this.searchGeneration||0)+1;if(this.artworkCleanup)this.artworkCleanup.forEach(stop=>stop());clearInterval(this.timer);document.defaultView.removeEventListener('resize',this.layoutHome);if(this.homeResize)this.homeResize.disconnect();this.homeGeneration=(this.homeGeneration||0)+1;}
  });
 }
 module.exports={install};

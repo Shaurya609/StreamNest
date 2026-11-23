@@ -11,7 +11,7 @@ function check(kind,entry,bytes){if(!new RegExp('^catalogs/v1/data/'+kind+'-[0-9
 class Catalogs {
  constructor(options={}){
   this.root=options.root||null;this.fetch=options.fetch||net;this.clock=options.clock||Date.now;this.health=new Map();this.sessions=new Map();this.pages={};this.known=new Map();this.bases=defaults.slice();this.preferred=this.bases[0];this.saved=false;
-  this.bundles=options.bundles||{};for(const kind of ['movies','shows','animes','latest'])if(!this.bundles[kind])this.bundles[kind]=read(path.join(__dirname,'catalog-'+kind+'-v1.json'));
+  this.bundles={...options.bundles};for(const kind of ['movies','shows','animes','latest'])if(!this.bundles[kind])Object.defineProperty(this.bundles,kind,{configurable:true,enumerable:true,get(){const doc=read(path.join(__dirname,'catalog-'+kind+'-v1.json'));Object.defineProperty(this,kind,{value:doc,writable:true,configurable:true,enumerable:true});return doc;}});
   const doc=this.catalog('movies');for(const m of doc&&doc.movies||[])this.known.set(m.imdb_code,m);
   if(this.root){const state=read(path.join(this.root,'state.json'));if(state){this.pages=state.pages||{};if(this.bases.includes(state.preferred))this.preferred=state.preferred;}const known=read(path.join(this.root,'movies-known.json'));for(const m of known&&known.movies||[])if(!this.known.has(m.imdb_code)||Number(m.catalogVerifiedAt||0)>=Number(this.known.get(m.imdb_code).catalogVerifiedAt||0))this.known.set(m.imdb_code,m);}
  }

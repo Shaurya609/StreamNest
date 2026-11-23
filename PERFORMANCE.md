@@ -153,3 +153,15 @@ These observations do not establish an overall startup, CPU or RAM improvement. 
 ### Android baseline
 
 Android 0.41.0 code is unchanged in this pass. Three sequential Low Memory Home profiles in an unlocked, separately installed tablet app recorded launch-to-idle 1058/636/635 ms, 30-second process CPU 11734/8755/9051 ms, and peak main-process PSS 125021/112052/107444 KiB. The first run uses a fresh test install; later runs retain its cache. These are baselines rather than a before/after saving, Home idle is not first decoded video, no torrent worker was active, and this is not a 1 GiB physical-projector measurement. The owner separately confirmed S1E3 smooth playback on projector 0.41.0; that functional result does not supply sustained projector CPU/RAM measurements. Test packages were removed and production build configuration restored.
+
+
+## 23 November 2026 — desktop early launch and saved Home
+
+Owner clarified the delay is before any window appears. Desktop0.45.0 now requests the lightweight native shell from launch.html before index.html loads media/provider dependencies, yields64ms for the starting screen, and retains the active-installer guard. Normal launch shows Starting StreamNest rather than an updating message. Home paints current-history Continue Watching and saved recommendation metadata before deferred catalog work; series/anime/latest bundles load on demand. Snapshot contains title metadata only, never resume timestamps.
+
+219 desktop tests pass. Packaged hidden Home regression passed keyboard focus, themes/sizes, all-category search, live progress, removal tombstones, manual Watched, next episode selection and details. The packaged installer guard blocks an active installer and continues after it completes. Production app, account and history were untouched.
+
+Hidden disposable-profile timings (not actual foreground paint measurements):
+- fresh-profile: shell request495ms; Home cards detected3787ms.
+- warm-profile: shell request456ms; Home cards detected3030ms.
+The earlier0.44.0 baseline observed16748ms first-profile and3004ms repeat-profile Home readiness. Candidate observations are3787ms and3030ms respectively. The original cold run had different OS/file-cache conditions, so these are observations, not a claimed cold-start percentage improvement. Shell-request time is not first visible paint, and antivirus/runtime startup before launch.html remains outside this change.

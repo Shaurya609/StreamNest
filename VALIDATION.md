@@ -673,3 +673,15 @@ Sites owner-private deployment succeeded: project appgprj_6b00afc74a40819197f806
 Native paused-metadata test received asynchronous status (longest request0ms at millisecond resolution), did not mark an unverified piece ready, kept active cache, cleared stopped cache and prevented source cycling for a typed storage failure. Real S1E3 test on tablet Low Memory mode passed on source1: time to video56009ms, total130284ms, download while paused true, resumed position67402ms, 60-second sustained sample, peak main-process PSS369545KiB (excludes worker). Test ran in isolated package; production history and credentials unchanged.
 
 Physical projector USB acceptance remains pending. Fixes target two separate findings: internal app-state writes failing under low space, and a native synchronous status wait after an external-cache probe succeeded. The app now guards both volumes, surfaces file errors, protects active roots and requests status asynchronously without overlapping bitfield generations. A newer native pending query expires after60s rather than allowing unlimited waits. Dashboard allowlist and plain-language explanations deployed with separate internal/cache free-space measurements; no new diagnostic endpoint or polling frequency was introduced.
+
+
+## 23 November 2026 — desktop early launch and saved Home
+
+Owner clarified the delay is before any window appears. Desktop0.45.0 now requests the lightweight native shell from launch.html before index.html loads media/provider dependencies, yields64ms for the starting screen, and retains the active-installer guard. Normal launch shows Starting StreamNest rather than an updating message. Home paints current-history Continue Watching and saved recommendation metadata before deferred catalog work; series/anime/latest bundles load on demand. Snapshot contains title metadata only, never resume timestamps.
+
+219 desktop tests pass. Packaged hidden Home regression passed keyboard focus, themes/sizes, all-category search, live progress, removal tombstones, manual Watched, next episode selection and details. The packaged installer guard blocks an active installer and continues after it completes. Production app, account and history were untouched.
+
+Hidden disposable-profile timings (not actual foreground paint measurements):
+- fresh-profile: shell request495ms; Home cards detected3787ms.
+- warm-profile: shell request456ms; Home cards detected3030ms.
+The earlier0.44.0 baseline observed16748ms first-profile and3004ms repeat-profile Home readiness. Candidate observations are3787ms and3030ms respectively. The original cold run had different OS/file-cache conditions, so these are observations, not a claimed cold-start percentage improvement. Shell-request time is not first visible paint, and antivirus/runtime startup before launch.html remains outside this change.
