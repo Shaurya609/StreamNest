@@ -11,6 +11,8 @@ Updated 23 November 2026. This is the current source of truth for open work. PEN
 
 
 | O5 | Physical TV/projector remote navigation on0.46.0 | Confirm directional entry into Seasons/Episodes/Quality, scrolling beyond visible episodes, and reaching/activating Remove using a disposable Continue Watching title. Isolated developer tests passed; implementation is released. |
+| O6 | Desktop startup on0.45.0 | After the normal update, confirm the time before the first window appears and then before Continue Watching/recommendations appear. Developer checks request the early shell in~0.5s and find Home in3–4s in disposable profiles; actual foreground paint and first launch after reboot remain owner acceptance. |
+
 
 Owner checks are acceptance tests, not unfinished implementation. The developer retains responsibility for diagnosis, code fixes and developer-run verification. An owner report can create or update a developer issue; it does not automatically reopen every historical issue.
 
