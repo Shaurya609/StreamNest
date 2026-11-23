@@ -56,7 +56,7 @@ public class EngineWorkerService extends Service {
   Bundle d=new Bundle();d.putString("token",token);d.putInt("pid",android.os.Process.myPid());
   d.putLong("workerMemoryMb",memoryMb);if(!failureReport.isEmpty())d.putString("failureReport",failureReport);
   d.putString("rangeReport",e.rangeSnapshot().toString());
-  d.putString("message",e.message);d.putString("url",e.url);d.putBoolean("closed",e.closed);d.putBoolean("complete",e.verifiedComplete);
+  d.putString("message",e.storageFailure&&!e.storageMessage.isEmpty()?e.storageMessage:e.message);d.putString("url",e.url);d.putBoolean("closed",e.closed);d.putBoolean("complete",e.verifiedComplete);
   d.putBoolean("storageFailure",e.storageFailure);
   if(e.storageFailure&&failureReport.isEmpty())try{failureReport=new org.json.JSONObject().put("service","storage").put("operation","cache").put("reason","storage").put("nativeCode",Math.abs((long)e.diagnosticError)).put("cacheFreeMb",StorageGuard.cacheFreeMb).put("internalFreeMb",StorageGuard.internalFreeMb).toString();d.putString("failureReport",failureReport);}catch(Exception ignored){}
   d.putLong("internalFreeMb",StorageGuard.internalFreeMb);d.putLong("cacheFreeMb",StorageGuard.cacheFreeMb);

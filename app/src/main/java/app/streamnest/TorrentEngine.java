@@ -10,6 +10,7 @@ class TorrentEngine implements AutoCloseable {
   volatile String message = "Starting torrent engine…", url;
   volatile boolean closed;
   volatile boolean storageFailure;
+  volatile String storageMessage="";
   volatile long internalFreeMb=-1,cacheFreeMb=-1;
   ContextStorageCheck storageCheck;
   interface ContextStorageCheck {void check() throws IOException;}
@@ -75,7 +76,7 @@ class TorrentEngine implements AutoCloseable {
 
           public void alert(Alert<?> a) {
             if(a instanceof StateUpdateAlert){try{if(!closed)for(TorrentStatus s:((StateUpdateAlert)a).status())acceptStatus(s,statusGeneration);}finally{statusPending=false;}}
-            if(a instanceof FileErrorAlert){storageFailure=true;diagnosticError=((FileErrorAlert)a).error().getValue();message="The selected cache could not read or write video data. Check the USB connection, folder access, free space and drive format in Playback & storage, then retry.";closed=true;url=null;}
+            if(a instanceof FileErrorAlert){storageMessage="The selected cache could not read or write video data. Check the USB connection, folder access, free space and drive format in Playback & storage, then retry.";storageFailure=true;diagnosticError=((FileErrorAlert)a).error().getValue();message=storageMessage;closed=true;url=null;}
             if(a instanceof TrackerErrorAlert){trackerErrors=Math.min(1000000,trackerErrors+1);trackerErrorCode=Math.abs((long)((TrackerErrorAlert)a).error().getValue());}
             if (a instanceof PieceFinishedAlert) available.finished(((PieceFinishedAlert)a).pieceIndex());
             if (a instanceof HashFailedAlert) available.failed(((HashFailedAlert)a).pieceIndex());
