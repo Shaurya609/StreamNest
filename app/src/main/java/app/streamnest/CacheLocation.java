@@ -95,6 +95,11 @@ final class CacheLocation {
       existing = existing.getParentFile();
     return existing.getUsableSpace();
   }
+  static String kind(Context c,File folder){
+    if(folder.toPath().toAbsolutePath().normalize().startsWith(c.getFilesDir().getParentFile().toPath()))return "internal";
+    try{if(android.os.Environment.isExternalStorageRemovable(folder))return "external";if(android.os.Environment.isExternalStorageEmulated(folder))return "internal";}catch(IllegalArgumentException ignored){}
+    return "custom";
+  }
 
   static File writable(File selected) throws IOException {
     if (!selected.isAbsolute()) throw new IOException("Enter an absolute folder path");

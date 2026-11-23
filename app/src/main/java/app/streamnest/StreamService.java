@@ -77,6 +77,8 @@ public class StreamService extends Service {
             next.startup.enter("Checking cache folder",20000);
             File dir = directory(this,i);
             next.root=dir; // Reserve the destination before cancellation cleanup can inspect it.
+            PlaybackCache.recoverInternalForUsb(this,dir.getParentFile());
+            StorageGuard.check(this,dir.getParentFile(),true);
             next.lite = DeviceProfile.lite(this);
             // Writable storage is probed inside the recoverable worker process.
             if (next.closed) return;
@@ -85,6 +87,7 @@ public class StreamService extends Service {
             PlaybackCache.record(this, CacheLocation.current(this), dir);
             if (!next.closed) next.start(source, dir);
           } catch (Throwable e) {
+            next.storageFailure=StorageGuard.isStorageFailure(e);
             Diagnostics.failure("torrent.failed","torrent","startup",e);
             next.closed=true;
             next.message =

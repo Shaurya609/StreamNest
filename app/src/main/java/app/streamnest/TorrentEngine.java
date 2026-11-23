@@ -9,6 +9,11 @@ import org.libtorrent4j.alerts.*;
 class TorrentEngine implements AutoCloseable {
   volatile String message = "Starting torrent engine…", url;
   volatile boolean closed;
+  volatile boolean storageFailure;
+  volatile long internalFreeMb=-1,cacheFreeMb=-1;
+  ContextStorageCheck storageCheck;
+  interface ContextStorageCheck {void check() throws IOException;}
+  long storageCheckedAt;
   final EngineStartup startup=new EngineStartup(System::nanoTime,s->{android.util.Log.i("StreamNestStartup",s);Diagnostics.startup(s);});
   boolean lite, publicMetadataLookup, episodeRequest;
   volatile boolean preloadOnly;
@@ -35,6 +40,9 @@ class TorrentEngine implements AutoCloseable {
   volatile int sourceTrackers,restoredTrackers,trackerErrors;
   volatile long trackerErrorCode;
   long diagnosticSampleAt;
+  volatile String lastStatusText="";
+  volatile boolean statusPending;
+  volatile long statusRequestAt,statusGeneration;
   int pieceLength;
   final PieceAvailability available = new PieceAvailability();
   final java.util.concurrent.atomic.AtomicBoolean startupHints=new java.util.concurrent.atomic.AtomicBoolean(true);
@@ -56,6 +64,8 @@ class TorrentEngine implements AutoCloseable {
             return new int[] {
               AlertType.ADD_TORRENT.swig(),
               AlertType.TRACKER_ERROR.swig(),
+              AlertType.FILE_ERROR.swig(),
+              AlertType.STATE_UPDATE.swig(),
               AlertType.PIECE_FINISHED.swig(),
               AlertType.HASH_FAILED.swig(),
               AlertType.SAVE_RESUME_DATA.swig(),
@@ -64,6 +74,8 @@ class TorrentEngine implements AutoCloseable {
           }
 
           public void alert(Alert<?> a) {
+            if(a instanceof StateUpdateAlert){try{if(!closed)for(TorrentStatus s:((StateUpdateAlert)a).status())acceptStatus(s,statusGeneration);}finally{statusPending=false;}}
+            if(a instanceof FileErrorAlert){storageFailure=true;diagnosticError=((FileErrorAlert)a).error().getValue();message="The selected cache could not read or write video data. Check the USB connection, folder access, free space and drive format in Playback & storage, then retry.";closed=true;url=null;}
             if(a instanceof TrackerErrorAlert){trackerErrors=Math.min(1000000,trackerErrors+1);trackerErrorCode=Math.abs((long)((TrackerErrorAlert)a).error().getValue());}
             if (a instanceof PieceFinishedAlert) available.finished(((PieceFinishedAlert)a).pieceIndex());
             if (a instanceof HashFailedAlert) available.failed(((HashFailedAlert)a).pieceIndex());
@@ -259,6 +271,7 @@ class TorrentEngine implements AutoCloseable {
     System.out.println("StreamNest URL " + url);
     message = "Buffering · " + video.getName();
     while (!closed) {
+      if(storageCheck!=null&&System.nanoTime()-storageCheckedAt>5000000000L){storageCheckedAt=System.nanoTime();storageCheck.check();}
       if(budgetChanged){budgetChanged=false;session.applySettings(new SettingsPack().setInteger(org.libtorrent4j.swig.settings_pack.int_types.aio_threads.swigValue(),EngineBudget.diskThreads(lite,preloadOnly)));}
       message = updateStatus();
       if (url == null && startupReady()) url = readyUrl;
@@ -299,10 +312,22 @@ class TorrentEngine implements AutoCloseable {
 
   String updateStatus() {
     try {
-      if (handle != null && handle.isValid()) {
-        // One native status request, then local bitfield reads. No synchronous per-piece RPCs.
-        long generation = available.generation();
-        TorrentStatus s = handle.status(TorrentHandle.QUERY_PIECES);
+      // post_torrent_updates queues work instead of blocking this worker in handle.status().
+      // A slow USB/native status operation can no longer prevent its control heartbeat.
+      long now=System.nanoTime();
+      // Never overlap queries: the generation belongs to this one bitfield request.
+      if(statusPending&&now-statusRequestAt>60000000000L){message="Torrent status request timed out. Stop and retry after checking the selected storage.";closed=true;url=null;return message;}
+      if(session!=null&&handle!=null&&!statusPending){
+        statusPending=true;statusRequestAt=now;statusGeneration=available.generation();
+        session.swig().post_torrent_updates(TorrentHandle.QUERY_PIECES);
+      }
+    }catch(Exception ignored){statusPending=false;}
+    return lastStatusText.isEmpty()?message:lastStatusText;
+  }
+
+  void acceptStatus(TorrentStatus s,long generation){
+    if(closed)return;
+    try{
         PieceIndexBitfield pieces = s.pieces();
         java.util.BitSet snapshot = new java.util.BitSet();
         for (int i=0;i<pieces.size();i++) if(pieces.getBit(i)) snapshot.set(i);
@@ -310,8 +335,8 @@ class TorrentEngine implements AutoCloseable {
         verifyCompletion(s.progress());
         receivedBytes = s.totalWantedDone();
         diagnosticPeers=Math.max(0,s.numPeers());diagnosticKbps=Math.max(0,s.downloadRate()/1024);diagnosticPercent=Math.max(0,Math.min(100,Math.round(s.progress()*100)));diagnosticError=s.errorCode().getValue();
-        if (s.errorCode().getValue() != 0) return "Torrent error: " + s.errorCode().getMessage();
-        return String.format(
+        if (s.errorCode().getValue() != 0) {lastStatusText="Torrent error: " + s.errorCode().getMessage();return;}
+        lastStatusText=String.format(
             Locale.ROOT,
             "%s · %.1f%% · %.0f KB/s · %d peers",
             s.state().toString().toLowerCase(Locale.ROOT).contains("check")
@@ -320,10 +345,7 @@ class TorrentEngine implements AutoCloseable {
             s.progress() * 100,
             s.downloadRate() / 1024.0,
             s.numPeers());
-      }
-    } catch (Exception ignored) {
-    }
-    return message;
+    }catch(Exception ignored){}
   }
 
   String movieHash() {

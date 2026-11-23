@@ -31,12 +31,14 @@ public class EngineWorkerService extends Service {
      engine.startup.begin("Checking cache folder",20000);
      long probeAt=android.os.SystemClock.elapsedRealtime();
      File requested=new File(d.getString("root",""));File root=requested.getCanonicalFile(),base=CacheLocation.writable(requested.getParentFile());
+     StorageGuard.check(EngineWorkerService.this,base,true);
+     engine.storageCheck=()->StorageGuard.check(EngineWorkerService.this,base,false);
      Bundle storage=new Bundle();storage.putString("token",token);String kind=storageKind(base);
      storage.putString("report",new org.json.JSONObject().put("stage","cache_check").put("storage",kind).put("cacheFreeMb",base.getUsableSpace()/1048576).put("elapsedMs",android.os.SystemClock.elapsedRealtime()-probeAt).toString());send(REPORT,storage);
      if(!requested.getName().matches("[a-f0-9]{64}")||!base.equals(root.getParentFile()))throw new IOException("Invalid torrent worker folder");
      if(engine.preloadOnly&&base.getUsableSpace()<512L*1024*1024)throw new IOException("Not enough free storage to preload");
      if(!engine.closed)engine.start(engine.sourceUrl,root);
-    }catch(Throwable error){failureReport=DiagnosticData.failure("torrent","startup",error).toString();engine.message="Unable to stream: "+(error.getMessage()==null?error.getClass().getSimpleName():error.getMessage());engine.closed=true;engine.startup.done();}
+    }catch(Throwable error){engine.storageFailure|=StorageGuard.isStorageFailure(error);failureReport=DiagnosticData.failure(engine.storageFailure?"storage":"torrent","startup",error).toString();engine.message="Unable to stream: "+(error.getMessage()==null?error.getClass().getSimpleName():error.getMessage());engine.closed=true;engine.startup.done();}
     finally{snapshot();if(stopping||engine.closed)finishEngine();}});
    }else if(token.equals(d.getString("token"))){
     if(m.what==ABORT){android.os.Process.killProcess(android.os.Process.myPid());return;}
@@ -47,7 +49,7 @@ public class EngineWorkerService extends Service {
    }
   }
  });
- String storageKind(File base){if(base.toPath().startsWith(getFilesDir().getParentFile().toPath()))return "internal";try{return android.os.Environment.isExternalStorageRemovable(base)?"external":"custom";}catch(IllegalArgumentException ignored){return "custom";}}
+ String storageKind(File base){return CacheLocation.kind(this,base);}
  @Override public IBinder onBind(Intent i){return endpoint.getBinder();}
  void snapshot(){
   TorrentEngine e=engine;if(e==null)return;
@@ -55,6 +57,9 @@ public class EngineWorkerService extends Service {
   d.putLong("workerMemoryMb",memoryMb);if(!failureReport.isEmpty())d.putString("failureReport",failureReport);
   d.putString("rangeReport",e.rangeSnapshot().toString());
   d.putString("message",e.message);d.putString("url",e.url);d.putBoolean("closed",e.closed);d.putBoolean("complete",e.verifiedComplete);
+  d.putBoolean("storageFailure",e.storageFailure);
+  if(e.storageFailure&&failureReport.isEmpty())try{failureReport=new org.json.JSONObject().put("service","storage").put("operation","cache").put("reason","storage").put("nativeCode",Math.abs((long)e.diagnosticError)).put("cacheFreeMb",StorageGuard.cacheFreeMb).put("internalFreeMb",StorageGuard.internalFreeMb).toString();d.putString("failureReport",failureReport);}catch(Exception ignored){}
+  d.putLong("internalFreeMb",StorageGuard.internalFreeMb);d.putLong("cacheFreeMb",StorageGuard.cacheFreeMb);
   d.putString("stage",e.startup.stage);d.putLong("since",e.startup.since);d.putLong("limit",e.startup.limitMs);d.putBoolean("active",e.startup.active);d.putLong("pulse",e.workerPulse);
   d.putString("video",e.video==null?"":e.video.getAbsolutePath());d.putLong("size",e.size);d.putLong("received",e.receivedBytes);d.putString("fingerprint",e.fingerprint());d.putString("hash",e.cachedMovieHash);
   d.putInt("peers",e.diagnosticPeers);d.putInt("kbps",e.diagnosticKbps);d.putInt("percent",e.diagnosticPercent);d.putInt("error",e.diagnosticError);

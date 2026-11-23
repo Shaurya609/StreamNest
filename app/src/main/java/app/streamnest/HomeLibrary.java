@@ -8,7 +8,7 @@ final class HomeLibrary {
  static volatile List<Catalog.Title> cached;static volatile long cachedAt,revision;
  static void clear(){cached=null;}
 
- static void remember(Context c,Catalog.Title title){clear();try{
+ static void remember(Context c,Catalog.Title title){try{
    android.content.SharedPreferences p=c.getSharedPreferences("home-library",0);JSONObject raw=new JSONObject(title.raw.toString());try{JSONObject old=new JSONObject(p.getString(title.id,"{}")).optJSONObject("title");if(old!=null&&!raw.has("homeEpisodeOrder")&&old.has("homeEpisodeOrder"))raw.put("homeEpisodeOrder",old.get("homeEpisodeOrder")).put("homeEpisodeOrderAt",old.optLong("homeEpisodeOrderAt"));}catch(Exception ignored){}JSONObject doc=new JSONObject().put("kind",title.kind).put("title",raw).put("seen",System.currentTimeMillis());
    android.content.SharedPreferences.Editor edit=p.edit().putString(title.id,doc.toString());
    if(p.getAll().size()>200){List<String> keys=new ArrayList<>(p.getAll().keySet());keys.sort(Comparator.comparingLong(k->{try{return new JSONObject(p.getString(k,"{}")).optLong("seen");}catch(Exception e){return 0L;}}));for(String key:keys.subList(0,keys.size()-200))if(!key.equals(title.id))edit.remove(key);}
@@ -23,8 +23,19 @@ final class HomeLibrary {
   List<Catalog.Title> rows=new ArrayList<>();String field=kind.equals("movies")?"movies":"series";boolean found=false;
   try(android.util.JsonReader reader=CatalogJson.reader(in)){reader.beginObject();while(reader.hasNext()){String key=reader.nextName();if(!key.equals(field)){reader.skipValue();continue;}found=true;reader.beginArray();while(reader.hasNext()){if(Thread.currentThread().isInterrupted())throw new InterruptedException();JSONObject row=(JSONObject)CatalogJson.value(reader,1);if(rows.size()>=30000)throw new IOException("Home catalog limit");rows.add(Catalog.parse(lean(row,kind,lite),kind));}reader.endArray();}reader.endObject();}if(!found||rows.isEmpty())throw new IOException("Home catalog unavailable");return rows;
  }
- static List<Catalog.Title> load(Context c)throws Exception{
-  List<Catalog.Title> savedPool=cached;if(savedPool!=null&&System.currentTimeMillis()-cachedAt<120000)return new ArrayList<>(savedPool);
+ static List<Catalog.Title> quick(Context c){
+  List<Catalog.Title> out=new ArrayList<>();
+  try{out.addAll(HomeSnapshot.decode(c.getSharedPreferences("home-preview",0).getString("titles","{}")));}catch(Exception ignored){}
+  return remembered(c,out);
+ }
+ static List<Catalog.Title> remembered(Context c,List<Catalog.Title> out){
+  // Latest remembered metadata wins while fresh progress still comes from WatchProgress.
+  for(Object value:c.getSharedPreferences("home-library",0).getAll().values())try{JSONObject doc=new JSONObject((String)value);out.add(Catalog.parse(doc.getJSONObject("title"),doc.getString("kind")));}catch(Exception ignored){}
+  return out;
+ }
+ static void savePreview(Context c,List<HomeFeed.Row> rows){try{JSONObject doc=HomeSnapshot.encode(rows);if(doc!=null)c.getSharedPreferences("home-preview",0).edit().putString("titles",doc.toString()).apply();}catch(Exception ignored){}}
+ static synchronized List<Catalog.Title> load(Context c)throws Exception{
+  List<Catalog.Title> savedPool=cached;if(savedPool!=null&&System.currentTimeMillis()-cachedAt<600000)return remembered(c,new ArrayList<>(savedPool));
   List<Catalog.Title> out=new ArrayList<>();File dir=CatalogStorage.folder(c);
   for(String kind:new String[]{"movies","shows","animes"})try{
    String name="catalog-"+kind+"-v1.json";boolean lite=DeviceProfile.lite(c);
@@ -35,8 +46,7 @@ final class HomeLibrary {
    if(rows==null)rows=read(c.getAssets().open(name),kind,lite);out.addAll(rows);
   }catch(Exception ignored){}
   try(android.database.Cursor cursor=MovieRepository.shared(c).getReadableDatabase().rawQuery("SELECT payload FROM movies ORDER BY popularity ASC,seeds DESC,uploaded DESC LIMIT 500",null)){while(cursor.moveToNext())out.add(Catalog.parse(lean(new JSONObject(cursor.getString(0)),"movies",DeviceProfile.lite(c)),"movies"));}catch(Exception ignored){}
-  for(Object value:c.getSharedPreferences("home-library",0).getAll().values())try{JSONObject doc=new JSONObject((String)value);out.add(Catalog.parse(doc.getJSONObject("title"),doc.getString("kind")));}catch(Exception ignored){}
-  cached=new ArrayList<>(out);cachedAt=System.currentTimeMillis();return out;
+  cached=new ArrayList<>(out);cachedAt=System.currentTimeMillis();return remembered(c,out);
  }
  static JSONArray episodeOrder(List<JSONObject> episodes){List<JSONObject> ordered=new ArrayList<>(episodes);ordered.sort(Comparator.comparingInt((JSONObject r)->r.optInt("season")).thenComparingInt(r->r.optInt("episode")));JSONArray order=new JSONArray();for(JSONObject row:ordered)if(row.optInt("episode")>0&&ResumeEpisodeSelection.aired(row,System.currentTimeMillis()))order.put(row.optInt("season")+":"+row.optInt("episode"));return order;}
  static void rememberEpisodes(Context c,Catalog.Title title,List<JSONObject> episodes){try{JSONObject raw=new JSONObject(title.raw.toString()).put("homeEpisodeOrder",episodeOrder(episodes)).put("homeEpisodeOrderAt",System.currentTimeMillis());remember(c,Catalog.parse(raw,title.kind));}catch(Exception ignored){}}

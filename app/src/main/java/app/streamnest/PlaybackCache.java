@@ -35,7 +35,7 @@ final class PlaybackCache {
         .edit()
         .putString("episodes", saved.toString())
         .putStringSet("entries", recorded)
-        .commit()) throw new IOException("Could not record episode cache");
+        .commit()) throw new StorageGuard.StorageException("Internal app records could not be saved. Free internal storage in Playback & storage before retrying; switching video to USB alone does not free internal space.");
   }
 
   static synchronized void discard(Context c,File entry) {
@@ -60,7 +60,28 @@ final class PlaybackCache {
     paths.add(target.getPath());
     // Persist before the engine writes, so a killed process can recover next launch.
     if (!prefs.edit().putStringSet("entries", paths).commit())
-      throw new IOException("Could not record video cache");
+      throw new StorageGuard.StorageException("Internal video-cache records could not be saved. Free internal storage before retrying.");
+  }
+
+  static boolean protectedEntry(File entry){
+    try{File target=entry.getCanonicalFile();for(File root:RemoteTorrentEngine.protectedRoots())if(root.getCanonicalFile().equals(target))return true;
+      for(TorrentEngine e:new TorrentEngine[]{StreamService.engine,StreamService.retiring})if(e!=null&&e.root!=null&&e.root.getCanonicalFile().equals(target))return true;
+      return EpisodePreload.protects(entry);
+    }catch(IOException e){return true;}
+  }
+
+  /** Recover only recorded, stopped video entries on built-in storage after switching to USB. */
+  static synchronized void recoverInternalForUsb(Context c,File selected){
+    try{if(!android.os.Environment.isExternalStorageRemovable(selected)||CacheLocation.freeSpace(c.getFilesDir())>=512L*1048576)return;}catch(IllegalArgumentException e){return;}
+    SharedPreferences p=c.getSharedPreferences("playback_cache",0);Set<String> entries=new HashSet<>(p.getStringSet("entries",Collections.emptySet()));
+    for(String path:new HashSet<>(entries))try{
+      File entry=new File(path);boolean builtIn=entry.toPath().startsWith(c.getFilesDir().toPath());
+      try{builtIn|=android.os.Environment.isExternalStorageEmulated(entry);}catch(IllegalArgumentException ignored){}
+      if(!builtIn||!entry.getName().matches("[a-f0-9]{64}")||protectedEntry(entry))continue;
+      CachePurger.deleteEntry(entry.getParentFile(),entry);entries.remove(path);
+      if(CacheLocation.freeSpace(c.getFilesDir())>=512L*1048576)break;
+    }catch(IOException ignored){}
+    p.edit().putStringSet("entries",entries).commit();
   }
 
   static void enter(Context context) {
@@ -94,7 +115,7 @@ final class PlaybackCache {
     for (String path : pending) {
       File entry = new File(path);
       try {
-        if(EpisodePreload.protects(entry)){failed.add(path);continue;}
+        if(protectedEntry(entry)){failed.add(path);continue;}
         CachePurger.deleteEntry(entry.getParentFile(), entry);
       } catch (IOException e) {
         failed.add(path);

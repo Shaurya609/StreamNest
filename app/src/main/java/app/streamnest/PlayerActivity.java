@@ -594,6 +594,7 @@ public class PlayerActivity extends Activity {
 
   void switchSource(boolean automatic) {
     TorrentEngine starting=StreamService.engine;
+    if(starting!=null&&starting.storageFailure){if(!automatic)Toast.makeText(this,"Resolve the storage problem in Playback & storage before retrying.",Toast.LENGTH_LONG).show();return;}
     if(StreamService.startupBlocked()||starting!=null&&!(starting instanceof RemoteTorrentEngine)&&starting.startup.active){if(!automatic)Toast.makeText(this,starting==null?"Waiting for engine cleanup":starting.status(),Toast.LENGTH_LONG).show();return;}
     if (changingEpisode) return;
     if (attempt + 1 >= alternatives.size()) {
@@ -871,6 +872,7 @@ public class PlayerActivity extends Activity {
             EpisodePreload.consider(PlayerActivity.this,e,episodeQueue,neighbour(1));
           }
           if(currentEngine&&e.closed&&!playedVideo)sourceFailed=true;
+          if(currentEngine&&e.storageFailure&&!startupExhausted){persistProgress(false);startupExhausted=true;userPaused=true;player.pause();episodeMessage=e.message;nextSource.setEnabled(false);setControlsVisible(true);new AlertDialog.Builder(PlayerActivity.this).setTitle("Video storage needs attention").setMessage(e.message).setPositiveButton("Playback & storage",(d,w)->{stopService(new Intent(PlayerActivity.this,StreamService.class));startActivity(new Intent(PlayerActivity.this,PlaybackSettingsActivity.class));finish();}).setNegativeButton("Stop",(d,w)->finish()).show();}
           long now = SystemClock.elapsedRealtime();
           if(player!=null&&playbackStall.sample(now,Math.max(0,player.getTime()),Math.max(0,player.getLength()),playedVideo&&!userPaused&&!dragging&&pendingSeek<0&&viewsAttached&&hasWindowFocus())){Diagnostics.event("torrent.stalled");DiagnosticPlayback.sample(PlayerActivity.this,player,currentEngine?e:null,softwareDecoder,diagnosticBufferPercent);episodeMessage="Playback has stalled. Try another source or a lower quality.";setControlsVisible(true);}else if(playbackStall.advancedAt==now&&episodeMessage!=null&&episodeMessage.startsWith("Playback has stalled"))episodeMessage=null;
           if(now-watchingActivityAt>=30000){watchingActivityAt=now;WatchingActivity.report(PlayerActivity.this,userPaused||!viewsAttached||opened&&!player.isPlaying()&&!diagnosticBuffering?"paused":playedVideo&&player.isPlaying()&&!diagnosticBuffering?"playing":mediaSet?"buffering":"starting");}

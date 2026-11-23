@@ -6,6 +6,13 @@ import dashboard from './dashboard.mjs';
 import {createDiagnosticsLanguage} from './diagnostic-explanations.mjs';
 const L=createDiagnosticsLanguage(),base=Date.now();
 const event=(type,data={},at=base,session='one',level='info')=>({type,data,at,session,level});
+
+test('USB capacity does not hide an internal-space storage failure',()=>{
+ const explained=L.event(event('cache.failed',{reason:'storage',internalFreeMb:98,cacheFreeMb:14933}));
+ assert.match(explained.title,/Internal app storage/);assert.match(explained.meaning,/98 MB/);assert.match(explained.meaning,/USB/);assert.doesNotMatch(explained.next,/another source/);
+ const summary=L.summary({events:[event('player.sample',{internalFreeMb:512,cacheFreeMb:14933,playState:'playing'})]},base);
+ assert.match(summary.evidence.join(' '),/Internal app storage free/);assert.match(summary.evidence.join(' '),/Selected video-cache storage free/);
+});
 test('episode selection and storage failures explain uncertainty without inventing a cause',()=>{
  const episode=L.event(event('torrent.failed',{frames:['app.streamnest.EpisodeFiles.select:49']}));
  assert.match(episode.title,/match this episode/);assert.match(episode.meaning,/filename\/numbering mismatch/);assert.match(episode.meaning,/does not identify the filename/);

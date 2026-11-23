@@ -73,6 +73,8 @@ public class PlaybackSettingsActivity extends Activity {
     path = label(box, "", 15);
     Button folder = button(box, "Change cache folder");
     folder.setOnClickListener(v -> folders());
+    Button clearVideo=button(box,"Clear stopped video cache");
+    clearVideo.setOnClickListener(v->new AlertDialog.Builder(this).setTitle("Clear video cache?").setMessage("Deletes stopped StreamNest video downloads from recorded cache folders. Watch history, sync groups, subtitles settings and accounts are kept. Active downloads are protected.").setPositiveButton("Clear video cache",(d,w)->{clearVideo.setEnabled(false);StreamService.worker.execute(()->{PlaybackCache.purge(getApplicationContext());runOnUiThread(()->{if(isDestroyed())return;clearVideo.setEnabled(true);refresh();Toast.makeText(this,"Stopped video cache cleared; active or unavailable folders remain protected.",Toast.LENGTH_LONG).show();});});}).setNegativeButton("Cancel",null).show());
     label(
         box,
         "Video cache is cleared when you exit StreamNest. Settings and accounts are kept. New"
@@ -129,6 +131,7 @@ public class PlaybackSettingsActivity extends Activity {
             + CacheLocation.description(this)
             + "\nFree space: "
             + android.text.format.Formatter.formatFileSize(this, CacheLocation.freeSpace(f)));
+    path.append("\nInternal app storage free: "+android.text.format.Formatter.formatFileSize(this,CacheLocation.freeSpace(getFilesDir()))+"\nUSB video storage still needs free internal space for app records.");
     mode.setText(
         "Low Memory mode: "
             + modeLabel()

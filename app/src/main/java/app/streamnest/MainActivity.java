@@ -14,6 +14,12 @@ import org.json.*;
 
 public class MainActivity extends Activity {
   final ExecutorService work = Executors.newFixedThreadPool(2);
+  final ExecutorService homeWork = Executors.newSingleThreadExecutor();
+  final ThreadPoolExecutor homeMetadata = new ThreadPoolExecutor(0,1,30,TimeUnit.SECONDS,new ArrayBlockingQueue<>(1),r->{Thread t=new Thread(r,"home-metadata");t.setPriority(Thread.MIN_PRIORITY);return t;},new ThreadPoolExecutor.DiscardPolicy());
+  List<HomeFeed.Row> displayedHome;
+  String displayedHomeSignature="";
+  Future<?> homeEnrichment;
+  volatile long homeFirstRowsMs,homeFullRowsMs;
   PosterLoader posters;
   boolean activeLite, homeTab = true;
   LinearLayout filtersRow;
@@ -273,7 +279,6 @@ public class MainActivity extends Activity {
   void tab(String k) {
     if(homeTab){homeQuery="";homeSearchPool.clear();query="";search.setText("");search.setVisibility(View.GONE);}
     homeTab = false;
-    HomeLibrary.clear();
     favoriteTab = false;
     kind = k;
     if (k.equals("movies") && !Arrays.asList("All", "1080p", "2160p").contains(quality))
@@ -363,20 +368,54 @@ public class MainActivity extends Activity {
   void loadHome(){
     if(!homeQuery.isEmpty()){loadHomeSearch();return;}
     if(browseJob!=null)browseJob.cancel(true);
+    if(homeEnrichment!=null)homeEnrichment.cancel(true);
+    homeMetadata.getQueue().clear();
     final int request=++generation; browseAdapter=null; browseList=null; moreControl=null;
     filtersRow.setVisibility(View.GONE);status.setText("Home · Your library, together");
     for(int i=0;i<tabs.getChildCount();i++)tabs.getChildAt(i).setSelected(((Button)tabs.getChildAt(i)).getText().toString().equals("Home"));
-    clearContent();content.addView(text("Loading your home…",16,0xffaaaaaa));
-    browseJob=work.submit(()->{
+    final long started=android.os.SystemClock.elapsedRealtime();
+    if(displayedHome==null){clearContent();content.addView(text("Loading your home…",16,0xffaaaaaa));}
+    homeFirstRowsMs=-1;homeFullRowsMs=-1;
+    browseJob=homeWork.submit(()->{
+      boolean published=false;
       try{
-        JSONObject history=WatchProgress.records(this);List<Catalog.Title> pool=HomeLibrary.load(this);
+        JSONObject history=WatchProgress.records(this);
+        List<Catalog.Title> quick=HomeLibrary.quick(this);
+        List<HomeFeed.Row> saved=HomeSync.build(this,quick,history,DeviceProfile.lite(this)?6:12);
+        if(saved.stream().anyMatch(row->!row.cards.isEmpty())){
+          published=true;publishHome(request,history,saved,started,false);
+        }
+        if(Thread.currentThread().isInterrupted())return;
+        List<Catalog.Title> pool=HomeLibrary.load(this);
+        if(Thread.currentThread().isInterrupted())return;
         List<HomeFeed.Row> rows=HomeSync.build(this,pool,history,DeviceProfile.lite(this)?6:12);
-        ui.post(()->{if(request==generation&&homeTab&&!isDestroyed()){homeHistorySignature=history.toString();homeLibraryRevision=HomeLibrary.revision;renderHome(rows);}});
-        List<Catalog.Title> before=new ArrayList<>(pool);pool=HomeLibrary.enrich(this,pool,history);if(pool.equals(before))return;List<HomeFeed.Row> enriched=HomeSync.build(this,pool,history,DeviceProfile.lite(this)?6:12);
-        ui.post(()->{if(request==generation&&homeTab&&!isDestroyed()){homeLibraryRevision=HomeLibrary.revision;renderHome(enriched);}});
-      }catch(Exception e){ui.post(()->{if(request==generation&&homeTab&&!isDestroyed()){clearContent();content.addView(text("Home unavailable. Open Movies, Series or Anime, or tap above to retry.",16,0xffaaaaaa));}});}
+        published=true;publishHome(request,history,rows,started,true);HomeLibrary.savePreview(this,rows);
+        final List<Catalog.Title> metadataPool=pool;
+        homeEnrichment=homeMetadata.submit(()->{try{
+          List<Catalog.Title> before=new ArrayList<>(metadataPool);List<Catalog.Title> enrichedPool=HomeLibrary.enrich(this,metadataPool,history);
+          if(Thread.currentThread().isInterrupted()||enrichedPool.equals(before))return;
+          List<HomeFeed.Row> enriched=HomeSync.build(this,enrichedPool,history,DeviceProfile.lite(this)?6:12);
+          publishHome(request,history,enriched,started,true);HomeLibrary.savePreview(this,enriched);
+        }catch(Exception ignored){}});
+      }catch(Exception e){if(!published)ui.post(()->{if(request==generation&&homeTab&&!isDestroyed()&&displayedHome==null){clearContent();content.addView(text("Home unavailable. Open Movies, Series or Anime, or tap above to retry.",16,0xffaaaaaa));}});}
     });
   }
+
+  void publishHome(int request,JSONObject history,List<HomeFeed.Row> rows,long started,boolean full){
+    final String signature=homeRowSignature(rows);
+    ui.post(()->{if(request!=generation||!homeTab||!homeQuery.isEmpty()||isDestroyed())return;
+      boolean historyChanged=!homeHistorySignature.equals(history.toString());
+      homeHistorySignature=history.toString();homeLibraryRevision=HomeLibrary.revision;
+      long elapsed=android.os.SystemClock.elapsedRealtime()-started;
+      if(homeFirstRowsMs<0)homeFirstRowsMs=elapsed;if(full)homeFullRowsMs=elapsed;
+      android.util.Log.i("StreamNest","Home "+(full?"catalog":"saved")+" rows ready in "+elapsed+" ms");
+      // Do not replace the current native view when its content has not changed.
+      if(displayedHome!=null&&signature.equals(displayedHomeSignature))return;
+      boolean navigating=displayedHome!=null&&getCurrentFocus()!=null&&getCurrentFocus().getContentDescription()!=null;
+      if(!navigating||historyChanged){renderHome(rows);displayedHomeSignature=signature;}
+    });
+  }
+  static String homeRowSignature(List<HomeFeed.Row> rows){StringBuilder s=new StringBuilder();for(HomeFeed.Row row:rows){s.append(row.name);for(HomeFeed.Card card:row.cards)s.append('|').append(card.title.id).append(':').append(card.title.raw).append(':').append(card.progress).append(':').append(card.historyKey);}return s.toString();}
 
   void loadHomeSearch(){
     if(browseJob!=null)browseJob.cancel(true);final int request=++generation,p=homeSearchPage,size=DeviceProfile.lite(this)?6:24;final String q=homeQuery;final List<Catalog.Title> previous=new ArrayList<>(homeSearchPool);filtersRow.setVisibility(View.GONE);homeSearchPending=true;homeSearchFailed=false;status.setText("Searching movies, series and anime…");
@@ -400,7 +439,7 @@ public class MainActivity extends Activity {
   }
 
   void renderHome(List<HomeFeed.Row> rows){
-    clearContent();final Map<ImageView,Catalog.Title> homeImages=new LinkedHashMap<>();final Set<ImageView> requested=new HashSet<>();ScrollView scroll=new ScrollView(this);LinearLayout body=new LinearLayout(this);body.setOrientation(LinearLayout.VERTICAL);scroll.addView(body);content.addView(scroll,new LinearLayout.LayoutParams(-1,-1));
+    clearContent();if(homeQuery.isEmpty())displayedHome=rows;final Map<ImageView,Catalog.Title> homeImages=new LinkedHashMap<>();final Set<ImageView> requested=new HashSet<>();ScrollView scroll=new ScrollView(this);LinearLayout body=new LinearLayout(this);body.setOrientation(LinearLayout.VERTICAL);scroll.addView(body);content.addView(scroll,new LinearLayout.LayoutParams(-1,-1));
     TextView heading=text(homeQuery.isEmpty()?"Something for your next watch":"Search results for “"+homeQuery+"”",25,-1);heading.setPadding(dp(8),dp(14),dp(8),dp(16));body.addView(heading);
     for(HomeFeed.Row section:rows){
       if(section.cards.isEmpty()&&!section.name.equals("Continue Watching"))continue;
@@ -1280,7 +1319,7 @@ public class MainActivity extends Activity {
     }
   }
 
-  void clearContent() { if (posters != null) posters.cancelPending(); content.removeAllViews(); }
+  void clearContent() { displayedHome=null;displayedHomeSignature="";if (posters != null) posters.cancelPending(); content.removeAllViews(); }
 
   @Override protected void onSaveInstanceState(Bundle state){state.putBoolean("homeTab",homeTab);state.putString("homeQuery",homeQuery);super.onSaveInstanceState(state);}
 
@@ -1337,6 +1376,7 @@ public class MainActivity extends Activity {
     if (isFinishing()) PlaybackCache.exit(this);
     generation++;
     work.shutdownNow();
+    homeWork.shutdownNow();homeMetadata.shutdownNow();
     if (posters != null) posters.close();
     ui.removeCallbacksAndMessages(null);
     super.onDestroy();

@@ -30,6 +30,8 @@ class RemoteTorrentEngine extends TorrentEngine {
    workerPulse=d.getLong("pulse");message=d.getString("message",message);verifiedComplete=d.getBoolean("complete");
    String file=d.getString("video","");if(!file.isEmpty())video=new File(file);size=d.getLong("size");receivedBytes=d.getLong("received");torrentFingerprint=d.getString("fingerprint","");cachedMovieHash=d.getString("hash","");
    diagnosticPeers=d.getInt("peers");diagnosticKbps=d.getInt("kbps");diagnosticPercent=d.getInt("percent");diagnosticError=d.getInt("error");
+   storageFailure=d.getBoolean("storageFailure");
+   internalFreeMb=d.getLong("internalFreeMb");cacheFreeMb=d.getLong("cacheFreeMb");
    url=d.getString("url");if(d.getBoolean("closed")){if(!closed&&!closeStarted)Diagnostics.event("torrent.failed");closed=true;url=null;}
   }
  });
