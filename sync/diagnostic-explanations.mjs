@@ -24,6 +24,14 @@ export function createDiagnosticsLanguage(){
    return result('Download and playback snapshot','These measurements describe the device at the recorded time.');
   }
   if(type==='torrent.stage'){
+   if(d.stage==='cache_check'&&d.ioPhase&&d.ioState){
+     const phase={create:'create a temporary file',open:'open the file for random access',size:'set the file size',write:'write blocks at two offsets',sync:'flush the writes to the drive',read:'read and verify both blocks',close:'close the temporary file',cleanup:'remove the temporary file'}[d.ioPhase];
+     if(phase){
+       if(d.ioState==='started')return result('USB check started','Trying to '+phase+'. A missing completion can help locate where the check stalled.');
+       if(d.ioState==='completed')return result('USB check completed','The worker could '+phase+' ('+d.elapsedMs+' ms).');
+       if(d.ioState==='failed')return result('USB check failed','The worker could not '+phase+'.','','warn');
+     }
+   }
    const stages={worker:['Starting the background downloader','StreamNest is connecting to or preparing its download worker.'],shutdown:['Stopping the previous downloader','Cleanup has started; this event does not confirm it has finished.'],cache_check:['Checking the cache folder','StreamNest is checking whether its download storage can be used.'],cache_prepare:['Preparing download storage','StreamNest is preparing the episode cache.'],folder:['Preparing the download folder','The background downloader is preparing its files.'],session_create:['Creating a download session','StreamNest is preparing the torrent engine.'],engine_start:['Starting the download engine','The torrent engine is starting or preparing the video.'],cleanup:['Cleaning up the previous attempt','StreamNest is closing resources before continuing.'],metadata:['Finding the source file list','StreamNest is obtaining information about the torrent.'],buffer:['Preparing enough video to play','The required video data is being prepared.'],server:['Preparing the video connection','StreamNest is setting up the local connection to its player.']};
    const text=stages[d.stage];return result(...(text||['Download progress update','The background downloader reported a progress stage.']));
   }

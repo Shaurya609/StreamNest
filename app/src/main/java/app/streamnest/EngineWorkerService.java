@@ -40,6 +40,13 @@ public class EngineWorkerService extends Service {
      Bundle storage=new Bundle();storage.putString("token",token);String kind=storageKind(base);
      storage.putString("report",new org.json.JSONObject().put("stage","cache_check").put("storage",kind).put("cacheFreeMb",base.getUsableSpace()/1048576).put("elapsedMs",android.os.SystemClock.elapsedRealtime()-probeAt).toString());send(REPORT,storage);
      if(!requested.getName().matches("[a-f0-9]{64}")||!base.equals(root.getParentFile()))throw new IOException("Invalid torrent worker folder");
+     if("external".equals(kind)&&!engine.preloadOnly&&d.getBoolean("diagnostics")){
+      engine.startup.enter("Checking USB random access",15000);
+      try{UsbCacheProbe.run(base,EngineWorkerService.this::reportUsbProbe);}catch(IOException | SecurityException error){
+       // Keep testing actual playback after a probe I/O error.
+      }
+      if(engine.closed)return;
+     }
      if(engine.preloadOnly&&base.getUsableSpace()<512L*1024*1024)throw new IOException("Not enough free storage to preload");
      if(!engine.closed)engine.start(engine.sourceUrl,root);
     }catch(Throwable error){engine.storageFailure|=StorageGuard.isStorageFailure(error);failureReport=DiagnosticData.failure(engine.storageFailure?"storage":"torrent","startup",error).toString();engine.message="Unable to stream: "+(error.getMessage()==null?error.getClass().getSimpleName():error.getMessage());engine.closed=true;engine.startup.done();}
@@ -53,6 +60,14 @@ public class EngineWorkerService extends Service {
    }
   }
  });
+ void reportUsbProbe(String phase,String state,long elapsedMs){
+  try{
+   Bundle report=new Bundle();report.putString("token",token);
+   report.putString("report",new org.json.JSONObject().put("stage","cache_check").put("storage","external")
+       .put("ioPhase",phase).put("ioState",state).put("elapsedMs",elapsedMs).toString());
+   send(REPORT,report);
+  }catch(org.json.JSONException ignored){}
+ }
  String storageKind(File base){return CacheLocation.kind(this,base);}
  @Override public IBinder onBind(Intent i){return endpoint.getBinder();}
  void snapshot(){
