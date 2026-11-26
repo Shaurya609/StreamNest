@@ -58,6 +58,7 @@
             'click .reset-current-filter': 'resetFilter',
             'click .update-dht': 'updateDht',
             'click .update-app': 'updateApp',
+            'click .settings-jump': 'jumpToSection',
             'mousedown #customMoviesServer': 'showFullDatalist',
             'mousedown #customSeriesServer': 'showFullDatalist',
             'mousedown #customAnimeServer': 'showFullDatalist'
@@ -741,6 +742,11 @@
         updateDht: function(e) {
             let updateMode = e === 'enable' ? e : (e ? 'manual' : '');
             App.Updater.updateDHT(updateMode);
+        },
+
+        jumpToSection: function(event) {
+            const section = this.el.ownerDocument.getElementById(event.currentTarget.dataset.target);
+            if (section && this.el.contains(section)) section.scrollIntoView({block: 'start'});
         },
 
         updateApp: function(e) {

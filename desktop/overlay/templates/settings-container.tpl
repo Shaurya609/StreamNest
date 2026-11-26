@@ -1,4 +1,17 @@
 <div class="settings-container">
+    <style>
+        .settings-container .settings-shortcuts {
+            position: sticky; top: 0; z-index: 2;
+            display: flex; flex-wrap: wrap; gap: 8px;
+            margin: 0 4%; padding: 8px 12px;
+            background: inherit; border-bottom: 1px solid currentColor;
+        }
+        .settings-container .settings-shortcuts .btn-settings { margin: 0; }
+        .settings-container section { scroll-margin-top: 110px; }
+        .settings-container .playback-options { padding-bottom: 16px; }
+        .settings-container .playback-options > span { height: auto; min-height: 36px; }
+        .settings-container .playback-note { clear: both; margin: 0 0 12px 24px; max-width: 640px; }
+    </style>
     <div class="fa fa-times close-icon"></div>
     <div class="success_alert" style="display:none"><%= i18n.__("Saved") %>&nbsp;<span id="checkmark-notify"><div id="stem-notify"></div><div id="kick-notify"></div></span></div>
 
@@ -13,8 +26,34 @@
         </div>
     </section>
 
-    <section><div class="title">Device diagnostics</div><div class="content"><p>Technical reports to help diagnose playback issues. On by default; turn off in Device diagnostics.</p><button type="button" id="streamnestDiagnosticsOpen" style="padding:12px;background:#99c5ff;color:#101827">Device diagnostics</button></div></section>
-    <section id="watch-sync"><div class="title">Resume watching</div><div class="content"><p>Connect devices using a private pairing code. Your watch progress is encrypted.</p><button type="button" id="streamnestSyncOpen" style="min-height:42px;padding:10px 16px;background:#99c5ff;color:#101827;border:1px solid #99c5ff;border-radius:6px;font:600 14px/20px sans-serif;cursor:pointer">Resume &amp; sync devices</button><button type="button" id="streamnestWatchingOpen" style="padding:12px;background:#99c5ff;color:#101827">Watching activity sharing</button></div></section>
+    <nav class="settings-shortcuts" aria-label="Settings sections">
+        <button type="button" class="btn-settings settings-jump" data-target="user-interface">Interface</button>
+        <button type="button" class="btn-settings settings-jump" data-target="watch-sync">Sync</button>
+        <button type="button" class="btn-settings settings-jump" data-target="playback">Playback</button>
+        <button type="button" class="btn-settings settings-jump" data-target="miscellaneous">Updates</button>
+    </nav>
+
+    <section>
+        <div class="title">Device diagnostics</div>
+        <div class="content">
+            <p>Manage technical reports used to diagnose playback issues.</p>
+            <div class="clearfix">
+                <button type="button" class="btn-settings" id="streamnestDiagnosticsOpen">Device diagnostics</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="watch-sync">
+        <div class="title">Resume watching</div>
+        <div class="content">
+            <p>Connect devices using a private pairing code. Your watch progress is encrypted.</p>
+            <div class="clearfix">
+                <button type="button" class="btn-settings" id="streamnestSyncOpen">Resume &amp; sync devices</button>
+                <button type="button" class="btn-settings" id="streamnestWatchingOpen">Watching activity sharing</button>
+            </div>
+        </div>
+    </section>
+
     <section id="user-interface">
         <div class="title"><%= i18n.__("User Interface") %></div>
         <div class="content">
@@ -450,7 +489,7 @@
 
     <section id="playback">
         <div class="title"><%= i18n.__("Playback") %></div>
-        <div class="content">
+        <div class="content playback-options">
             <span>
                 <input class="settings-checkbox" name="alwaysFullscreen" id="alwaysFullscreen" type="checkbox" <%=(Settings.alwaysFullscreen? "checked='checked'":"")%>>
                 <label class="settings-label" for="alwaysFullscreen"><%= i18n.__("Always start playing in fullscreen") %></label>
@@ -463,21 +502,22 @@
                 <input class="settings-checkbox" name="audioPassthrough" id="audioPassthrough" type="checkbox" <%=(Settings.audioPassthrough? "checked='checked'":"")%>>
                 <label class="settings-label" for="audioPassthrough"><%= i18n.__("Allow Audio Passthrough") %></label>
             </span>
+            <span>
+                <input class="settings-checkbox" name="streamnestPreloadNext" id="streamnestPreloadNext" type="checkbox" <%=Settings.streamnestPreloadNext===true?"checked='checked'":""%>>
+                <label class="settings-label" for="streamnestPreloadNext">Pre-load next episode</label>
+            </span>
+            <p class="playback-note">Starts after the current episode finishes downloading. Uses additional storage and bandwidth. The previous episode is removed from cache after the next video starts.</p>
+            <span>
+                <input class="settings-checkbox" name="streamnestSkipButtons" id="streamnestSkipButtons" type="checkbox" <%=Settings.streamnestSkipButtons!==false?"checked='checked'":""%>>
+                <label class="settings-label" for="streamnestSkipButtons">Show intro and credits skip buttons</label>
+            </span>
+            <span>
+                <input class="settings-checkbox" name="streamnestAutoSkip" id="streamnestAutoSkip" type="checkbox" <%=Settings.streamnestAutoSkip!==false?"checked='checked'":""%>>
+                <label class="settings-label" for="streamnestAutoSkip">Automatically skip intros and credits after five seconds</label>
+            </span>
+            <p class="playback-note">Uses community timestamps when available. Credits skip to the end of the segment, so later scenes remain playable. Timestamp sources: IntroDB, AniSkip and SkipDB (ODbL 1.0 + reciprocity, skipdb.tv/license).</p>
         </div>
     </section>
-
-    <section id="streamnest-preloading"><div class="title">Episode preloading</div><div class="content"><span>
-      <input class="settings-checkbox" name="streamnestPreloadNext" id="streamnestPreloadNext" type="checkbox" <%=Settings.streamnestPreloadNext===true?"checked='checked'":""%>>
-      <label class="settings-label" for="streamnestPreloadNext">Pre-load next episode</label>
-      <p>Starts after the current episode finishes downloading. Uses additional storage and bandwidth. Previous episode data is removed only after the next video starts playing.</p>
-    </span></div></section>
-    <section id="streamnest-skipping"><div class="title">Episode skipping</div><div class="content"><span>
-      <input class="settings-checkbox" name="streamnestSkipButtons" id="streamnestSkipButtons" type="checkbox" <%=Settings.streamnestSkipButtons!==false?"checked='checked'":""%>>
-      <label class="settings-label" for="streamnestSkipButtons">Show intro and credits skip buttons</label>
-      <input class="settings-checkbox" name="streamnestAutoSkip" id="streamnestAutoSkip" type="checkbox" <%=Settings.streamnestAutoSkip!==false?"checked='checked'":""%>>
-      <label class="settings-label" for="streamnestAutoSkip">Automatically skip intros and credits after five seconds</label>
-      <p>Community timestamps from IntroDB, SkipDB and AniSkip, when available. SkipDB data is licensed under ODbL 1.0 + reciprocity (skipdb.tv/license). Credits skip to the segment end; later scenes remain playable. Previous/next episode controls work independently of autoplay. Previous episode data is purged only after the next video starts playing.</p>
-    </span></div></section>
 
     <section id="features">
         <div class="title"><%= i18n.__("Features") %></div>
@@ -790,8 +830,12 @@
             <span>
                 <input class="settings-checkbox" name="updateNotification" id="updateNotification" type="checkbox" <%=(Settings.updateNotification? "checked='checked'":"")%>>
                 <label class="settings-label" for="updateNotification"><%= i18n.__("Show a notification when a new version is available") %></label>
-                <i class="update-app fa fa-rotate tooltipped" data-toggle="tooltip" data-placement="auto" title="<%= i18n.__("Check for updates") %>"></i>
             </span>
+            <div class="clearfix">
+                <button type="button" class="btn-settings update-app">
+                    <%= i18n.__("Check for updates") %>
+                </button>
+            </div>
         </div>
     </section>
 

@@ -25,6 +25,9 @@ public class PlayerActivity extends Activity {
   String skipKey = "";
   long skipRemaining = 5000, skipClock;
   long pendingSeek = -1;
+  private static final String RESUME_UNAVAILABLE = "Could not reach your saved position. Your progress is preserved until you seek.";
+  long pendingResume = -1, resumeRetryAt;
+  int resumeSeekAttempts;
   boolean skipCancelled, skipAutoEnabled;
   TorrentEngine cacheCommitted;
   List<SkipSegments.Segment> segments = new ArrayList<>();
@@ -249,6 +252,11 @@ public class PlayerActivity extends Activity {
             Diagnostics.event("player.ended");WatchingActivity.report(this,"stopped");
             episodeEnded();
           }
+          if (e.type == MediaPlayer.Event.TimeChanged && pendingResume >= 0
+              && resumeSeekAttempts > 0 && Math.abs(player.getTime() - pendingResume) < 2000) {
+            clearPendingResume();
+            persistProgress(false);
+          }
           if (e.type == MediaPlayer.Event.TimeChanged && pendingSeek >= 0
               && Math.abs(player.getTime() - pendingSeek) < 2000) {
             pendingSeek = -1;
@@ -273,7 +281,10 @@ public class PlayerActivity extends Activity {
                             WatchProgress.identity(getIntent(), key),
                             getPreferences(0).getLong(key, 0));
             startupPosition = p;
-            if (p > 0){recordSeek(p,"resume");player.setTime(p);}
+            pendingResume = p > 0 ? p : -1;
+            resumeSeekAttempts = 0;
+            resumeRetryAt = SystemClock.elapsedRealtime() + 8000;
+            tryResumeSeek(SystemClock.elapsedRealtime());
             getIntent().putExtra("startFromBeginning", false);
             prepareTracks();
           }
@@ -317,13 +328,32 @@ public class PlayerActivity extends Activity {
       endedHandled = false;
       pendingAuto = false;
     }
+    clearPendingResume();
     recordSeek(position,kind);
     pendingSeek = position;
     player.setTime(position);
   }
 
+  void clearPendingResume() {
+    pendingResume = -1;
+    if (RESUME_UNAVAILABLE.equals(episodeMessage)) episodeMessage = null;
+  }
+
+  void tryResumeSeek(long now) {
+    if (pendingResume < 0 || (resumeSeekAttempts > 0 && now < resumeRetryAt)) return;
+    if (resumeSeekAttempts >= 3 || (!player.isSeekable() && now >= resumeRetryAt)) {
+      episodeMessage = RESUME_UNAVAILABLE;
+      return;
+    }
+    if (!player.isSeekable()) return;
+    recordSeek(pendingResume, "resume");
+    resumeSeekAttempts++;
+    resumeRetryAt = now + 2500;
+    player.setTime(pendingResume);
+  }
+
   void persistProgress(boolean completed) {
-    if (player == null || !playedVideo || !completed && endedHandled) return;
+    if (player == null || pendingResume >= 0 || !playedVideo || !completed && endedHandled) return;
     long duration = Math.max(lastLength, player.getLength()),
         position = completed ? duration : player.getTime();
     if (duration <= 0 || position < 0) return;
@@ -553,7 +583,7 @@ public class PlayerActivity extends Activity {
       changed = true;
     }
     skipAutoEnabled = enabled;
-    boolean auto = enabled && !skipCancelled;
+    boolean auto = enabled && !skipCancelled && pendingResume < 0;
     boolean running = player != null && player.isPlaying() && viewsAttached && hasWindowFocus() && !dragging;
     if (visible && auto && running)
       skipRemaining -= Math.min(1000, Math.max(0, now - (skipClock == 0 ? now : skipClock)));
@@ -606,7 +636,7 @@ public class PlayerActivity extends Activity {
             .show();
       return;
     }
-    resumeAfterSwitch = Math.max(resumeAfterSwitch, Math.max(0, player.getTime()));
+    resumeAfterSwitch = pendingResume >= 0 ? pendingResume : Math.max(resumeAfterSwitch, Math.max(0, player.getTime()));
     TorrentEngine old = StreamService.engine;
     if (old != null) old.closed = true;
     player.stop();
@@ -874,6 +904,7 @@ public class PlayerActivity extends Activity {
           if(currentEngine&&e.closed&&!playedVideo)sourceFailed=true;
           if(currentEngine&&e.storageFailure&&!startupExhausted){persistProgress(false);startupExhausted=true;userPaused=true;player.pause();episodeMessage=e.message;nextSource.setEnabled(false);setControlsVisible(true);new AlertDialog.Builder(PlayerActivity.this).setTitle("Video storage needs attention").setMessage(e.message).setPositiveButton("Playback & storage",(d,w)->{stopService(new Intent(PlayerActivity.this,StreamService.class));startActivity(new Intent(PlayerActivity.this,PlaybackSettingsActivity.class));finish();}).setNegativeButton("Stop",(d,w)->finish()).show();}
           long now = SystemClock.elapsedRealtime();
+          if(opened&&mediaSet&&player!=null)tryResumeSeek(now);
           if(player!=null&&playbackStall.sample(now,Math.max(0,player.getTime()),Math.max(0,player.getLength()),playedVideo&&!userPaused&&!dragging&&pendingSeek<0&&viewsAttached&&hasWindowFocus())){Diagnostics.event("torrent.stalled");DiagnosticPlayback.sample(PlayerActivity.this,player,currentEngine?e:null,softwareDecoder,diagnosticBufferPercent);episodeMessage="Playback has stalled. Try another source or a lower quality.";setControlsVisible(true);}else if(playbackStall.advancedAt==now&&episodeMessage!=null&&episodeMessage.startsWith("Playback has stalled"))episodeMessage=null;
           if(now-watchingActivityAt>=30000){watchingActivityAt=now;WatchingActivity.report(PlayerActivity.this,userPaused||!viewsAttached||opened&&!player.isPlaying()&&!diagnosticBuffering?"paused":playedVideo&&player.isPlaying()&&!diagnosticBuffering?"playing":mediaSet?"buffering":"starting");}
           if(mediaSet&&player.isPlaying()&&player.getTime()>1500&&videoOutputs==0&&diagnosticAudioOnlyVersion!=playbackVersion){diagnosticAudioOnlyVersion=playbackVersion;try{Diagnostics.event("player.audio_only",new org.json.JSONObject().put("attempt",attempt).put("decoder",softwareDecoder?"software":"auto"));}catch(Exception ignored){}}

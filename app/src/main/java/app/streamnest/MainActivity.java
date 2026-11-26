@@ -1099,7 +1099,7 @@ public class MainActivity extends Activity {
 
   void settings() {
     new AlertDialog.Builder(this)
-        .setTitle("Settings")
+        .setTitle("Settings · StreamNest " + AppUpdateActivity.installedVersion(this))
         .setItems(
             new String[] {
               "Catalog servers",

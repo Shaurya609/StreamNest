@@ -317,7 +317,7 @@ class TorrentEngine implements AutoCloseable {
       // A slow USB/native status operation can no longer prevent its control heartbeat.
       long now=System.nanoTime();
       // Never overlap queries: the generation belongs to this one bitfield request.
-      if(statusPending&&now-statusRequestAt>60000000000L){message="Torrent status request timed out. Stop and retry after checking the selected storage.";closed=true;url=null;return message;}
+      if(statusPending&&now-statusRequestAt>60000000000L){message="Torrent status request timed out. Recovering the download worker.";closed=true;url=null;return message;}
       if(session!=null&&handle!=null&&!statusPending){
         statusPending=true;statusRequestAt=now;statusGeneration=available.generation();
         session.swig().post_torrent_updates(TorrentHandle.QUERY_PIECES);
@@ -380,7 +380,7 @@ class TorrentEngine implements AutoCloseable {
     if (server != null) server.stop();
     if (session != null) {
       try {
-        if (handle != null && handle.isValid() && handle.status().hasMetadata()) {
+        if (handle != null && info != null && handle.isValid()) {
           handle.pause();
           handle.saveResumeData(TorrentHandle.FLUSH_DISK_CACHE.or_(TorrentHandle.SAVE_INFO_DICT));
           resumeSaved.await(2200, java.util.concurrent.TimeUnit.MILLISECONDS);

@@ -13,14 +13,14 @@ test('artwork lookup rejects another title and deduplicates independent metadata
 });
 test('image failure advances to the canonical poster, successful art is reused, cleanup cancels handlers',()=>{
  const t={imdb:'tt991235',poster_big:'https://example.com/broken.jpg',kind:'shows'},image={removeAttribute(){delete this.src;}},placeholder={hidden:true};const stop=A.attach(t,image,placeholder);
- assert.equal(image.src,t.poster_big);image.onerror();assert.equal(image.src,'https://images.metahub.space/poster/medium/tt991235/img');image.onload();assert.equal(placeholder.hidden,true);assert.equal(A.candidates(t)[0],image.src);stop();assert.equal(image.onerror,null);
+ assert.equal(image.src,t.poster_big);assert.equal(placeholder.textContent,"Loading artwork…");assert.equal(placeholder.hidden,false);image.onerror();assert.equal(image.src,'https://images.metahub.space/poster/medium/tt991235/img');image.onload();assert.equal(placeholder.hidden,true);assert.equal(A.candidates(t)[0],image.src);stop();assert.equal(image.onerror,null);
 });
 test('resume fractions use timestamps, clamp invalid values and retain small positive positions',()=>{
  assert.equal(A.fraction({positionMs:71,durationMs:100}),.71);assert.equal(A.fraction({positionMs:38000,durationMs:2200000})>0,true);assert.equal(A.fraction({positionMs:5,durationMs:0}),0);assert.equal(A.fraction({positionMs:200,durationMs:100}),1);assert.equal(A.fraction({positionMs:NaN,durationMs:100}),0);
 });
 
 test('a hidden-window observer cannot prevent a missing-poster URL from being assigned',()=>{const image={ownerDocument:{visibilityState:'hidden',defaultView:{IntersectionObserver:class{observe(){}disconnect(){}}}},parentElement:{},removeAttribute(){delete this.src;}},placeholder={};const stop=A.attach({imdb:'tt991236'},image,placeholder);assert.equal(image.src,'https://images.metahub.space/poster/medium/tt991236/img');stop();});
-test('exhausted artwork shows a clean placeholder instead of a broken image',async()=>{const image={removeAttribute(){delete this.src;}},placeholder={hidden:true};const stop=A.attach({poster_big:'https://example.invalid/a.jpg',kind:'movies'},image,placeholder);image.onerror();await new Promise(r=>setImmediate(r));assert.equal(image.hidden,true);assert.equal(placeholder.hidden,false);stop();});
+test('exhausted artwork shows a clean placeholder instead of a broken image',async()=>{const image={removeAttribute(){delete this.src;}},placeholder={hidden:true};const stop=A.attach({poster_big:'https://example.invalid/a.jpg',kind:'movies'},image,placeholder);image.onerror();await new Promise(r=>setImmediate(r));assert.equal(image.hidden,true);assert.equal(placeholder.hidden,false);assert.equal(placeholder.textContent,"Artwork unavailable");stop();});
 
 test('offscreen Home cards defer artwork and metadata work until near viewport',()=>{
  const callbacks=[];let assignments=0;

@@ -1,5 +1,5 @@
 {
-  "version": "0.45.0",
+  "version": "0.46.0",
   "target": "Popcorn Time 0.5.1",
   "files": [
     {
@@ -72,7 +72,7 @@
     },
     {
       "path": "butter-provider/streamnest-artwork.js",
-      "sha256": "5067ead7535cf5f5eef583731ee1ed7d3df54d34655bd23f520ca923f5fc8986"
+      "sha256": "fed560accfe25d582579029bbd72dbf5d12c33933efce4e8ad4c5241c6aee404"
     },
     {
       "path": "butter-provider/streamnest-browse.js",
@@ -244,7 +244,7 @@
     },
     {
       "path": "lib/views/settings_container.js",
-      "sha256": "a22a906712f002a349ff19f193ffee664c0605a5c5224b7a16bc4f5830e985a5"
+      "sha256": "b1f8d1100b2347a3e8e2ed9cd73811ac14c54c0b87d357e432af752e9661679f"
     },
     {
       "path": "lib/views/show_detail.js",
@@ -260,7 +260,7 @@
     },
     {
       "path": "templates/settings-container.tpl",
-      "sha256": "276f97514e96c26bb76633408bdf3e8b9a0aacccb24cc8e547a8fb4296ea119d"
+      "sha256": "c3decc4fc49d1fa36b7bbe1637734352b7fada07672a0c89157cc031a6303d32"
     },
     {
       "path": "templates/show-detail.tpl",

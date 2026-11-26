@@ -41,7 +41,7 @@ final class EpisodePreload {
   static synchronized void cancel(){if(slot!=null){slot.engine.closed=true;slot=null;}attempted="";message="";}
   static synchronized void consider(Context context,TorrentEngine active,JSONObject queue,JSONObject next) {
     if(!enabled(context)){cancel();return;}
-    if(active==null||active.closed||!active.complete()||queue==null||next==null||PlaybackCache.exiting)return;
+    if(active==null||active.closed||!active.complete()||queue==null||next==null||PlaybackCache.exiting||RemoteTorrentEngine.cleanupPending())return;
     for(TorrentEngine other:inFlight)if(other!=active&&(slot==null||other!=slot.engine))return;
     String identity=queue.optString("imdb")+":"+EpisodeLibrary.key(next);
     String attempt=active.sourceUrl+"|"+identity;
@@ -67,8 +67,14 @@ final class EpisodePreload {
         value.engine.start(best.url,dir);
       }catch(Throwable error){value.engine.startup.done();if(!value.claimed)message="Next episode preload unavailable";else value.engine.message="Unable to stream preloaded episode";}
       finally {
-        if(!value.claimed||value.engine.closed)value.engine.close();
-        if(!value.claimed){released(value.engine);synchronized(EpisodePreload.class){if(slot==value)slot=null;}PlaybackCache.discard(c,value.engine.root);}
+        if(!value.claimed||value.engine.closed)StreamService.release(value.engine);
+        if(!value.claimed){
+          // RemoteTorrentEngine retains its writer lease if shutdown is unconfirmed.
+          // Clear this speculative slot so a later confirmation can unblock playback.
+          released(value.engine);
+          synchronized(EpisodePreload.class){if(slot==value)slot=null;}
+          PlaybackCache.discard(c,value.engine.root);
+        }
       }
     },"episode-preload").start();
   }

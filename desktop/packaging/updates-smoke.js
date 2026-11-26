@@ -40,7 +40,28 @@
       result.navigation = !!playback.neighbour({season:1,episode:1,auto_play_data:[{season:1,episode:1},{season:1,episode:2}]},1);
       setTimeout(async function(){
         try{
-          await App.Updater.check();
+          App.vent.trigger('settings:show');
+          const menu = document.querySelector('.settings-shortcuts');
+          const preload = document.querySelector('#playback #streamnestPreloadNext');
+          const skip = document.querySelector('#playback #streamnestSkipButtons');
+          const autoSkip = document.querySelector('#playback #streamnestAutoSkip');
+          if (!menu || !preload || !skip || !autoSkip || skip.parentElement === autoSkip.parentElement) {
+            throw new Error('Playback controls or settings navigation are missing.');
+          }
+          menu.querySelector('[data-target="miscellaneous"]').click();
+          const button = document.querySelector('#miscellaneous button.update-app');
+          if (!button || button.textContent.trim() !== 'Check for updates') {
+            throw new Error('Settings is missing the manual update button.');
+          }
+          const bounds = button.getBoundingClientRect();
+          if (bounds.bottom <= 0 || bounds.top >= window.innerHeight) {
+            throw new Error('Updates navigation did not reveal the update button.');
+          }
+          button.click();
+          const deadline = Date.now() + 25000;
+          while (!document.body.innerText.includes('StreamNest is up to date.') && Date.now() < deadline) {
+            await new Promise(resolve => setTimeout(resolve, 150));
+          }
           const text=document.body.innerText;
           result.updateStatus=Array.from(document.querySelectorAll('div')).filter(n=>n.style.zIndex==='99999'&&n.style.right==='20px').map(n=>n.innerText).join(' | ');
           result.updateCheckPassed=text.includes('StreamNest is up to date.');

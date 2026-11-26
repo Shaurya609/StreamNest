@@ -24,7 +24,16 @@ public class AppUpdateActivity extends Activity {
   static volatile long lastAutomatic;
   final Handler ui = new Handler(Looper.getMainLooper());
   TextView status;
-  Button install;
+  Button install, close;
+
+  static String installedVersion(Context context) {
+    try {
+      String version = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
+      return version == null ? "unknown" : version;
+    } catch (PackageManager.NameNotFoundException missing) {
+      return "unknown";
+    }
+  }
 
   static void launchCheck(MainActivity activity) {
     long now = SystemClock.elapsedRealtime();
@@ -165,14 +174,18 @@ public class AppUpdateActivity extends Activity {
     root.setPadding(32, 32, 32, 32);
     setContentView(root);
     SafeArea.apply(this);
+    TextView version = new TextView(this);
+    version.setText("Installed version: " + installedVersion(this));
+    root.addView(version);
     status = new TextView(this);
     root.addView(status);
     install = new Button(this);
     install.setText("Install update");
     root.addView(install);
     install.setOnClickListener(v -> install());
-    Button close = new Button(this);
-    close.setText("Later");
+    close = new Button(this);
+    close.setText("Close");
+    install.setVisibility(android.view.View.GONE);
     root.addView(close);
     close.setOnClickListener(v -> finish());
     if (ready == null && !busy)
@@ -194,7 +207,11 @@ public class AppUpdateActivity extends Activity {
         public void run() {
           if (isDestroyed()) return;
           status.setText(message);
-          install.setEnabled(ready != null && !busy);
+          boolean canInstall = ready != null && !busy;
+          boolean restoreFocus = !canInstall && install.hasFocus();
+          install.setVisibility(canInstall ? android.view.View.VISIBLE : android.view.View.GONE);
+          close.setText(canInstall ? "Later" : "Close");
+          if (restoreFocus) close.requestFocus();
           ui.postDelayed(this, 500);
         }
       };

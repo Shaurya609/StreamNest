@@ -283,6 +283,20 @@ public class PlaybackRegression extends Instrumentation {
       main(() -> activity.player.setTime(10000));
       SystemClock.sleep(1200);
       assertFrame("initial");
+      if (getTargetContext().getPackageName().endsWith(".verification")) {
+        main(() -> {
+          activity.pendingResume = 18000;
+          activity.resumeSeekAttempts = 0;
+          activity.resumeRetryAt = SystemClock.elapsedRealtime() + 8000;
+          activity.tryResumeSeek(SystemClock.elapsedRealtime());
+        });
+        long deadline = SystemClock.elapsedRealtime() + 6000;
+        while (activity.pendingResume >= 0 && SystemClock.elapsedRealtime() < deadline)
+          SystemClock.sleep(100);
+        if (activity.pendingResume >= 0 || activity.player.getTime() < 16000)
+          throw new AssertionError("Saved-position seek did not reach its target");
+        result.putBoolean("savedSeekAcknowledged", true);
+      }
       for (String segmentType : new String[] {"intro", "outro"}) {
         long start = segmentType.equals("intro") ? 5000 : 15000;
         long end = start + 5000;

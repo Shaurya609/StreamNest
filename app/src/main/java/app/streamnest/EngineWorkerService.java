@@ -13,17 +13,21 @@ public class EngineWorkerService extends Service {
  final HandlerThread controlThread=new HandlerThread("torrent-worker-control");
  {controlThread.start();}
  final Handler control=new Handler(controlThread.getLooper());
+ private final Object lifecycleLock = new Object();
  final ExecutorService worker=Executors.newSingleThreadExecutor();
  long memoryAt;volatile long memoryMb;final java.util.concurrent.atomic.AtomicBoolean memoryBusy=new java.util.concurrent.atomic.AtomicBoolean();
  volatile Thread engineThread;int stackReports;final java.util.concurrent.atomic.AtomicBoolean stackBusy=new java.util.concurrent.atomic.AtomicBoolean();
  volatile String failureReport="";
- TorrentEngine engine;Messenger owner;String token="";boolean stopping;
+ volatile TorrentEngine engine;Messenger owner;String token="";volatile boolean stopping;
  final Messenger endpoint=new Messenger(new Handler(controlThread.getLooper()){
   @Override public void handleMessage(Message m){
    Bundle d=m.getData();
    if(m.what==HELLO&&engine==null&&!stopping){owner=m.replyTo;token=d.getString("token","");Bundle hello=new Bundle();hello.putString("token",token);hello.putInt("pid",android.os.Process.myPid());send(HELLO,hello);return;}
    if(m.what==START&&engine==null&&!stopping&&token.equals(d.getString("token"))){
-    owner=m.replyTo;token=d.getString("token","");engine=new TorrentEngine();
+    synchronized(lifecycleLock){
+     if(stopping)return;
+     owner=m.replyTo;token=d.getString("token","");engine=new TorrentEngine();
+    }
     engine.sourceUrl=d.getString("source","");engine.episodeIdentity=d.getString("identity");engine.expectedFilename=d.getString("filename","");engine.fileIndex=d.getInt("fileIndex",-1);
     engine.episodeRequest=d.getBoolean("episodeRequest");engine.requestedSeason=d.getInt("season");engine.requestedEpisode=d.getInt("episode");engine.absoluteEpisode=d.getInt("absolute");engine.publicMetadataLookup=d.getBoolean("metadata");engine.lite=d.getBoolean("lite");engine.preloadOnly=d.getBoolean("preload");engine.resumeFraction=d.getDouble("resumeFraction");
     engine.startup.begin("Creating torrent worker",10000);snapshot();
@@ -70,6 +74,14 @@ public class EngineWorkerService extends Service {
  @Override public void onCreate(){super.onCreate();control.post(ticker);}
  void finishEngine(){try{engine.close();}finally{Bundle d=new Bundle();d.putString("token",token);send(CLOSED,d);control.post(this::terminate);}}
  void terminate(){stopSelf();new Thread(()->{android.os.SystemClock.sleep(100);android.os.Process.killProcess(android.os.Process.myPid());},"worker-exit").start();}
- @Override public boolean onUnbind(Intent i){stopping=true;if(engine!=null){engine.closed=true;control.postDelayed(this::terminate,4500);}else stopSelf();return false;}
+ @Override public boolean onUnbind(Intent i){
+  TorrentEngine active;
+  synchronized(lifecycleLock){stopping=true;active=engine;}
+  if(active==null){stopSelf();return false;}
+  active.closed=true;
+  // The Android lifecycle can still stop this process if its control looper stalls.
+  new Handler(getMainLooper()).postDelayed(this::terminate,1500);
+  return false;
+ }
  @Override public void onDestroy(){control.removeCallbacks(ticker);if(engine!=null)engine.closed=true;worker.shutdown();controlThread.quitSafely();super.onDestroy();}
 }
