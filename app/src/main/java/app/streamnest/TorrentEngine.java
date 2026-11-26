@@ -36,6 +36,8 @@ class TorrentEngine implements AutoCloseable {
   final RangeTrace ranges=new RangeTrace(System::nanoTime);
   volatile String rangeReport="{}",diagnosticSeekKind="none";
   volatile int diagnosticSeekPercent=-1;
+  boolean collectDiskStats;
+  volatile TorrentDiskStats diskStats;
   volatile long receivedBytes;
   volatile int diagnosticPeers,diagnosticKbps,diagnosticPercent,diagnosticError;
   volatile int sourceTrackers,restoredTrackers,trackerErrors;
@@ -59,6 +61,7 @@ class TorrentEngine implements AutoCloseable {
     if (!root.exists() && !root.mkdirs()) throw new IOException("Cannot create download folder");
     startup.enter("Creating torrent session",30000);
     session = new SafeTorrentSession();
+    if (collectDiskStats) diskStats = new TorrentDiskStats();
     session.addListener(
         new AlertListener() {
           public int[] types() {
@@ -67,6 +70,7 @@ class TorrentEngine implements AutoCloseable {
               AlertType.TRACKER_ERROR.swig(),
               AlertType.FILE_ERROR.swig(),
               AlertType.STATE_UPDATE.swig(),
+              AlertType.SESSION_STATS.swig(),
               AlertType.PIECE_FINISHED.swig(),
               AlertType.HASH_FAILED.swig(),
               AlertType.SAVE_RESUME_DATA.swig(),
@@ -75,6 +79,7 @@ class TorrentEngine implements AutoCloseable {
           }
 
           public void alert(Alert<?> a) {
+            if (a instanceof SessionStatsAlert && diskStats != null) diskStats.accept((SessionStatsAlert)a);
             if(a instanceof StateUpdateAlert){try{if(!closed)for(TorrentStatus s:((StateUpdateAlert)a).status())acceptStatus(s,statusGeneration);}finally{statusPending=false;}}
             if(a instanceof FileErrorAlert){storageMessage="The selected cache could not read or write video data. Check the USB connection, folder access, free space and drive format in Playback & storage, then retry.";storageFailure=true;diagnosticError=((FileErrorAlert)a).error().getValue();message=storageMessage;closed=true;url=null;}
             if(a instanceof TrackerErrorAlert){trackerErrors=Math.min(1000000,trackerErrors+1);trackerErrorCode=Math.abs((long)((TrackerErrorAlert)a).error().getValue());}
@@ -316,6 +321,7 @@ class TorrentEngine implements AutoCloseable {
       // post_torrent_updates queues work instead of blocking this worker in handle.status().
       // A slow USB/native status operation can no longer prevent its control heartbeat.
       long now=System.nanoTime();
+      if (diskStats != null && session != null && handle != null) diskStats.request(session, now);
       // Never overlap queries: the generation belongs to this one bitfield request.
       if(statusPending&&now-statusRequestAt>60000000000L){message="Torrent status request timed out. Recovering the download worker.";closed=true;url=null;return message;}
       if(session!=null&&handle!=null&&!statusPending){
@@ -391,7 +397,7 @@ class TorrentEngine implements AutoCloseable {
     }
   }
 
-  org.json.JSONObject rangeSnapshot(){org.json.JSONObject d=ranges.snapshot();try{d.put("sourceTrackers",sourceTrackers).put("restoredTrackers",restoredTrackers).put("trackerErrors",trackerErrors).put("trackerErrorCode",trackerErrorCode);if(size>0&&pieceLength>=16384){java.util.Set<Integer> needed=new java.util.HashSet<>();for(int[] range:StartupPieces.ranges(size,offset,pieceLength,0))for(int n=range[0];n<=range[1];n++)needed.add(n);int ready=0;for(int n:needed)if(available.has(n))ready++;d.put("startupPiecesRequired",needed.size()).put("startupPiecesReady",ready).put("pieceSizeKb",pieceLength/1024);}}catch(org.json.JSONException ignored){}return d;}
+  org.json.JSONObject rangeSnapshot(){org.json.JSONObject d=ranges.snapshot();try{if(diskStats!=null)diskStats.append(d);d.put("sourceTrackers",sourceTrackers).put("restoredTrackers",restoredTrackers).put("trackerErrors",trackerErrors).put("trackerErrorCode",trackerErrorCode);if(size>0&&pieceLength>=16384){java.util.Set<Integer> needed=new java.util.HashSet<>();for(int[] range:StartupPieces.ranges(size,offset,pieceLength,0))for(int n=range[0];n<=range[1];n++)needed.add(n);int ready=0;for(int n:needed)if(available.has(n))ready++;d.put("startupPiecesRequired",needed.size()).put("startupPiecesReady",ready).put("pieceSizeKb",pieceLength/1024);}}catch(org.json.JSONException ignored){}return d;}
 
   final class PieceStream extends InputStream {
     long pos, end;

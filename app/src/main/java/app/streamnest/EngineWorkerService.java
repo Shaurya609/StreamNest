@@ -30,6 +30,7 @@ public class EngineWorkerService extends Service {
     }
     engine.sourceUrl=d.getString("source","");engine.episodeIdentity=d.getString("identity");engine.expectedFilename=d.getString("filename","");engine.fileIndex=d.getInt("fileIndex",-1);
     engine.episodeRequest=d.getBoolean("episodeRequest");engine.requestedSeason=d.getInt("season");engine.requestedEpisode=d.getInt("episode");engine.absoluteEpisode=d.getInt("absolute");engine.publicMetadataLookup=d.getBoolean("metadata");engine.lite=d.getBoolean("lite");engine.preloadOnly=d.getBoolean("preload");engine.resumeFraction=d.getDouble("resumeFraction");
+    engine.collectDiskStats=d.getBoolean("diagnostics");
     engine.startup.begin("Creating torrent worker",10000);snapshot();
     worker.execute(()->{engineThread=Thread.currentThread();try{
      engine.startup.begin("Checking cache folder",20000);
