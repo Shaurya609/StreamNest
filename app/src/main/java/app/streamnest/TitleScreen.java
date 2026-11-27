@@ -81,6 +81,7 @@ final class TitleScreen extends Dialog {
     root.setPadding(dp(20), dp(12), dp(20), dp(14));
     root.setBackgroundColor(0xff17181b);
     setContentView(root);
+    SafeArea.apply(getWindow());
     LinearLayout top = new LinearLayout(a);
     top.setGravity(Gravity.CENTER_VERTICAL);
     TextView brand = text("StreamNest", 15, 0xff92959c);

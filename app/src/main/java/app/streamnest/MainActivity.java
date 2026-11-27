@@ -1023,6 +1023,7 @@ public class MainActivity extends Activity {
           }
         });
     dialog.setContentView(layout);
+    SafeArea.apply(dialog.getWindow());
     dialog.show();
     dialog.getWindow().setLayout(-1, -1);
   }
