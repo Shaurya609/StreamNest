@@ -32,6 +32,7 @@ final class SafeAreaRegression {
    test.runOnMainSync(()->{
     dialog[0]=new TitleScreen(activity,title);
     dialog[0].show();
+    dialog[0].health.setText("Auto · No positive seed count reported · 1080p · Alternative · HEVC");
    });
    try {
     Thread.sleep(600);
@@ -45,6 +46,25 @@ final class SafeAreaRegression {
      HomeRegression.check(content.getPaddingTop()>=bars.top
          &&content.getPaddingBottom()>=bars.bottom&&closeLocation[1]>=bars.top,
          "System bars overlap "+kind+" title controls");
+     View watch=dialog[0].watch;
+     android.graphics.Rect visibleWatch=new android.graphics.Rect();
+     HomeRegression.check(watch.getGlobalVisibleRect(visibleWatch)
+         &&visibleWatch.height()==watch.getHeight()
+         &&watch.getHeight()>=activity.dp(36),
+         "Watch Now is clipped on "+kind+" title details");
+    });
+    test.runOnMainSync(()->{
+     Window window=dialog[0].getWindow();
+     window.setLayout(-1,activity.dp(480));
+    });
+    Thread.sleep(300);
+    test.runOnMainSync(()->{
+     View watch=dialog[0].watch;
+     android.graphics.Rect visible=new android.graphics.Rect();
+     HomeRegression.check(watch.getGlobalVisibleRect(visible)&&visible.height()==watch.getHeight(),
+         "Watch Now is clipped in a shorter "+kind+" title window");
+     if(dialog[0].series)
+      HomeRegression.check(dialog[0].episodesView.getHeight()>0,"No room for the episode list");
     });
    }finally{
     test.runOnMainSync(()->dialog[0].dismiss());

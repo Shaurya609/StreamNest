@@ -103,7 +103,8 @@ final class TitleScreen extends Dialog {
     hero.setPadding(0, dp(12), 0, dp(16));
     ImageView poster = new ImageView(a);
     poster.setScaleType(ImageView.ScaleType.FIT_CENTER);
-    int height = series ? 160 : wide ? 290 : 190;
+    int preferredPosterHeight = series ? 160 : wide ? 290 : 190;
+    int height = Math.min(preferredPosterHeight, configuration.screenHeightDp / 2);
     hero.addView(
         poster, new LinearLayout.LayoutParams(dp(series ? 105 : wide ? 190 : 125), dp(height)));
     a.posters.load(title.poster, poster);
@@ -309,8 +310,8 @@ final class TitleScreen extends Dialog {
                         : sourceLookupError!=null?sourceLookupError:"No matching source found. Tap to retry.")
                     : "No 1080p or 4K source is currently listed.")
                 : (episodeMode() && selectedQuality.equals("Auto") ? "Auto → " : "")
-                    + best.seeds
-                    + " reported seeds · "
+                    + (best.seeds > 0 ? best.seeds + " reported seeds" : "No positive seed count reported")
+                    + " · "
                     + best.label);
   }
 
@@ -376,8 +377,8 @@ final class TitleScreen extends Dialog {
         listColumn,
         wide
             ? new LinearLayout.LayoutParams(dp(240), -1)
-            : new LinearLayout.LayoutParams(-1, 0, 1));
-    episodePanel = column();
+            : new LinearLayout.LayoutParams(-1, 0, 4));
+    episodePanel = wide ? column() : workspace;
     heading = text("Select an episode", 20, -1);
     heading.setTypeface(null, Typeface.BOLD);
     episodePanel.addView(heading);
@@ -388,12 +389,12 @@ final class TitleScreen extends Dialog {
     ScrollView scroll = new ScrollView(a);
     scroll.addView(overview);
     episodePanel.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
-    buildControls(episodePanel);
-    workspace.addView(
-        episodePanel,
-        wide
-            ? new LinearLayout.LayoutParams(0, -1, 1)
-            : new LinearLayout.LayoutParams(-1, dp(160)));
+    if (wide) {
+      buildControls(episodePanel);
+      workspace.addView(episodePanel, new LinearLayout.LayoutParams(0, -1, 1));
+    } else {
+      buildControls(root);
+    }
     episodeAdapter =
         new BaseAdapter() {
           public int getCount() {
